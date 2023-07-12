@@ -39,3 +39,13 @@ user = User(username='Shunda', phone_number='99999', integrator=integrator)
 async def test():
     query = {'_id': ObjectId('64add20cebc30e84159695ee')}
     return await find_one(Model=User, query=query)
+
+
+# class Test(BaseModel):
+#     id: str
+#     name: str
+
+
+# obj_dict = {'_id': 'a1b2c3', 'name': 'Shunda'}
+# obj = Test(**obj_dict)
+# obj_to_dict = obj.dict()

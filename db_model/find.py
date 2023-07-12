@@ -1,34 +1,11 @@
 from fastapi import HTTPException
 from .connection import db
-
-base_lookup = [
-    {
-        '$lookup': {
-            'from': 'integrators',
-            'localField': 'integrator',
-            'foreignField': '_id',
-            'as': 'integrator'
-        }
-    }, {
-        '$addFields': {
-            'integrator': {
-                '$arrayElemAt': [
-                    '$integrator', 0
-                ]
-            },
-            'shunda': 'Shunda Legal'
-        }
-    }
-]
+from pprint import pprint
 
 
 async def __aggregate(Model, pipeline):
     docs_cursor = db[Model._collection].aggregate(pipeline)
-    docs = []
-    async for doc in docs_cursor:
-        doc['id'] = doc.pop('_id')
-        docs.append(Model(**doc))
-    return docs
+    return [Model(**doc) async for doc in docs_cursor]
 
 
 def __mount_base_pipeline(Model, query):

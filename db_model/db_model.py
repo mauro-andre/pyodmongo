@@ -27,6 +27,11 @@ class DbModel(MainModel):
     updated_at: datetime = None
     _pipeline: list = []
 
+    def __init__(self, **attrs):
+        if attrs.get('_id') is not None:
+            attrs['id'] = attrs.pop('_id')
+        super().__init__(**attrs)
+
     @staticmethod
     def __resolve_indexes(key: str, extra: dict):
         idx = []
