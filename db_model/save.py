@@ -32,15 +32,27 @@ async def __save_dict(dict_to_save: dict, collection, indexes):
 def __consolidate_dict(obj: Integrator, dct: dict):
     for key in obj.__fields__.keys():
         value = getattr(obj, key)
-        has_dict_method = hasattr(value, 'dict')
+        has_dict_method = hasattr(obj.__fields__[key].type_, 'dict')
+        by_reference = obj.__fields__[key].field_info.extra.get('by_reference')
+
         if has_dict_method:
             by_reference = obj.__fields__[
                 key].field_info.extra.get('by_reference')
-            if by_reference:
-                dct[key] = value.id
+            if type(value) != list:
+                if by_reference:
+                    dct[key] = value.id
+                else:
+                    dct[key] = {}
+                    __consolidate_dict(obj=value, dct=dct[key])
             else:
-                dct[key] = {}
-                __consolidate_dict(obj=value, dct=dct[key])
+                if by_reference:
+                    dct[key] = [o.id for o in value]
+                else:
+                    dct[key] = []
+                    for v in value:
+                        obj_lst_elem = {}
+                        __consolidate_dict(obj=v, dct=obj_lst_elem)
+                        dct[key].append(obj_lst_elem)
         else:
             if key == 'id':
                 key = '_id'
@@ -50,19 +62,5 @@ def __consolidate_dict(obj: Integrator, dct: dict):
 
 async def save(obj):
     dct = __consolidate_dict(obj=obj, dct={})
+    pprint(dct)
     save_result = await __save_dict(dict_to_save=dct, collection=db[obj._collection], indexes=obj._indexes)
-    # print()
-    # print(obj)
-    # dict_to_save = {}
-    # for key, field_prop in obj.__fields__.items():
-    #     attr_has_id = hasattr(field_prop.type_, 'id')
-    #     try:
-    #         attr_value = getattr(obj, key).dict()
-    #         by_reference = obj.__fields__[
-    #             key].field_info.extra.get('by_reference')
-    #         if by_reference and attr_has_id:
-    #             attr_value = attr_value.get('id')
-    #     except AttributeError:
-    #         attr_value = getattr(obj, key)
-    #     dict_to_save[key] = attr_value
-    # await __save_dict(dict_to_save=dict_to_save, collection=db[obj._collection], indexes=obj._indexes)
