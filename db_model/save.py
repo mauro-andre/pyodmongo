@@ -3,12 +3,13 @@ from datetime import datetime
 from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException
 from .connection import db
-from models import Integrator
 from pprint import pprint
+from typing import get_args
+from .db_model import Id
 
 
 async def __save_dict(dict_to_save: dict, collection, indexes):
-    find_filter = {'_id': ObjectId(dict_to_save.get('id'))}
+    find_filter = {'_id': ObjectId(dict_to_save.get('_id'))}
     now = datetime.utcnow()
     dict_to_save['updated_at'] = now
     dict_to_save.pop('_id')
@@ -20,7 +21,8 @@ async def __save_dict(dict_to_save: dict, collection, indexes):
     try:
         if len(indexes) > 0:
             await collection.create_indexes(indexes)
-        return await collection.update_one(filter=find_filter, update=to_save, upsert=True)
+        result = await collection.update_one(filter=find_filter, update=to_save, upsert=True)
+        return result.raw_result
     except DuplicateKeyError as e:
         detail = {'message': 'duplicate key(s) error'} | {
             'keys': e.details['keyValue']}
@@ -29,24 +31,36 @@ async def __save_dict(dict_to_save: dict, collection, indexes):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-def __consolidate_dict(obj: Integrator, dct: dict):
+def __consolidate_dict(obj, dct: dict):
     for key in obj.__fields__.keys():
-        value = getattr(obj, key)
-        has_dict_method = hasattr(obj.__fields__[key].type_, 'dict')
-        by_reference = obj.__fields__[key].field_info.extra.get('by_reference')
+        key_type = get_args(obj.__fields__[key].type_) or obj.__fields__[
+            key].type_
+        try:
+            has_dict_method = hasattr(key_type[0], 'dict')
+        except TypeError:
+            has_dict_method = hasattr(key_type, 'dict')
 
+        value = getattr(obj, key)
         if has_dict_method:
-            by_reference = obj.__fields__[
-                key].field_info.extra.get('by_reference')
+            try:
+                by_reference = key_type[1] == Id
+            except TypeError:
+                by_reference = False
             if type(value) != list:
                 if by_reference:
-                    dct[key] = value.id
+                    try:
+                        dct[key] = value.id
+                    except AttributeError:
+                        dct[key] = value
                 else:
                     dct[key] = {}
                     __consolidate_dict(obj=value, dct=dct[key])
             else:
                 if by_reference:
-                    dct[key] = [o.id for o in value]
+                    try:
+                        dct[key] = [o.id for o in value]
+                    except AttributeError:
+                        dct[key] = value
                 else:
                     dct[key] = []
                     for v in value:
@@ -62,5 +76,4 @@ def __consolidate_dict(obj: Integrator, dct: dict):
 
 async def save(obj):
     dct = __consolidate_dict(obj=obj, dct={})
-    pprint(dct)
-    save_result = await __save_dict(dict_to_save=dct, collection=db[obj._collection], indexes=obj._indexes)
+    return await __save_dict(dict_to_save=dct, collection=db[obj._collection], indexes=obj._indexes)

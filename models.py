@@ -1,24 +1,36 @@
 from db_model import DbModel, MainModel
 from pydantic import Field
-from typing import ClassVar, List
+from typing import ClassVar
 
 
-class BrazilianCity(DbModel):
-    name: str = Field(index=True)
-    state: str
-    _collection: ClassVar = 'brazilian_cities'
+# class Vrau(DbModel):
+#     var1: str
+#     var2: str
+#     _collection: ClassVar = 'vraus'
 
 
-class Address(MainModel):
-    street: str
-    city: BrazilianCity = Field(by_reference=False)
-    number: str
+# class State(DbModel):
+#     name: str
+#     sigla: str
+#     vraus: list[Vrau] = Field(by_reference=True)
+#     _collection: ClassVar = 'states'
 
-# User = ForwardRef('User')
+
+# class BrazilianCity(DbModel):
+#     name: str = Field(index=True)
+#     states: list[State]
+#     _collection: ClassVar = 'brazilian_cities'
 
 
-class Integrator(DbModel):
-    address: Address
-    name: str = Field(index=True)
-    outros_addresses: list[Address] = Field(by_reference=False)
-    _collection: ClassVar = 'integrators'
+# class Address(MainModel):
+#     street: str
+#     city: BrazilianCity
+#     number: str
+
+
+# class Integrator(DbModel):
+#     name: str = Field(index=True)
+#     address: Address
+#     outros_addresses: list[Address]
+#     outras_cidades: list[BrazilianCity] = Field(by_reference=True)
+#     _collection: ClassVar = 'integrators'
