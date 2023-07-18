@@ -63,6 +63,7 @@ async def teste():
     # await save(lv_22_1)
     # await save(lv_22_2)
     # await save(lv_1)
-    lv_1_load = await find_one(Model=Lv1, query={'_id': ObjectId(lv_1.id)})
-    return lv_1_load
+    lv_1_load: Lv1 = await find_one(Model=Lv1, query={'_id': ObjectId('64b57354374aac33adfb4ed8')})
+    print(lv_1_load.__fields__)
+    # return lv_1_load
     pass
