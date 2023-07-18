@@ -1,6 +1,5 @@
 from fastapi import HTTPException
 from .connection import db
-from pprint import pprint
 
 
 async def __aggregate(Model, pipeline):

@@ -2,7 +2,7 @@ from .main_model import MainModel
 from .db_model_init import resolve_indexes, resolve_lookup_and_set
 from .id_model import Id
 from datetime import datetime
-from pprint import pprint
+from .db_model_init import field_infos
 
 
 class DbModel(MainModel):
@@ -18,13 +18,14 @@ class DbModel(MainModel):
 
     def __init_subclass__(cls):
         ref_pipeline = resolve_lookup_and_set(cls=cls, pipeline=[], path='')
-        pprint(ref_pipeline)
-        print()
         indexes = []
         for key in cls.__fields__.keys():
             extra = cls.__fields__[key].field_info.extra
             idx = resolve_indexes(key=key, extra=extra)
             indexes += idx
+            field_type, by_reference, is_list, has_dict_method = field_infos(
+                cls=cls, field_name=key)
+            setattr(cls, key, (key, field_type))
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_reference_pipeline', ref_pipeline)
 

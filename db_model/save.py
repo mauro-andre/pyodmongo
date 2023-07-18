@@ -3,9 +3,7 @@ from datetime import datetime
 from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException
 from .connection import db
-from pprint import pprint
-from typing import get_args
-from .db_model import Id
+from .db_model_init import field_infos
 
 
 async def __save_dict(dict_to_save: dict, collection, indexes):
@@ -33,20 +31,11 @@ async def __save_dict(dict_to_save: dict, collection, indexes):
 
 def __consolidate_dict(obj, dct: dict):
     for key in obj.__fields__.keys():
-        key_type = get_args(obj.__fields__[key].type_) or obj.__fields__[
-            key].type_
-        try:
-            has_dict_method = hasattr(key_type[0], 'dict')
-        except TypeError:
-            has_dict_method = hasattr(key_type, 'dict')
-
         value = getattr(obj, key)
+        field_type, by_reference, is_list, has_dict_method = field_infos(
+            cls=obj, field_name=key)
         if has_dict_method:
-            try:
-                by_reference = key_type[1] == Id
-            except TypeError:
-                by_reference = False
-            if type(value) != list:
+            if not is_list:
                 if by_reference:
                     try:
                         dct[key] = value.id

@@ -1,8 +1,27 @@
 from pydantic import BaseModel
 from pymongo import IndexModel, ASCENDING
-from .aggregate import lookup_and_set
+from .aggregate_stages import lookup_and_set
 from typing import get_origin, get_args
 from .id_model import Id
+
+
+def field_infos(cls: BaseModel, field_name: str):
+    field_type = get_args(cls.__fields__[field_name].type_) or cls.__fields__[
+        field_name].type_
+    try:
+        by_reference = field_type[1] == Id
+    except TypeError:
+        by_reference = False
+    try:
+        field_type = field_type[0]
+    except TypeError:
+        pass
+    try:
+        is_list = get_origin(cls.__annotations__[field_name]) == list
+    except KeyError:
+        is_list = False
+    has_dict_method = hasattr(field_type, 'dict')
+    return field_type, by_reference, is_list, has_dict_method
 
 
 def resolve_indexes(key: str, extra: dict):
@@ -16,44 +35,10 @@ def resolve_indexes(key: str, extra: dict):
     return idx
 
 
-# def resolve_lookup_pipeline(key: str, field_type, is_list: bool, add_field_pipeline: list):
-#     lookup = [{
-#         '$lookup': {
-#             'from': field_type._collection,
-#             'localField': key,
-#             'foreignField': '_id',
-#             'as': key
-#         }
-#     }]
-#     if is_list:
-#         return lookup
-#     if len(add_field_pipeline) == 0:
-#         add_fields = {'$addFields': {
-#             key: {'$arrayElemAt': [f'${key}', 0]}}}
-#         add_field_pipeline.append(add_fields)
-#     else:
-#         add_field_pipeline[0]['$addFields'][key] = {
-#             '$arrayElemAt': [f'${key}', 0]}
-#     return lookup
-
-
 def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: str):
     for key in cls.__fields__.keys():
-        field_type = get_args(cls.__fields__[key].type_) or cls.__fields__[
-            key].type_
-        try:
-            by_reference = field_type[1] == Id
-        except TypeError:
-            by_reference = False
-        is_list = False
-        if by_reference:
-            is_list = get_origin(cls.__annotations__[key]) == list
-            try:
-                field_type = field_type[0]
-            except TypeError:
-                pass
-
-        has_dict_method = hasattr(field_type, 'dict')
+        field_type, by_reference, is_list, has_dict_method = field_infos(
+            cls=cls, field_name=key)
 
         if has_dict_method:
             if path == '':
