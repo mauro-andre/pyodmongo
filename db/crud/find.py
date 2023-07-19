@@ -70,6 +70,5 @@ async def populate(objs: list):
     pipeline = __mount_base_pipeline(
         Model=Model, query={'_id': {'$in': ids}}
     )
-    print(pipeline)
     objs = await __aggregate(Model=Model, pipeline=pipeline)
     return objs
