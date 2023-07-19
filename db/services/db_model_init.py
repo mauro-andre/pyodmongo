@@ -3,6 +3,7 @@ from pymongo import IndexModel, ASCENDING
 from .aggregate_stages import lookup_and_set
 from typing import get_origin, get_args
 from ..models.id_model import Id
+from ..models.field_info import FieldInfo
 
 
 def field_infos(cls: BaseModel, field_name: str):
@@ -21,7 +22,7 @@ def field_infos(cls: BaseModel, field_name: str):
     except KeyError:
         is_list = False
     has_dict_method = hasattr(field_type, 'dict')
-    return field_type, by_reference, is_list, has_dict_method
+    return FieldInfo(name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_dict_method=has_dict_method)
 
 
 def resolve_indexes(key: str, extra: dict):
@@ -37,9 +38,11 @@ def resolve_indexes(key: str, extra: dict):
 
 def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: str):
     for key in cls.__fields__.keys():
-        field_type, by_reference, is_list, has_dict_method = field_infos(
-            cls=cls, field_name=key)
-
+        field_info: FieldInfo = field_infos(cls=cls, field_name=key)
+        has_dict_method = field_info.has_dict_method
+        by_reference = field_info.by_reference
+        field_type = field_info.field_type
+        is_list = field_info.is_list
         if has_dict_method:
             if path == '':
                 path += key

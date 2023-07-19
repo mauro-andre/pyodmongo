@@ -4,6 +4,7 @@ from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException
 from ..services.connection import db
 from ..services.db_model_init import field_infos
+from ..models.field_info import FieldInfo
 
 
 async def __save_dict(dict_to_save: dict, collection, indexes):
@@ -32,8 +33,12 @@ async def __save_dict(dict_to_save: dict, collection, indexes):
 def __consolidate_dict(obj, dct: dict):
     for key in obj.__fields__.keys():
         value = getattr(obj, key)
-        field_type, by_reference, is_list, has_dict_method = field_infos(
-            cls=obj, field_name=key)
+        field_info: FieldInfo = field_infos(cls=obj, field_name=key)
+        has_dict_method = field_info.has_dict_method
+        is_list = field_info.is_list
+        by_reference = field_info.by_reference
+        # field_type, by_reference, is_list, has_dict_method = field_infos(
+        #     cls=obj, field_name=key)
         if has_dict_method:
             if not is_list:
                 if by_reference:

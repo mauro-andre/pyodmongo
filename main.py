@@ -2,7 +2,8 @@ from bson import ObjectId
 from pprint import pprint
 from db.crud import save, find_one, find_many
 from db.models import DbModel, Id
-from fastapi import FastAPI
+from db.queries import eq, in_, nin, query_mount
+from fastapi import FastAPI, Request
 from pydantic import Field
 from typing import ClassVar
 
@@ -79,10 +80,12 @@ class Lv1(DbModel):
 
 
 @app.get('/test')
-async def test(id: str, docs_per_page: int, current_page: int = 1):
-    # return await find_one(Model=Lv1, query={'_id': ObjectId(id)})
+async def test(request: Request, docs_per_page: int, current_page: int = 1):
+    # print(Lv7.var_7)
+    query = query_mount(request=request, Model=Lv7)
+    # return await find_one(Model=Lv1, query=query)
     return await find_many(Model=Lv1,
-                           query={'_id': ObjectId(id)},
+                           query=query,
                            current_page=current_page,
                            docs_per_page=docs_per_page,
                            )

@@ -3,6 +3,7 @@ from ..services.db_model_init import resolve_indexes, resolve_lookup_and_set
 from .id_model import Id
 from datetime import datetime
 from ..services.db_model_init import field_infos
+from ..models.field_info import FieldInfo
 
 
 class DbModel(MainModel):
@@ -23,9 +24,10 @@ class DbModel(MainModel):
             extra = cls.__fields__[key].field_info.extra
             idx = resolve_indexes(key=key, extra=extra)
             indexes += idx
-            field_type, by_reference, is_list, has_dict_method = field_infos(
-                cls=cls, field_name=key)
-            setattr(cls, key, (key, field_type))
+            field_info: FieldInfo = field_infos(cls=cls, field_name=key)
+            field_type = field_info.field_type
+            # setattr(cls, key, (key, field_type))
+            setattr(cls, key, field_info)
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_reference_pipeline', ref_pipeline)
 
