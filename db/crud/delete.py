@@ -1,9 +1,10 @@
 from fastapi import HTTPException
+from ..services.connection import db
 
 
 async def delete(Model, query):
     try:
-        result = await Model.collection().delete_one(filter=query)
+        result = await db[Model._collection].delete_one(filter=query)
         if result.deleted_count == 0:
             raise HTTPException(status_code=404, detail='Id not found')
         return {'message': 'Success delete'}
