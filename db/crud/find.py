@@ -62,3 +62,14 @@ async def find_many(Model, query, current_page: int, docs_per_page: int):
                             page_quantity=page_quantity,
                             docs_quantity=count,
                             docs=result)
+
+
+async def populate(objs: list):
+    ids = [obj.id for obj in objs]
+    Model = type(objs[0])
+    pipeline = __mount_base_pipeline(
+        Model=Model, query={'_id': {'$in': ids}}
+    )
+    print(pipeline)
+    objs = await __aggregate(Model=Model, pipeline=pipeline)
+    return objs

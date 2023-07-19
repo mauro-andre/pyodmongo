@@ -1,6 +1,6 @@
 from bson import ObjectId
 from pprint import pprint
-from db.crud import save, find_one, find_many
+from db.crud import save, find_one, find_many, populate
 from db.models import DbModel, Id
 from db.queries import eq, in_, nin, query_mount
 from fastapi import FastAPI, Request
@@ -54,7 +54,7 @@ class Lv2(DbModel):
 
 class Lv1(DbModel):
     var1: str
-    lv_2: Lv2
+    lv_2: Lv2 | Id
     _collection: ClassVar = 'Lv1'
 
 # 64b2e3ec0bff1e48346f6fa4
@@ -81,14 +81,11 @@ class Lv1(DbModel):
 
 @app.get('/test')
 async def test(request: Request, docs_per_page: int, current_page: int = 1):
-    # print(Lv7.var_7)
     query = query_mount(request=request, Model=Lv7)
-    # return await find_one(Model=Lv1, query=query)
-    return await find_many(Model=Lv1,
-                           query=query,
-                           current_page=current_page,
-                           docs_per_page=docs_per_page,
-                           )
+    lv_1: Lv1 = await find_one(Model=Lv1, query=query)
+    await populate(lv_1.lv_2.lv_3.lv_4)
+    return lv_1
+
     # print(Lv2.lv_3)
     # lv_8_1 = Lv8(id='64b2e3ec0bff1e48346f6fa4',
     #              var_8_1='var_8_1', var_8_2='var_8_1')
@@ -123,7 +120,8 @@ async def test(request: Request, docs_per_page: int, current_page: int = 1):
 
     # lv_2 = Lv2(id='64b2e3ec0bff1e48346f6fac', var2='var_2', lv_3=lv_3)
 
-    # lv_1 = Lv1(id='64b2e3ec0bff1e48346f6fad', var1='var_1', lv_2=lv_2)
+    # lv_1 = Lv1(id='64b2e3ec0bff1e48346f6fad', var1='var_1',
+    #            lv_2='64b2e3ec0bff1e48346f6fac')
     # await save(lv_8_1)
     # await save(lv_8_2)
     # await save(lv_8_3)

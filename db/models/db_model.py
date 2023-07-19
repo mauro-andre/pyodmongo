@@ -25,11 +25,13 @@ class DbModel(MainModel):
             idx = resolve_indexes(key=key, extra=extra)
             indexes += idx
             field_info: FieldInfo = field_infos(cls=cls, field_name=key)
-            field_type = field_info.field_type
-            # setattr(cls, key, (key, field_type))
             setattr(cls, key, field_info)
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_reference_pipeline', ref_pipeline)
+
+    @classmethod
+    def populate(cls):
+        print(cls)
 
     class Config:
         anystr_strip_whitespace = True

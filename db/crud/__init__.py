@@ -1,2 +1,2 @@
-from .find import find_one, find_many
+from .find import find_one, find_many, populate
 from .save import save

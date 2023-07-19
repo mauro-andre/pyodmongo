@@ -37,8 +37,6 @@ def __consolidate_dict(obj, dct: dict):
         has_dict_method = field_info.has_dict_method
         is_list = field_info.is_list
         by_reference = field_info.by_reference
-        # field_type, by_reference, is_list, has_dict_method = field_infos(
-        #     cls=obj, field_name=key)
         if has_dict_method:
             if not is_list:
                 if by_reference:
