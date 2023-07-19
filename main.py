@@ -1,6 +1,7 @@
 from bson import ObjectId
 from pprint import pprint
-from db_model import save, find_one, DbModel, Id
+from db.crud import save, find_one, find_many
+from db.models import DbModel, Id
 from fastapi import FastAPI
 from pydantic import Field
 from typing import ClassVar
@@ -78,8 +79,14 @@ class Lv1(DbModel):
 
 
 @app.get('/test')
-async def test():
-    print(Lv2.lv_3)
+async def test(id: str, docs_per_page: int, current_page: int = 1):
+    # return await find_one(Model=Lv1, query={'_id': ObjectId(id)})
+    return await find_many(Model=Lv1,
+                           query={'_id': ObjectId(id)},
+                           current_page=current_page,
+                           docs_per_page=docs_per_page,
+                           )
+    # print(Lv2.lv_3)
     # lv_8_1 = Lv8(id='64b2e3ec0bff1e48346f6fa4',
     #              var_8_1='var_8_1', var_8_2='var_8_1')
     # lv_8_2 = Lv8(id='64b2ece08c9ce793f4841a00',
@@ -131,6 +138,5 @@ async def test():
     # await save(lv_3)
     # await save(lv_2)
     # await save(lv_1)
-    # return await find_one(Model=Lv1, query={'_id': ObjectId('64b2e3ec0bff1e48346f6fad')})
 
     pass

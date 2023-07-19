@@ -1,4 +1,4 @@
-from db_model import DbModel, MainModel
+from db import DbModel, MainModel
 from pydantic import Field
 from typing import ClassVar
 

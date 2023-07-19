@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from pymongo import IndexModel, ASCENDING
 from .aggregate_stages import lookup_and_set
 from typing import get_origin, get_args
-from .id_model import Id
+from ..models.id_model import Id
 
 
 def field_infos(cls: BaseModel, field_name: str):

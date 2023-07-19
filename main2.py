@@ -1,6 +1,6 @@
 from bson import ObjectId
 from pprint import pprint
-from db_model import save, find_one, DbModel, Id
+from db import save, find_one, DbModel, Id
 from fastapi import FastAPI
 from pydantic import Field
 from typing import ClassVar

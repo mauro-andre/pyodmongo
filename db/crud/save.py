@@ -2,8 +2,8 @@ from bson import ObjectId
 from datetime import datetime
 from pymongo.errors import DuplicateKeyError
 from fastapi import HTTPException
-from .connection import db
-from .db_model_init import field_infos
+from ..services.connection import db
+from ..services.db_model_init import field_infos
 
 
 async def __save_dict(dict_to_save: dict, collection, indexes):

@@ -1,8 +1,8 @@
 from .main_model import MainModel
-from .db_model_init import resolve_indexes, resolve_lookup_and_set
+from ..services.db_model_init import resolve_indexes, resolve_lookup_and_set
 from .id_model import Id
 from datetime import datetime
-from .db_model_init import field_infos
+from ..services.db_model_init import field_infos
 
 
 class DbModel(MainModel):
