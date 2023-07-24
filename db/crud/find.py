@@ -32,6 +32,8 @@ async def find_one(Model, query):
     try:
         result = await __aggregate(Model=Model, pipeline=pipeline)
         return result[0]
+    except IndexError:
+        return None
     except TypeError as e:
         raise HTTPException(status_code=404, detail='no records found')
     except AttributeError as e:

@@ -6,3 +6,4 @@ class MainModel(BaseModel):
 
     class Config:
         json_encoders = {ObjectId: str}
+        anystr_strip_whitespace = True

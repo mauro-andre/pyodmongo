@@ -53,3 +53,8 @@ def ne(field_info, v):
 
 def nin(field_info, v: list):
     return comparison_operator(field_info=field_info, operator='$nin', value=v)
+
+
+def text(v):
+    return {'$text': {'$search': f'"{v}"'}}
+

@@ -1,6 +1,6 @@
-def and_(operators: list):
-    return {'$and': operators}
+def and_(*operators):
+    return {'$and': list(operators)}
 
 
-def or_(operators: list):
-    return {'$or': operators}
+def or_(*operators):
+    return {'$or': list(operators)}

@@ -19,11 +19,8 @@ class DbModel(MainModel):
 
     def __init_subclass__(cls):
         ref_pipeline = resolve_lookup_and_set(cls=cls, pipeline=[], path='')
-        indexes = []
+        indexes = resolve_indexes(cls=cls)
         for key in cls.__fields__.keys():
-            extra = cls.__fields__[key].field_info.extra
-            idx = resolve_indexes(key=key, extra=extra)
-            indexes += idx
             field_info: FieldInfo = field_infos(cls=cls, field_name=key)
             setattr(cls, key, field_info)
         setattr(cls, '_indexes', indexes)

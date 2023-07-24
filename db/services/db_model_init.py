@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pymongo import IndexModel, ASCENDING
+from pymongo import IndexModel, ASCENDING, TEXT
 from .aggregate_stages import lookup_and_set
 from typing import get_origin, get_args
 from ..models.id_model import Id
@@ -25,15 +25,25 @@ def field_infos(cls: BaseModel, field_name: str):
     return FieldInfo(name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_dict_method=has_dict_method)
 
 
-def resolve_indexes(key: str, extra: dict):
-    idx = []
-    is_index = extra.get('index')
-    if is_index:
-        is_unique = False
-        if extra.get('unique'):
-            is_unique = True
-        idx = [IndexModel([(key, ASCENDING)], name=key, unique=is_unique)]
-    return idx
+def resolve_indexes(cls: BaseModel):
+    indexes = []
+    text_keys = []
+    for key in cls.__fields__.keys():
+        extra = cls.__fields__[key].field_info.extra
+        if extra.get('index'):
+            is_unique = False
+            if extra.get('unique'):
+                is_unique = True
+            indexes.append(IndexModel(
+                [(key, ASCENDING)], name=key, unique=is_unique))
+        is_text_index = extra.get('text_index')
+        if extra.get('text_index'):
+            text_keys.append((key, TEXT))
+    if len(text_keys) > 0:
+        indexes.append(
+            IndexModel(text_keys, name='texts', default_language='portuguese')
+        )
+    return indexes
 
 
 def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: str):
