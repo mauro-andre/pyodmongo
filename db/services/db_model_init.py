@@ -22,7 +22,49 @@ def field_infos(cls: BaseModel, field_name: str):
     except KeyError:
         is_list = False
     has_dict_method = hasattr(field_type, 'dict')
-    return FieldInfo(name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_dict_method=has_dict_method)
+    field_info = FieldInfo(name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list,
+                           has_dict_method=has_dict_method)
+    return field_info
+
+
+def recursive_field_infos(cls: BaseModel, field_name: str, field_info: FieldInfo, path: list):
+    field_type = get_args(cls.__fields__[field_name].type_) or cls.__fields__[
+        field_name].type_
+    try:
+        by_reference = field_type[1] == Id
+    except TypeError:
+        by_reference = False
+    try:
+        field_type = field_type[0]
+    except TypeError:
+        pass
+    try:
+        is_list = get_origin(cls.__annotations__[field_name]) == list
+    except KeyError:
+        is_list = False
+    has_dict_method = hasattr(field_type, 'dict')
+    path.append(field_name)
+    path_str = '.'.join(path)
+    field_info.name = path_str
+    field_info.field_type = field_type
+    field_info.by_reference = by_reference
+    field_info.is_list = is_list
+    field_info.has_dict_method = has_dict_method
+    if has_dict_method:
+        for key in field_type.__fields__.keys():
+            setattr(field_info, key, FieldInfo())
+            recursive_field_infos(cls=field_type, field_name=key,
+                                  field_info=getattr(field_info, key), path=path)
+    path.pop(-1)
+    return field_info
+
+
+def set_new_field_info(cls: BaseModel):
+    for key in cls.__fields__.keys():
+        field_info = FieldInfo()
+        recursive_field_infos(cls=cls, field_name=key,
+                              field_info=field_info, path=[])
+        setattr(cls, key, field_info)
 
 
 def resolve_indexes(cls: BaseModel):
@@ -46,7 +88,7 @@ def resolve_indexes(cls: BaseModel):
     return indexes
 
 
-def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: str):
+def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: list):
     for key in cls.__fields__.keys():
         field_info: FieldInfo = field_infos(cls=cls, field_name=key)
         has_dict_method = field_info.has_dict_method
@@ -54,19 +96,17 @@ def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: str):
         field_type = field_info.field_type
         is_list = field_info.is_list
         if has_dict_method:
-            if path == '':
-                path += key
-            else:
-                path += f'.{key}'
+            path.append(key)
+            path_str = '.'.join(path)
             if by_reference:
                 collection = field_type._collection
                 pipeline += lookup_and_set(from_=collection,
-                                           local_field=path,
+                                           local_field=path_str,
                                            foreign_field='_id',
-                                           as_=path,
+                                           as_=path_str,
                                            is_reference_list=is_list)
             if not is_list:
                 resolve_lookup_and_set(
                     cls=field_type, pipeline=pipeline, path=path)
-
+            path.pop(-1)
     return pipeline

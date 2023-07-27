@@ -6,10 +6,9 @@ from ..models.id_model import Id
 
 def comparison_operator(field_info: FieldInfo, operator, value):
     field_name = field_info.name
-    field_type = field_info.field_type
     if field_name == 'id':
         field_name = '_id'
-    if field_type == Id:
+    if field_info.by_reference:
         if type(value) != list:
             try:
                 value = ObjectId(value)
@@ -57,4 +56,3 @@ def nin(field_info, v: list):
 
 def text(v):
     return {'$text': {'$search': f'"{v}"'}}
-

@@ -57,6 +57,7 @@ class Lv1(DbModel):
     lv_2: Lv2 | Id
     _collection: ClassVar = 'Lv1'
 
+
 # 64b2e3ec0bff1e48346f6fa4
 # 64b2ece08c9ce793f4841a00
 # 64b2e3ec0bff1e48346f6fa5
@@ -79,11 +80,32 @@ class Lv1(DbModel):
 # 64b300b7c3b263e9907f378a
 
 
-@app.get('/test')
-async def test(request: Request, docs_per_page: int, current_page: int = 1):
-    query = query_mount(request=request, Model=Lv1)
-    pprint(query)
-    return await find_many(Model=Lv1, query=query, current_page=current_page, docs_per_page=docs_per_page)
+def my_decorator(func):
+    def wrapper(var: str):
+        return var.upper()
+    return wrapper
+
+
+def my_decorator2(func):
+    def wrapper(var: str):
+        return var + 'LEGAL'
+    return wrapper
+
+
+@app.get('/tests')
+async def test():
+    print(Lv1.var1)
+    print(Lv3.lv_4.var4)
+    print(Lv1.lv_2.lv_3.lv_4.var4)
+    print(eq(Lv1.lv_2.lv_3.lv_4.var4, 'VRAU'))
+    # def get_orders(var: str):
+    #     return var
+
+    # x = get_orders(var='Muito')
+    # print(x)
+    # query = query_mount(request=request, Model=Lv1)
+    # pprint(query)
+    # return await find_many(Model=Lv1, query=query, current_page=current_page, docs_per_page=docs_per_page)
     # lv_1: Lv1 = await find_one(Model=Lv1, query=query)
     # await populate(lv_1.lv_2.lv_3.lv_4)
     # return lv_1

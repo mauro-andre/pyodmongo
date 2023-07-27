@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from ..services.connection import db
 from ..services.db_model_init import field_infos
 from ..models.field_info import FieldInfo
+from bson import ObjectId
 
 
 async def __save_dict(dict_to_save: dict, collection, indexes):
@@ -41,18 +42,18 @@ def __consolidate_dict(obj, dct: dict):
             if not is_list:
                 if by_reference:
                     try:
-                        dct[key] = value.id
+                        dct[key] = ObjectId(value.id)
                     except AttributeError:
-                        dct[key] = value
+                        dct[key] = ObjectId(value)
                 else:
                     dct[key] = {}
                     __consolidate_dict(obj=value, dct=dct[key])
             else:
                 if by_reference:
                     try:
-                        dct[key] = [o.id for o in value]
+                        dct[key] = [ObjectId(o.id) for o in value]
                     except AttributeError:
-                        dct[key] = value
+                        dct[key] = [ObjectId(o) for o in value]
                 else:
                     dct[key] = []
                     for v in value:
