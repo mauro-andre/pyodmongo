@@ -5,10 +5,10 @@ from ..models.id_model import Id
 
 
 def comparison_operator(field_info: FieldInfo, operator, value):
-    field_name = field_info.name
+    field_name = field_info.field_name
     if field_name == 'id':
         field_name = '_id'
-    if field_info.by_reference:
+    if field_info.by_reference or field_info.field_type == Id:
         if type(value) != list:
             try:
                 value = ObjectId(value)

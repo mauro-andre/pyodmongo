@@ -22,7 +22,7 @@ def field_infos(cls: BaseModel, field_name: str):
     except KeyError:
         is_list = False
     has_dict_method = hasattr(field_type, 'dict')
-    field_info = FieldInfo(name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list,
+    field_info = FieldInfo(field_name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list,
                            has_dict_method=has_dict_method)
     return field_info
 
@@ -45,7 +45,7 @@ def recursive_field_infos(cls: BaseModel, field_name: str, field_info: FieldInfo
     has_dict_method = hasattr(field_type, 'dict')
     path.append(field_name)
     path_str = '.'.join(path)
-    field_info.name = path_str
+    field_info.field_name = path_str
     field_info.field_type = field_type
     field_info.by_reference = by_reference
     field_info.is_list = is_list

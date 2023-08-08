@@ -1,21 +1,19 @@
 from bson import ObjectId
 from pprint import pprint
-from db.crud import save, find_one, find_many, populate
-from db.models import DbModel, Id
-from db.queries import eq, in_, nin, query_mount
+from pyodmongo.crud import save, find_one, find_many, populate
+from pyodmongo.models import DbModel, Id
+from pyodmongo.queries import eq, in_, nin, query_mount
 from fastapi import FastAPI, Request
 from pydantic import Field
 from typing import ClassVar
 
 app = FastAPI()
-
-
 class Lv8(DbModel):
     var_8_1: str
     var_8_2: str
     _collection: ClassVar = 'Lv8'
-
-
+    
+    
 class Lv7(DbModel):
     var_7: str
     lv_8: Lv8 | Id
@@ -55,6 +53,7 @@ class Lv2(DbModel):
 class Lv1(DbModel):
     var1: str = Field(index=True)
     lv_2: Lv2 | Id
+    lv_7: Lv7 | Id
     _collection: ClassVar = 'Lv1'
 
 

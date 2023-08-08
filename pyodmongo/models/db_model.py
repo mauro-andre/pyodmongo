@@ -1,11 +1,11 @@
-from .main_model import MainModel
+from pydantic import BaseModel
 from ..services.db_model_init import resolve_indexes, resolve_lookup_and_set, set_new_field_info
 from .id_model import Id
 from datetime import datetime
 from ..models.field_info import FieldInfo
 
 
-class DbModel(MainModel):
+class DbModel(BaseModel):
     id: Id = None
     created_at: datetime = None
     updated_at: datetime = None
@@ -22,6 +22,7 @@ class DbModel(MainModel):
         set_new_field_info(cls=cls)
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_reference_pipeline', ref_pipeline)
+        
 
     @classmethod
     def populate(cls):

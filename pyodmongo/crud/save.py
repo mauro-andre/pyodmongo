@@ -6,6 +6,7 @@ from ..services.connection import db
 from ..services.db_model_init import field_infos
 from ..models.field_info import FieldInfo
 from bson import ObjectId
+from pprint import pprint
 
 
 async def __save_dict(dict_to_save: dict, collection, indexes):
@@ -39,6 +40,9 @@ def __consolidate_dict(obj, dct: dict):
         is_list = field_info.is_list
         by_reference = field_info.by_reference
         if has_dict_method:
+            if value is None:
+                dct[key] = None
+                continue
             if not is_list:
                 if by_reference:
                     try:

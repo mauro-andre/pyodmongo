@@ -8,8 +8,7 @@ def get_field_info(Model, field_name):
     return eval('Model.' + field_name)
 
 
-def query_mount(request: Request, Model):
-    operators = []
+def query_mount(request: Request, Model, operators: list):
     for key, value in request.query_params.items():
         value = value.strip()
         if value == '':
@@ -31,4 +30,6 @@ def query_mount(request: Request, Model):
                 status_code=400, detail=f"There's no field '{field_name}'")
         operators.append(comparison_operator(
             field_info=field_info, operator=operator, value=value))
-    return and_(operators=operators)
+    if len(operators) == 0:
+        return {}
+    return and_(*operators)
