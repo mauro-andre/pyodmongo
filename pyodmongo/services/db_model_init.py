@@ -53,6 +53,7 @@ def recursive_field_infos(cls: BaseModel, field_name: str, field_info: FieldInfo
     if has_dict_method:
         for key in field_type.__fields__.keys():
             setattr(field_info, key, FieldInfo())
+            print(path)
             recursive_field_infos(cls=field_type, field_name=key,
                                   field_info=getattr(field_info, key), path=path)
     path.pop(-1)
