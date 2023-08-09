@@ -5,10 +5,9 @@ from datetime import datetime
 
 
 class DbModel(BaseModel):
-    id: Id
+    id: Id = None
     created_at: datetime = None
     updated_at: datetime = None
-    _pipeline: list = []
     model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
     
     def __init__(self, **attrs):
@@ -21,6 +20,7 @@ class DbModel(BaseModel):
         ref_pipeline = resolve_lookup_and_set(cls=cls, pipeline=[], path=[])
         indexes = resolve_indexes(cls=cls)
         set_new_field_info(cls=cls)
+        setattr(cls, '_pipeline', [])
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_reference_pipeline', ref_pipeline)
         
