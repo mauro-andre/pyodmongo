@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Request
-from pyodmondo_pv2 import Id, DbModel, DbField, AsyncDbEngine, DbEngine
-from pyodmondo_pv2.queries import eq, in_, mount_query_filter, nin
+from pyodmondo import Id, DbModel, DbField, AsyncDbEngine, DbEngine
+from pyodmondo.queries import eq, in_, mount_query_filter, nin
 from bson import ObjectId
 from typing import ClassVar
 from pydantic import Field
 from pprint import pprint
 
 app = FastAPI()
-db = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='PyODMongo')
+db = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='PyODMongo')
 
 
 class Lv3(DbModel):
@@ -45,9 +45,9 @@ lv1_1 = Lv1(id='64d3e24c809e148e777e9f2e', lv2=lv2_1, lv3_list=[lv3_2, lv3_3])
 # print(db.find_one(Model=Lv1, query={}))
 
 @app.get('/')
-def test(request: Request):
+async def test(request: Request):
     # x = db.
-    vrau =  db.find_one(Model=Lv1, query=eq(Lv1.id, '64d3e24c809e148e777e9f2e'))
+    vrau = await db.find_one(Model=Lv1, query=eq(Lv1.id, '64d3e24c809e148e777e9f2e'))
     print(vrau)
     # save_result =  await db.save_all([lv3_1, lv3_2, lv3_3, lv2_1, lv1_1])
     # print(save_result)

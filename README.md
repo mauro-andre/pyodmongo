@@ -1,2 +1,2 @@
-# python_mongo_odm
-A Python ODM for MongoDB
+# PyODMongo
+A syncrounous and asyncrounous Python ODM for MongoDB based on Pydantic
