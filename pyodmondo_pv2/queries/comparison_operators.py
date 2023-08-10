@@ -1,24 +1,16 @@
-from fastapi import HTTPException
 from bson import ObjectId
 from ..models.field_info import FieldInfo
-from ..models.id_model import Id
 
 
 def comparison_operator(field_info: FieldInfo, operator, value):
     field_name = field_info.field_name
     if field_name == 'id':
         field_name = '_id'
-    if field_info.by_reference or field_info.field_type == Id:
-        if type(value) != list:
-            try:
-                value = ObjectId(value)
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=str(e))
+    if field_info.by_reference or field_name == '_id':
         if type(value) == list:
-            try:
-                value = [ObjectId(v) for v in value]
-            except Exception as e:
-                raise HTTPException(status_code=400, detail=str(e))
+            value = [ObjectId(v) for v in value]
+        else:
+            value = ObjectId(value)
     return {field_name: {operator: value}}
 
 

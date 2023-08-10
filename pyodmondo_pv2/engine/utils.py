@@ -2,6 +2,7 @@ from bson import ObjectId
 from ..services.db_model_init import field_infos
 from ..models.field_info import FieldInfo
 
+
 def consolidate_dict(obj, dct: dict):
     for key in obj.model_fields.keys():
         value = getattr(obj, key)

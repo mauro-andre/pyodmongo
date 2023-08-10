@@ -1,4 +1,3 @@
-from fastapi import Request, HTTPException
 from ..models.field_info import FieldInfo
 from .comparison_operators import comparison_operator
 from .logical_operators import and_
@@ -8,8 +7,8 @@ def get_field_info(Model, field_name):
     return eval('Model.' + field_name)
 
 
-def query_mount(request: Request, Model, operators: list):
-    for key, value in request.query_params.items():
+def mount_query_filter(items: dict, Model, operators: list):
+    for key, value in items.items():
         value = value.strip()
         if value == '':
             continue
@@ -23,13 +22,10 @@ def query_mount(request: Request, Model, operators: list):
             value = value
         field_name = split_result[0]
         try:
-            field_info: FieldInfo = get_field_info(
-                Model=Model, field_name=field_name)
+            field_info: FieldInfo = get_field_info(Model=Model, field_name=field_name)
         except AttributeError:
-            raise HTTPException(
-                status_code=400, detail=f"There's no field '{field_name}'")
-        operators.append(comparison_operator(
-            field_info=field_info, operator=operator, value=value))
+            raise AttributeError(f"There's no field '{field_name}'")
+        operators.append(comparison_operator(field_info=field_info, operator=operator, value=value))
     if len(operators) == 0:
         return {}
     return and_(*operators)

@@ -1,19 +1,18 @@
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 from ..engine.utils import consolidate_dict, mount_base_pipeline
 from ..models.paginate import ResponsePaginate
 from datetime import datetime
 from bson import ObjectId
 from math import ceil
-from asyncio import gather
 
 
-class AsyncDbEngine:
+class DbEngine:
     def __init__(self, mongo_uri, db_name):
-        self._client = AsyncIOMotorClient(mongo_uri)
+        self._client = MongoClient(mongo_uri)
         self._db = self._client[db_name]
         
     #----------DB OPERATIONS----------
-    async def __save_dict(self, dict_to_save: dict, collection, indexes):
+    def __save_dict(self, dict_to_save: dict, collection, indexes):
         find_filter = {'_id': ObjectId(dict_to_save.get('_id'))}
         now = datetime.utcnow()
         dict_to_save['updated_at'] = now
@@ -24,25 +23,25 @@ class AsyncDbEngine:
             '$setOnInsert': {'created_at': now}
         }
         if len(indexes) > 0:
-            await collection.create_indexes(indexes)
-        result = await collection.update_one(filter=find_filter, update=to_save, upsert=True)
+            collection.create_indexes(indexes)
+        result = collection.update_one(filter=find_filter, update=to_save, upsert=True)
         return result.raw_result
     
     
-    async def __aggregate(self, Model, pipeline):
+    def __aggregate(self, Model, pipeline):
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
-        return [Model(**doc) async for doc in docs_cursor]
+        return [Model(**doc) for doc in docs_cursor]
     
     
-    async def __resolve_count_pipeline(self, Model, pipeline):
-        docs = await self._db[Model._collection].aggregate(pipeline).to_list(1)
+    def __resolve_count_pipeline(self, Model, pipeline):
+        docs = list(self._db[Model._collection].aggregate(pipeline))
         try:
             return docs[0]['count']
         except IndexError as e:
             return 0
         
-    async def delete_one(self, Model, query):
-        result = await self._db[Model._collection].delete_one(filter=query)
+    def delete_one(self, Model, query):
+        result = self._db[Model._collection].delete_one(filter=query)
         if result.deleted_count == 0:
             {'document_deleted': 0}
         return {'document_deleted': result.deleted_count}
@@ -52,27 +51,29 @@ class AsyncDbEngine:
     #---------ACTIONS----------
     
     
-    async def save(self, obj):
+    def save(self, obj):
         dct = consolidate_dict(obj=obj, dct={})
-        return await self.__save_dict(dict_to_save=dct, collection=self._db[obj._collection], indexes=obj._indexes)
+        return self.__save_dict(dict_to_save=dct, collection=self._db[obj._collection], indexes=obj._indexes)
     
     
-    async def save_all(self, obj_list: list):
-        save_calls = [self.save(obj) for obj in obj_list]
-        return await gather(*save_calls)
+    def save_all(self, obj_list: list):
+        result = []
+        for obj in obj_list:
+            result.append(self.save(obj))
+        return result
     
     
-    async def find_one(self, Model, query):
+    def find_one(self, Model, query):
         pipeline = mount_base_pipeline(Model=Model, query=query)
         pipeline += [{'$limit': 1}]
         try:
-            result = await self.__aggregate(Model=Model, pipeline=pipeline)
+            result = self.__aggregate(Model=Model, pipeline=pipeline)
             return result[0]
         except IndexError:
             return None
 
         
-    async def find_many(self, Model, query, current_page: int = 1, docs_per_page: int = 1000):
+    def find_many(self, Model, query, current_page: int = 1, docs_per_page: int = 1000):
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
         docs_per_page = max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
@@ -86,10 +87,8 @@ class AsyncDbEngine:
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 
-        result, count = await gather(
-            self.__aggregate(Model=Model, pipeline=result_pipeline),
-            self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline)
-            )
+        result = self.__aggregate(Model=Model, pipeline=result_pipeline)
+        count = self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline)
 
         page_quantity = ceil(count / docs_per_page)
         return ResponsePaginate(current_page=current_page,
