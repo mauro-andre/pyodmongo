@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request
-from pyodmondo import Id, DbModel, DbField, AsyncDbEngine, DbEngine
-from pyodmondo.queries import eq, in_, mount_query_filter, nin
+from pyodmongo import Id, DbModel, DbField, AsyncDbEngine, DbEngine
+from pyodmongo.queries import eq, in_, mount_query_filter, nin
 from bson import ObjectId
 from typing import ClassVar
 from pydantic import Field
