@@ -45,7 +45,6 @@ def set_new_field_info(cls: BaseModel):
         field_info: FieldInfo = field_infos(cls=cls, field_name=key)
         recursive_field_infos(field_info=field_info, path=[field_info.field_name])
         setattr(cls, key, field_info)
-    pass
 
 
 def resolve_indexes(cls: BaseModel):
