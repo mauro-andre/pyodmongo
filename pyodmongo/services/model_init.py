@@ -2,83 +2,75 @@ from pydantic import BaseModel
 from pymongo import IndexModel, ASCENDING, TEXT
 from .aggregate_stages import lookup_and_set
 from typing import get_origin, get_args
-from ..models.field_info import FieldInfo
+from ..models.db_field_info import DbFieldInfo
 from ..models.id_model import Id
 from typing import Union, Any
 from types import UnionType
 
 
-def field_infos(field_name: str, field_type: Any):
-    print('Estou aqui')
-    print(field_name, field_type)
-    # info = cls.model_fields[field_name].annotation
+def _is_union(field_type):
+    info = get_origin(field_type)
+    return info is UnionType or info is Union
+
+
+def _union_fields(field_type):
+    by_reference = Id in field_type.__args__
+    field_type_index = 0
+    if by_reference:
+        id_index = field_type.__args__.index(Id)
+        field_type_index = abs(id_index - 1)
+    return by_reference, field_type.__args__[field_type_index]
+
+
+def _is_list(field_type):
+    info = get_origin(field_type)
+    return info is list
+    
+    
+def field_infos(field_name: str, field_type: Any, path: list):
     by_reference = False
     is_list = False
-    info = get_origin(field_type)
-    if info is UnionType or info is Union:
-        by_reference = Id in field_type.__args__
-        field_type_index = 0
-        if by_reference:
-            id_index = field_type.__args__.index(Id)
-            field_type_index = abs(id_index - 1)
-        field_type = field_type.__args__[field_type_index]
-    print(f'by_reference: {by_reference}, field_type: {field_type}')
-    # if get_origin(info) is Union:
-    #     field_type = get_args(info)[0]
-    #     by_reference = '_id' in get_args(get_args(info)[1])
-    # elif get_origin(info) is list:
-    #     field_type = get_args(info)[0]
-    #     by_reference = False
-    #     is_list = True
-    #     info = field_type
-    #     if get_origin(info) is Union:
-    #         field_type = get_args(field_type)[0]
-    #         by_reference = '_id' in get_args(get_args(info)[1])
-    # else:
-    #     field_type = info
-    #     by_reference = False
-    # has_model_dump = hasattr(field_type, 'model_dump')
-    # return FieldInfo(field_name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_model_dump=has_model_dump)
-
-# def field_infos(cls: BaseModel, field_name: str):
-#     info = cls.model_fields[field_name].annotation
-#     is_list = False
-#     if get_origin(info) is Union:
-#         field_type = get_args(info)[0]
-#         by_reference = '_id' in get_args(get_args(info)[1])
-#     elif get_origin(info) is list:
-#         field_type = get_args(info)[0]
-#         by_reference = False
-#         is_list = True
-#         info = field_type
-#         if get_origin(info) is Union:
-#             field_type = get_args(field_type)[0]
-#             by_reference = '_id' in get_args(get_args(info)[1])
-#     else:
-#         field_type = info
-#         by_reference = False
-#     has_model_dump = hasattr(field_type, 'model_dump')
-#     return FieldInfo(field_name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_model_dump=has_model_dump)
-
-
-def recursive_field_infos(field_info: FieldInfo, path: list):
-    if field_info.has_model_dump:
-        for key in field_info.field_type.model_fields.keys():
-            path.append(key)
+    if _is_union(field_type):
+        by_reference, field_type = _union_fields(field_type)
+    elif _is_list(field_type):
+        is_list = True
+        if _is_union(field_type.__args__[0]):
+            by_reference, field_type = _union_fields(field_type.__args__[0])
+    is_pyodmongo_model = hasattr(field_type, '__is_pyodmongo_model__')
+    field_info = DbFieldInfo(field_name=field_name,
+                     field_type=field_type,
+                     by_reference=by_reference,
+                     is_list=is_list,
+                     is_pyodmongo_model=is_pyodmongo_model)
+    if is_pyodmongo_model:
+        for rec_field_name, rec_field_type in field_type.__model_fields__().items():
+            path.append(rec_field_name)
             path_str = '.'.join(path)
-            field_info_to_set: FieldInfo = field_infos(cls=field_info.field_type, field_name=key)
-            field_info_to_set.field_name = path_str
-            setattr(field_info, key, field_info_to_set)
-            recursive_field_infos(field_info=getattr(field_info, key), path=path)
+            rec_field_info: DbFieldInfo = field_infos(field_name=rec_field_name, field_type=rec_field_type, path=path)
+            rec_field_info.field_name = path_str
+            setattr(field_info, rec_field_name, rec_field_info)
     path.pop(-1)
     return field_info
 
 
-def set_new_field_info(cls: BaseModel):
-    for key in cls.model_fields.keys():
-        field_info: FieldInfo = field_infos(cls=cls, field_name=key)
-        recursive_field_infos(field_info=field_info, path=[field_info.field_name])
-        setattr(cls, key, field_info)
+# def recursive_field_infos(field_info: FieldInfo, path: list):
+#     if field_info.is_pyodmongo_model:
+#         for key in field_info.field_type.model_fields.keys():
+#             path.append(key)
+#             path_str = '.'.join(path)
+#             field_info_to_set: FieldInfo = field_infos(cls=field_info.field_type, field_name=key)
+#             field_info_to_set.field_name = path_str
+#             setattr(field_info, key, field_info_to_set)
+#             recursive_field_infos(field_info=getattr(field_info, key), path=path)
+#     path.pop(-1)
+#     return field_info
+
+
+# def set_new_field_info(cls: BaseModel):
+#     for key in cls.model_fields.keys():
+#         field_info: FieldInfo = field_infos(cls=cls, field_name=key)
+#         recursive_field_infos(field_info=field_info, path=[field_info.field_name])
+#         setattr(cls, key, field_info)
 
 
 def resolve_indexes(cls: BaseModel):
@@ -102,8 +94,8 @@ def resolve_indexes(cls: BaseModel):
 
 def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: list):
     for key in cls.model_fields.keys():
-        field_info: FieldInfo = field_infos(cls=cls, field_name=key)
-        has_model_dump = field_info.has_model_dump
+        field_info: DbFieldInfo = field_infos(cls=cls, field_name=key)
+        has_model_dump = field_info.is_pyodmongo_model
         by_reference = field_info.by_reference
         field_type = field_info.field_type
         is_list = field_info.is_list

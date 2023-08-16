@@ -1,4 +1,4 @@
-from ..models.field_info import FieldInfo
+from ..models.db_field_info import DbFieldInfo
 from .comparison_operators import comparison_operator
 from .logical_operators import and_
 
@@ -22,7 +22,7 @@ def mount_query_filter(items: dict, Model, operators: list):
             value = value
         field_name = split_result[0]
         try:
-            field_info: FieldInfo = get_field_info(Model=Model, field_name=field_name)
+            field_info: DbFieldInfo = get_field_info(Model=Model, field_name=field_name)
         except AttributeError:
             raise AttributeError(f"There's no field '{field_name}'")
         operators.append(comparison_operator(field_info=field_info, operator=operator, value=value))

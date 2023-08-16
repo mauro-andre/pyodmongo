@@ -24,13 +24,23 @@ class MyModel2(MyModel1):
     attr3: str = Field(alias='attr_3_alias')
 
 class MyModel3(DbModel):
-    my_model_1: Id | MyModel1
+    my_model_1: MyModel1
+    my_model_1_ref: Id | MyModel1
     my_model_1_union: Union[MyModel1, Id]
-    list_my_model_1: list[MyModel1 | Id]
-    list_my_model_1_union: list[Union[MyModel1, Id]]
+    list_my_model_1: list[Id | MyModel1]
+    list_my_model_1_union: list[Union[Id, MyModel1]]
     
 obj = MyModel1(id=ObjectId('64dce79ef2af418b2e34482f'), attr1='shunda')
-# print(MyModel1.id)
+# print(MyModel3.my_model_1.attr2)
+
+def my_function(a: str, b: int):
+    ...
+
+my_dict = {'a': 1, 'b': 2}
+def my_function_2(**my_dict):
+    print(my_dict)
+    
+my_function_2()
 # print(MyModel1.model_fields)
 # print(obj)
 # print(type(obj.id))

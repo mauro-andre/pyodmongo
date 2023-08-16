@@ -1,13 +1,13 @@
 from bson import ObjectId
 from ..services.model_init import field_infos
-from ..models.field_info import FieldInfo
+from ..models.db_field_info import DbFieldInfo
 
 
 def consolidate_dict(obj, dct: dict):
     for key in obj.model_fields.keys():
         value = getattr(obj, key)
-        field_info: FieldInfo = field_infos(cls=obj, field_name=key)
-        has_model_dump = field_info.has_model_dump
+        field_info: DbFieldInfo = field_infos(cls=obj, field_name=key)
+        has_model_dump = field_info.is_pyodmongo_model
         is_list = field_info.is_list
         by_reference = field_info.by_reference
         if has_model_dump:

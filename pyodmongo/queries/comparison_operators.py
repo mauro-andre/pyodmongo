@@ -1,8 +1,8 @@
 from bson import ObjectId
-from ..models.field_info import FieldInfo
+from ..models.db_field_info import DbFieldInfo
 
 
-def comparison_operator(field_info: FieldInfo, operator, value):
+def comparison_operator(field_info: DbFieldInfo, operator, value):
     field_name = field_info.field_name
     if field_name == 'id':
         field_name = '_id'
@@ -14,7 +14,7 @@ def comparison_operator(field_info: FieldInfo, operator, value):
     return {field_name: {operator: value}}
 
 
-def eq(field_info: FieldInfo, v):
+def eq(field_info: DbFieldInfo, v):
     return comparison_operator(field_info=field_info, operator='$eq', value=v)
 
 
