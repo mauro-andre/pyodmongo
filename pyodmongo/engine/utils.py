@@ -1,5 +1,5 @@
 from bson import ObjectId
-from ..services.db_model_init import field_infos
+from ..services.model_init import field_infos
 from ..models.field_info import FieldInfo
 
 

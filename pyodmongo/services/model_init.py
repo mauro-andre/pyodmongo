@@ -3,28 +3,62 @@ from pymongo import IndexModel, ASCENDING, TEXT
 from .aggregate_stages import lookup_and_set
 from typing import get_origin, get_args
 from ..models.field_info import FieldInfo
-from typing import Union
+from ..models.id_model import Id
+from typing import Union, Any
+from types import UnionType
 
 
-def field_infos(cls: BaseModel, field_name: str):
-    info = cls.model_fields[field_name].annotation
+def field_infos(field_name: str, field_type: Any):
+    print('Estou aqui')
+    print(field_name, field_type)
+    # info = cls.model_fields[field_name].annotation
+    by_reference = False
     is_list = False
-    if get_origin(info) is Union:
-        field_type = get_args(info)[0]
-        by_reference = '_id' in get_args(get_args(info)[1])
-    elif get_origin(info) is list:
-        field_type = get_args(info)[0]
-        by_reference = False
-        is_list = True
-        info = field_type
-        if get_origin(info) is Union:
-            field_type = get_args(field_type)[0]
-            by_reference = '_id' in get_args(get_args(info)[1])
-    else:
-        field_type = info
-        by_reference = False
-    has_model_dump = hasattr(field_type, 'model_dump')
-    return FieldInfo(field_name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_model_dump=has_model_dump)
+    info = get_origin(field_type)
+    if info is UnionType or info is Union:
+        by_reference = Id in field_type.__args__
+        field_type_index = 0
+        if by_reference:
+            id_index = field_type.__args__.index(Id)
+            field_type_index = abs(id_index - 1)
+        field_type = field_type.__args__[field_type_index]
+    print(f'by_reference: {by_reference}, field_type: {field_type}')
+    # if get_origin(info) is Union:
+    #     field_type = get_args(info)[0]
+    #     by_reference = '_id' in get_args(get_args(info)[1])
+    # elif get_origin(info) is list:
+    #     field_type = get_args(info)[0]
+    #     by_reference = False
+    #     is_list = True
+    #     info = field_type
+    #     if get_origin(info) is Union:
+    #         field_type = get_args(field_type)[0]
+    #         by_reference = '_id' in get_args(get_args(info)[1])
+    # else:
+    #     field_type = info
+    #     by_reference = False
+    # has_model_dump = hasattr(field_type, 'model_dump')
+    # return FieldInfo(field_name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_model_dump=has_model_dump)
+
+# def field_infos(cls: BaseModel, field_name: str):
+#     info = cls.model_fields[field_name].annotation
+#     is_list = False
+#     if get_origin(info) is Union:
+#         field_type = get_args(info)[0]
+#         by_reference = '_id' in get_args(get_args(info)[1])
+#     elif get_origin(info) is list:
+#         field_type = get_args(info)[0]
+#         by_reference = False
+#         is_list = True
+#         info = field_type
+#         if get_origin(info) is Union:
+#             field_type = get_args(field_type)[0]
+#             by_reference = '_id' in get_args(get_args(info)[1])
+#     else:
+#         field_type = info
+#         by_reference = False
+#     has_model_dump = hasattr(field_type, 'model_dump')
+#     return FieldInfo(field_name=field_name, field_type=field_type, by_reference=by_reference, is_list=is_list, has_model_dump=has_model_dump)
 
 
 def recursive_field_infos(field_info: FieldInfo, path: list):
