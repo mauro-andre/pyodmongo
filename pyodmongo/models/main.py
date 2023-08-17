@@ -6,18 +6,18 @@ from pydantic import BaseModel
 from ..pydantic_version import is_pydantic_v1
 if not is_pydantic_v1:
     from pydantic import ConfigDict
-
+from pprint import pprint
 class MainModel:
+    
     __is_pyodmongo_model__ = None
     
     @classmethod
     def __model_fields__(cls):
         fields = {}
-        for base_cls in reversed(cls.mro()):
-            try:
-                fields.update(base_cls.__dict__['__annotations__'])
-            except KeyError:
-                pass
+        for base_cls in cls.mro():
+            base_fields = base_cls.__dict__.get('__annotations__')
+            if type(base_fields) == dict:
+                fields.update(base_fields)
         return fields
     
     @classmethod
@@ -28,7 +28,7 @@ class MainModel:
             setattr(cls, field_name, field_info)
         print(f'-----------------')
             
-class DbModel(BaseModel, MainModel):
+class DbModel(MainModel):
     id: Id = None
     created_at: datetime = None
     updated_at: datetime = None
