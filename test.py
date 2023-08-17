@@ -12,26 +12,26 @@ class MyModel1(DbModel):
     attr1: str#= Field(alias='attr_1_alias')
     attr2: str = 'attr_2'
     
-    if not is_pydantic_v1:
-        model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
+    # if not is_pydantic_v1:
+    #     model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
         
-    else:
-        class Config:
-            anystr_strip_whitespace = True
-            validate_assignment = True
+    # else:
+    #     class Config:
+    #         anystr_strip_whitespace = True
+    #         validate_assignment = True
             
 class MyModel2(MyModel1):
     attr3: str = 'valor padrão'
 
 class MyModel3(DbModel):
-    my_model_1: MyModel1# = DbField(index=True, unique=True, text_index=True)
+    my_model_1: MyModel1 = DbField(index=True, unique=True, text_index=True)
     my_model_1_ref: Id | MyModel1
     my_model_1_union: Union[MyModel1, Id]
     list_my_model_1: list[Id | MyModel1]
     list_my_model_1_union: list[Union[Id, MyModel1]]
     
 # obj = MyModel1(id=ObjectId('64dce79ef2af418b2e34482f'), attr1='shunda')
-print(MyModel3.my_model_1.attr2)
+# print(MyModel1.attr2)
 
 
 # print(MyModel1.model_fields)
