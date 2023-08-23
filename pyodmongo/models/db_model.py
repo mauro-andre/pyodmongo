@@ -5,13 +5,13 @@
 # from dataclasses import dataclass
 # # @dataclass
 
-    
+
 # class DbModel(BaseModel):
 #     id: Id = None
 #     created_at: datetime = None
 #     updated_at: datetime = None
 #     model_config = ConfigDict(str_strip_whitespace=True, validate_assignment=True)
-    
+
 #     def __init__(self, **attrs):
 #         if attrs.get('_id') is not None:
 #             attrs['id'] = attrs.pop('_id')
@@ -25,5 +25,24 @@
 #         setattr(cls, '_pipeline', [])
 #         setattr(cls, '_indexes', indexes)
 #         setattr(cls, '_reference_pipeline', ref_pipeline)
-        
 
+from ..pydantic_mod.main import BaseModel
+from .id_model import Id
+from datetime import datetime
+
+
+class DbModel(BaseModel):
+    id: Id = None
+    created_at: datetime = None
+    updated_at: datetime = None
+
+    def __init__(self, **attrs):
+        if attrs.get('_id') is not None:
+            attrs['id'] = attrs.pop('_id')
+        super().__init__(**attrs)
+
+    @classmethod
+    def __pydantic_init_subclass__(cls):
+        for field in cls.model_fields:
+            setattr(cls, field, 'VALOR DA VARIAVEL DE CLASSE')
+        pass
