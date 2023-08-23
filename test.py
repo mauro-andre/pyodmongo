@@ -46,7 +46,7 @@ class Model2(Model1):
 
 obj_2 = Model2(attr1='um')
 print(obj_2)
-print(Model2.model_fields)
+print(Model2.attr2)
 
 # class Query:
 #     def __getattribute__(self, __name: str) -> Any:
