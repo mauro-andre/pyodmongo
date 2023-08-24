@@ -8,7 +8,5 @@ class DbFieldInfo:
     field_type: Any = None
     by_reference: bool = None
     is_list: bool = None
-    is_pyodmongo_model: bool = None
-    default_value: Any = None
-    
-
+    has_model_dump: bool = None
+    # default_value: Any = None

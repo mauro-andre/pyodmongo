@@ -29,6 +29,7 @@
 from ..pydantic_mod.main import BaseModel
 from .id_model import Id
 from datetime import datetime
+from ..services.model_init import resolve_indexes
 
 
 class DbModel(BaseModel):
@@ -43,6 +44,8 @@ class DbModel(BaseModel):
 
     @classmethod
     def __pydantic_init_subclass__(cls):
+        indexes = resolve_indexes(cls=cls)
+        setattr(cls, '_indexes', indexes)
         for field in cls.model_fields:
-            setattr(cls, field, 'VALOR DA VARIAVEL DE CLASSE')
+            setattr(cls, field, 'TEMP VALUE')
         pass
