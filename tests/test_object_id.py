@@ -1,11 +1,13 @@
 import pytest
 from pyodmongo import DbModel
 from bson import ObjectId
+from typing import ClassVar
 
 
 def test_object_id_to_string():
     class MyClass(DbModel):
-        pass
+        _collection: ClassVar = 'myclass'
+
     id_str = '64e66f06ca15379cd00e6453'
     obj_dict_1 = {'id': id_str}
     obj_dict_2 = {'_id': id_str}
@@ -29,7 +31,8 @@ def test_object_id_to_string():
 
 def test_insert_an_invalid_object_id():
     class MyClass(DbModel):
-        pass
+        _collection: ClassVar = 'myclass'
+
     id_str = '123abc'
     obj_dict = {'id': id_str}
     with pytest.raises(ValueError):

@@ -1,17 +1,19 @@
 from pyodmongo import DbModel, Id
 from datetime import datetime
+from typing import ClassVar
+import pytest
 
 
 def test_create_class():
     class MyClass(DbModel):
-        pass
+        _collection: ClassVar = 'myclass'
 
     assert issubclass(MyClass, DbModel)
 
 
 def test_class_variable_db_model():
     class MyClass(DbModel):
-        pass
+        _collection: ClassVar = 'myclass'
 
     assert hasattr(MyClass, 'id')
     assert hasattr(MyClass, 'created_at')
@@ -20,7 +22,8 @@ def test_class_variable_db_model():
 
 def test_dbmodel_class_variables_type_annotation():
     class MyClass(DbModel):
-        pass
+        _collection: ClassVar = 'myclass'
+
     assert MyClass.model_fields['id'].annotation is Id
     assert MyClass.model_fields['created_at'].annotation is datetime
     assert MyClass.model_fields['updated_at'].annotation is datetime
@@ -29,18 +32,23 @@ def test_dbmodel_class_variables_type_annotation():
 def test_class_inheritance():
     class MyClassMain(DbModel):
         attr_main: str
+        _collection: ClassVar = 'myclassmain'
 
     class MyClass1(MyClassMain):
         attr_1: str
+        _collection: ClassVar = 'myclass1'
 
     class MyClass1_1(MyClass1):
         attr_1_1: str
+        _collection: ClassVar = 'myclass1_2'
 
     class MyClass2(MyClassMain):
         attr_2: str
+        _collection: ClassVar = 'myclass2'
 
     class MyClass2_2(MyClass2):
         attr_2_2: str
+        _collection: ClassVar = 'myclass2_2'
 
     assert hasattr(MyClassMain, 'attr_main')
     assert not hasattr(MyClassMain, 'attr_1')
@@ -87,18 +95,23 @@ def test_class_inheritance():
 def test_fields_inheritance():
     class MyClassMain(DbModel):
         attr_main: str
+        _collection: ClassVar = 'myclassmain'
 
     class MyClass1(MyClassMain):
         attr_1: str
+        _collection: ClassVar = 'myclass1'
 
     class MyClass1_1(MyClass1):
         attr_1_1: str
+        _collection: ClassVar = 'myclass1_2'
 
     class MyClass2(MyClassMain):
         attr_2: str
+        _collection: ClassVar = 'myclass2'
 
     class MyClass2_2(MyClass2):
         attr_2_2: str
+        _collection: ClassVar = 'myclass2_2'
 
     assert 'id' in MyClassMain.model_fields
     assert 'created_at' in MyClassMain.model_fields
@@ -144,3 +157,9 @@ def test_fields_inheritance():
     assert 'attr_1_1' not in MyClass2_2.model_fields
     assert 'attr_2' in MyClass2_2.model_fields
     assert 'attr_2_2' in MyClass2_2.model_fields
+
+
+def test_class_with_no_collection_attribute():
+    with pytest.raises(AttributeError):
+        class MyClass(DbModel):
+            pass

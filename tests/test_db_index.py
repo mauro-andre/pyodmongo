@@ -1,5 +1,6 @@
 from pyodmongo import DbModel, Field
 from pymongo import IndexModel
+from typing import ClassVar
 
 
 def test_index_unique_text_index():
@@ -9,6 +10,7 @@ def test_index_unique_text_index():
         attr_2: str = Field(unique=True)
         attr_3: str = Field(text_index=True)
         attr_4: str = Field(index=True, text_index=True)
+        _collection: ClassVar = 'myclass'
 
     assert not MyClass.model_fields['attr_0']._attributes_set.get('index') or False
     assert not MyClass.model_fields['attr_0']._attributes_set.get('unique') or False
@@ -37,6 +39,7 @@ def test_check_index_field():
         attr_2: str = Field(unique=True)
         attr_3: str = Field(text_index=True)
         attr_4: str = Field(index=True, text_index=True)
+        _collection: ClassVar = 'myclass'
 
     assert hasattr(MyClass, '_indexes')
     assert len(MyClass._indexes) == 3

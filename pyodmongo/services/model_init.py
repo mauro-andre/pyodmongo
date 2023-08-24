@@ -149,7 +149,8 @@ def _union_collector_info(args):
     return field_type, by_reference
 
 
-def _field_annotation_infos(field_annotation: Any):
+def _field_annotation_infos(field, field_info) -> DbFieldInfo:
+    field_annotation = field_info.annotation
     by_reference = False
     field_type = field_annotation
     is_list = get_origin(field_annotation) is list
@@ -163,23 +164,21 @@ def _field_annotation_infos(field_annotation: Any):
     elif _is_union(field_annotation):
         field_type, by_reference = _union_collector_info(args=field_annotation)
     has_model_fields = hasattr(field_type, 'model_fields')
-    return field_type, by_reference, is_list, has_model_fields
+    field_name = field
+    field_alias = field_info.alias or field
+    return DbFieldInfo(field_name=field_name,
+                       field_alias=field_alias,
+                       field_type=field_type,
+                       by_reference=by_reference,
+                       is_list=is_list,
+                       has_model_fields=has_model_fields)
 
 
-def resolve_db_fields_and_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
+def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     for field, field_info in cls.model_fields.items():
-        field_name = field
-        field_alias = field_info.alias or field
-        field_type, by_reference, is_list, has_model_fields = _field_annotation_infos(field_info.annotation)
-        db_field_info = DbFieldInfo(field_name=field_name,
-                                    field_alias=field_name,
-                                    field_type=field_type,
-                                    by_reference=by_reference,
-                                    is_list=is_list,
-                                    has_model_fields=has_model_fields)
-        # db_field_info.field_alias = field_alias
+        db_field_info = _field_annotation_infos(field=field, field_info=field_info)
         if db_field_info.has_model_fields:
-            path.append(field_alias)
+            path.append(db_field_info.field_alias)
             path_str = '.'.join(path)
             if db_field_info.by_reference:
                 collection = db_field_info.field_type._collection
@@ -189,11 +188,38 @@ def resolve_db_fields_and_ref_pipeline(cls: BaseModel, pipeline: list, path: lis
                                            as_=path_str,
                                            is_reference_list=db_field_info.is_list)
             if not db_field_info.is_list:
-                resolve_db_fields_and_ref_pipeline(cls=db_field_info.field_type,
-                                                   pipeline=pipeline,
-                                                   path=path)
+                resolve_ref_pipeline(cls=db_field_info.field_type,
+                                     pipeline=pipeline,
+                                     path=path)
             path.pop(-1)
     return pipeline
+
+#     if is_pyodmongo_model:
+#         for rec_field_name, rec_field_type in field_type.__model_fields__().items():
+#             path.append(rec_field_name)
+#             path_str = '.'.join(path)
+#             rec_field_info: DbFieldInfo = field_infos(field_name=rec_field_name, field_type=rec_field_type, path=path)
+#             rec_field_info.field_name = path_str
+#             setattr(field_info, rec_field_name, rec_field_info)
+#     path.pop(-1)
+#     return field_info
+
+
+def resolve_class_fields_db_info(cls: BaseModel, path: list):
+    for field, field_info in cls.model_fields.items():
+        db_field_info = _field_annotation_infos(field=field, field_info=field_info)
+        path.append(db_field_info.field_alias)
+        db_field_info.path_str = '.'.join(path)
+        if db_field_info.has_model_fields:
+            for rec_field, rec_field_info in db_field_info.field_type.model_fields.items():
+                rec_db_field_info = _field_annotation_infos(field=rec_field, field_info=rec_field_info)
+                path.append(rec_db_field_info.field_alias)
+                rec_db_field_info.path_str = '.'.join(path)
+                setattr(db_field_info, rec_field, rec_db_field_info)
+                path.pop(-1)
+            resolve_class_fields_db_info(cls=db_field_info.field_type, path=path)
+        setattr(cls, field, db_field_info)
+        path.pop(-1)
 
 
 # def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: list):

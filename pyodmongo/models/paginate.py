@@ -1,4 +1,4 @@
-from pyodmongo import BaseModel, ConfigDict
+from ..pydantic_mod.main import BaseModel, ConfigDict
 
 
 class ResponsePaginate(BaseModel):
@@ -7,4 +7,3 @@ class ResponsePaginate(BaseModel):
     docs_quantity: int
     docs: list
     model_config = ConfigDict(str_strip_whitespace=True)
-

@@ -22,10 +22,10 @@ class Lv1(DbModel):
     attr_lv1_two: str
     lv2: Lv2 | Id
     lv2_list: list[Lv2]
-    lv3_list_multi: list[Lv3 | Lv2]
+    lv3_list_multi: list[Id | Lv2]
     lv2_ref: Id | Lv3 = Field(alias='lv2Ref')
     lv3_list_ref: list[Lv3 | Id]
     _collection: ClassVar = 'lv1'
 
 
-pprint(Lv1._reference_pipeline)
+print(Lv1.lv2.lv3)
