@@ -3,7 +3,8 @@ from pymongo import IndexModel, ASCENDING, TEXT
 from typing import Any, Union, get_origin, get_args
 from types import UnionType
 from ..models.id_model import Id
-# from .aggregate_stages import lookup_and_set
+from ..models.db_field_info import DbFieldInfo
+from .aggregate_stages import lookup_and_set
 # from typing import get_origin, get_args
 # from ..models.db_field_info import DbFieldInfo
 # from ..models.id_model import Id
@@ -113,6 +114,25 @@ from ..models.id_model import Id
 #         recursive_field_infos(field_info=field_info, path=[field_info.field_name])
 #         setattr(cls, key, field_info)
 
+def resolve_indexes(cls: BaseModel):
+    indexes = []
+    text_keys = []
+    for key in cls.model_fields.keys():
+        is_index = cls.model_fields[key]._attributes_set.get('index') or False
+        is_unique = cls.model_fields[key]._attributes_set.get('unique') or False
+        is_text_index = cls.model_fields[key]._attributes_set.get('text_index') or False
+        if is_index:
+            indexes.append(IndexModel(
+                [(key, ASCENDING)], name=key, unique=is_unique))
+        if is_text_index:
+            text_keys.append((key, TEXT))
+    if len(text_keys) > 0:
+        indexes.append(
+            IndexModel(text_keys, name='texts', default_language='portuguese')
+        )
+    return indexes
+
+
 def _is_union(field_type: Any):
     return get_origin(field_type) is UnionType or get_origin(field_type) is Union
 
@@ -142,35 +162,38 @@ def _field_annotation_infos(field_annotation: Any):
             field_type = args
     elif _is_union(field_annotation):
         field_type, by_reference = _union_collector_info(args=field_annotation)
-    has_model_dump = hasattr(field_type, 'model_fields')
-    return field_type, by_reference, is_list, has_model_dump
+    has_model_fields = hasattr(field_type, 'model_fields')
+    return field_type, by_reference, is_list, has_model_fields
 
 
-def resolve_db_fields(cls: BaseModel):
+def resolve_db_fields_and_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     for field, field_info in cls.model_fields.items():
         field_name = field
-        field_alias = field_info.alias
-        field_type, by_reference, is_list, has_model_dump = _field_annotation_infos(field_info.annotation)
-        # db_field_inf
-
-
-def resolve_indexes(cls: BaseModel):
-    indexes = []
-    text_keys = []
-    for key in cls.model_fields.keys():
-        is_index = cls.model_fields[key]._attributes_set.get('index') or False
-        is_unique = cls.model_fields[key]._attributes_set.get('unique') or False
-        is_text_index = cls.model_fields[key]._attributes_set.get('text_index') or False
-        if is_index:
-            indexes.append(IndexModel(
-                [(key, ASCENDING)], name=key, unique=is_unique))
-        if is_text_index:
-            text_keys.append((key, TEXT))
-    if len(text_keys) > 0:
-        indexes.append(
-            IndexModel(text_keys, name='texts', default_language='portuguese')
-        )
-    return indexes
+        field_alias = field_info.alias or field
+        field_type, by_reference, is_list, has_model_fields = _field_annotation_infos(field_info.annotation)
+        db_field_info = DbFieldInfo(field_name=field_name,
+                                    field_alias=field_name,
+                                    field_type=field_type,
+                                    by_reference=by_reference,
+                                    is_list=is_list,
+                                    has_model_fields=has_model_fields)
+        # db_field_info.field_alias = field_alias
+        if db_field_info.has_model_fields:
+            path.append(field_alias)
+            path_str = '.'.join(path)
+            if db_field_info.by_reference:
+                collection = db_field_info.field_type._collection
+                pipeline += lookup_and_set(from_=collection,
+                                           local_field=path_str,
+                                           foreign_field='_id',
+                                           as_=path_str,
+                                           is_reference_list=db_field_info.is_list)
+            if not db_field_info.is_list:
+                resolve_db_fields_and_ref_pipeline(cls=db_field_info.field_type,
+                                                   pipeline=pipeline,
+                                                   path=path)
+            path.pop(-1)
+    return pipeline
 
 
 # def resolve_lookup_and_set(cls: BaseModel, pipeline: list, path: list):

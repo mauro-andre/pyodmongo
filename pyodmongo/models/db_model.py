@@ -29,7 +29,7 @@
 from ..pydantic_mod.main import BaseModel
 from .id_model import Id
 from datetime import datetime
-from ..services.model_init import resolve_indexes, resolve_db_fields
+from ..services.model_init import resolve_indexes, resolve_db_fields_and_ref_pipeline
 
 
 class DbModel(BaseModel):
@@ -44,9 +44,14 @@ class DbModel(BaseModel):
 
     @classmethod
     def __pydantic_init_subclass__(cls):
-        resolve_db_fields(cls=cls)
+        print(f'------{cls}------')
+        ref_pipeline = resolve_db_fields_and_ref_pipeline(cls=cls, pipeline=[], path=[])
+        setattr(cls, '_reference_pipeline', ref_pipeline)
         indexes = resolve_indexes(cls=cls)
         setattr(cls, '_pipeline', [])
         setattr(cls, '_indexes', indexes)
         for field in cls.model_fields:
             setattr(cls, field, 'TEMP VALUE')
+        if not hasattr(cls, '_collection'):
+            raise AttributeError(f"Model {cls.__name__} has no '_collection: typing.ClassVar'")
+        print(f'------------------------')
