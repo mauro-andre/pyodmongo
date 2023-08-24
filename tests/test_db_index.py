@@ -1,4 +1,5 @@
 from pyodmongo import DbModel, Field
+from pymongo import IndexModel
 
 
 def test_index_unique_text_index():
@@ -39,3 +40,4 @@ def test_check_index_field():
 
     assert hasattr(MyClass, '_indexes')
     assert len(MyClass._indexes) == 3
+    assert all(type(item) is IndexModel for item in MyClass._indexes)

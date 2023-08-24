@@ -1,11 +1,12 @@
 from ..pydantic_mod.main import BaseModel
 from pymongo import IndexModel, ASCENDING, TEXT
+from typing import Any, Union, get_origin, get_args
+from types import UnionType
+from ..models.id_model import Id
 # from .aggregate_stages import lookup_and_set
 # from typing import get_origin, get_args
 # from ..models.db_field_info import DbFieldInfo
 # from ..models.id_model import Id
-# from typing import Union, Any
-# from types import UnionType
 # from ..models.base import Base
 # from pprint import pprint
 
@@ -111,6 +112,46 @@ from pymongo import IndexModel, ASCENDING, TEXT
 #         field_info: FieldInfo = field_infos(cls=cls, field_name=key)
 #         recursive_field_infos(field_info=field_info, path=[field_info.field_name])
 #         setattr(cls, key, field_info)
+
+def _is_union(field_type: Any):
+    return get_origin(field_type) is UnionType or get_origin(field_type) is Union
+
+
+def _union_collector_info(args):
+    args = get_args(args)
+    by_reference = Id in args
+    if by_reference:
+        id_index = args.index(Id)
+        field_type_index = int(abs(id_index - 1))
+        field_type = args[field_type_index]
+    else:
+        field_type = args[0]
+    return field_type, by_reference
+
+
+def _field_annotation_infos(field_annotation: Any):
+    by_reference = False
+    field_type = field_annotation
+    is_list = get_origin(field_annotation) is list
+    if is_list:
+        args = get_args(field_annotation)[0]
+        is_union = _is_union(args)
+        if is_union:
+            field_type, by_reference = _union_collector_info(args=args)
+        else:
+            field_type = args
+    elif _is_union(field_annotation):
+        field_type, by_reference = _union_collector_info(args=field_annotation)
+    has_model_dump = hasattr(field_type, 'model_fields')
+    return field_type, by_reference, is_list, has_model_dump
+
+
+def resolve_db_fields(cls: BaseModel):
+    for field, field_info in cls.model_fields.items():
+        field_name = field
+        field_alias = field_info.alias
+        field_type, by_reference, is_list, has_model_dump = _field_annotation_infos(field_info.annotation)
+        # db_field_inf
 
 
 def resolve_indexes(cls: BaseModel):
