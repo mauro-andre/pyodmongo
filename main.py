@@ -32,4 +32,4 @@ class Lv1Filho(Lv1):
     lv1_filho_attr: str
 
 
-print(Lv1Filho.lv2.attr_lv2_one)
+pprint(Lv1Filho._reference_pipeline)
