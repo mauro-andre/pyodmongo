@@ -16,6 +16,7 @@ class DbEngine:
     def __save_dict(self, dict_to_save: dict, collection, indexes):
         find_filter = {'_id': ObjectId(dict_to_save.get('_id'))}
         now = datetime.utcnow()
+        # TODO think about to change to pydantic alias generator
         dict_to_save['updated_at'] = now
         dict_to_save.pop('_id')
         dict_to_save.pop('created_at')
