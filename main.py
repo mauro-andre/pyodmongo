@@ -28,4 +28,4 @@ class Lv1(DbModel):
     _collection: ClassVar = 'lv1'
 
 
-print(Lv1.lv2.lv3)
+print(Lv1.lv2.lv3.attr_lv3_one)
