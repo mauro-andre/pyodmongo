@@ -4,14 +4,15 @@ from ..models.paginate import ResponsePaginate
 from datetime import datetime
 from bson import ObjectId
 from math import ceil
+from pprint import pprint
 
 
 class DbEngine:
     def __init__(self, mongo_uri, db_name):
         self._client = MongoClient(mongo_uri)
         self._db = self._client[db_name]
-        
-    #----------DB OPERATIONS----------
+
+    # ----------DB OPERATIONS----------
     def __save_dict(self, dict_to_save: dict, collection, indexes):
         find_filter = {'_id': ObjectId(dict_to_save.get('_id'))}
         now = datetime.utcnow()
@@ -26,43 +27,39 @@ class DbEngine:
             collection.create_indexes(indexes)
         result = collection.update_one(filter=find_filter, update=to_save, upsert=True)
         return result.raw_result
-    
-    
+
     def __aggregate(self, Model, pipeline):
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
         return [Model(**doc) for doc in docs_cursor]
-    
-    
+
     def __resolve_count_pipeline(self, Model, pipeline):
         docs = list(self._db[Model._collection].aggregate(pipeline))
         try:
             return docs[0]['count']
         except IndexError as e:
             return 0
-        
+
     def delete_one(self, Model, query):
         result = self._db[Model._collection].delete_one(filter=query)
         if result.deleted_count == 0:
             {'document_deleted': 0}
         return {'document_deleted': result.deleted_count}
-    
-    #----------END DB OPERATIONS----------
-    
-    #---------ACTIONS----------
-    
-    
+
+    # ----------END DB OPERATIONS----------
+
+    # ---------ACTIONS----------
+
     def save(self, obj):
         dct = consolidate_dict(obj=obj, dct={})
+        pprint(dct)
         return self.__save_dict(dict_to_save=dct, collection=self._db[obj._collection], indexes=obj._indexes)
-    
-    
+
     def save_all(self, obj_list: list):
         result = []
         for obj in obj_list:
             result.append(self.save(obj))
         return result
-    
-    
+
     def find_one(self, Model, query):
         pipeline = mount_base_pipeline(Model=Model, query=query)
         pipeline += [{'$limit': 1}]
@@ -72,7 +69,6 @@ class DbEngine:
         except IndexError:
             return None
 
-        
     def find_many(self, Model, query, current_page: int = 1, docs_per_page: int = 1000):
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
@@ -95,4 +91,3 @@ class DbEngine:
                                 page_quantity=page_quantity,
                                 docs_quantity=count,
                                 docs=result)
-        

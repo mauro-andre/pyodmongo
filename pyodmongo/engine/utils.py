@@ -1,45 +1,55 @@
 from bson import ObjectId
-from ..services.model_init import field_infos
+from ..pydantic_mod.main import BaseModel
+# from ..services.model_init import field_infos
 from ..models.db_field_info import DbFieldInfo
+from ..models.id_model import Id
 
 
-def consolidate_dict(obj, dct: dict):
-    for key in obj.model_fields.keys():
-        value = getattr(obj, key)
-        field_info: DbFieldInfo = field_infos(cls=obj, field_name=key)
-        has_model_dump = field_info.is_pyodmongo_model
-        is_list = field_info.is_list
-        by_reference = field_info.by_reference
-        if has_model_dump:
+def consolidate_dict(obj: BaseModel, dct: dict):
+    for field in obj.model_fields.keys():
+        value = getattr(obj, field)
+        db_field_info: DbFieldInfo = getattr(obj.__class__, field)
+        alias = db_field_info.field_alias
+        has_model_fields = db_field_info.has_model_fields
+        is_list = db_field_info.is_list
+        by_reference = db_field_info.by_reference
+        if has_model_fields:
             if value is None:
-                dct[key] = None
+                dct[alias] = None
                 continue
             if not is_list:
                 if by_reference:
                     try:
-                        dct[key] = ObjectId(value.id)
+                        dct[alias] = ObjectId(value.id)
                     except AttributeError:
-                        dct[key] = ObjectId(value)
+                        dct[alias] = ObjectId(value)
                 else:
-                    dct[key] = {}
-                    consolidate_dict(obj=value, dct=dct[key])
+                    dct[alias] = {}
+                    consolidate_dict(obj=value, dct=dct[alias])
             else:
                 if by_reference:
                     try:
-                        dct[key] = [ObjectId(o.id) for o in value]
+                        dct[alias] = [ObjectId(o.id) for o in value]
                     except AttributeError:
-                        dct[key] = [ObjectId(o) for o in value]
+                        dct[alias] = [ObjectId(o) for o in value]
                 else:
-                    dct[key] = []
+                    dct[alias] = []
                     for v in value:
                         obj_lst_elem = {}
                         consolidate_dict(obj=v, dct=obj_lst_elem)
-                        dct[key].append(obj_lst_elem)
+                        dct[alias].append(obj_lst_elem)
         else:
-            if key == 'id':
-                key = '_id'
-            dct[key] = value
+            if alias == 'id':
+                alias = '_id'
+            if db_field_info.field_type == Id:
+                if is_list:
+                    dct[alias] = [ObjectId(o) for o in value]
+                else:
+                    dct[alias] = ObjectId(value)
+            else:
+                dct[alias] = value
     return dct
+
 
 def mount_base_pipeline(Model, query):
     match_stage = [{'$match': query}]
