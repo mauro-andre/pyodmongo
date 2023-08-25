@@ -66,8 +66,8 @@ obj_lv1_filho = Lv1Filho(id=id_5,
                          lv3_ref=obj_lv3_2,
                          lv3_list_ref=[obj_lv3_2, obj_lv3_1])
 
-db.save(obj_lv3_1)
-db.save(obj_lv3_2)
-db.save(obj_lv_2_1)
-db.save(obj_lv_2_2)
-db.save(obj_lv1_filho)
+query = eq(Lv2.id, '64e8fe13e6dcc2a63c365df6')
+# obj = db.find_one(Model=Lv2, query=query, populate=True)
+# print(obj)
+objs = db.find_many(Model=Lv2, populate=True)
+print(objs)

@@ -51,8 +51,11 @@ def consolidate_dict(obj: BaseModel, dct: dict):
     return dct
 
 
-def mount_base_pipeline(Model, query):
+def mount_base_pipeline(Model, query, populate: bool = False):
     match_stage = [{'$match': query}]
     model_stage = Model._pipeline
     reference_stage = Model._reference_pipeline
-    return match_stage + model_stage + reference_stage
+    if populate:
+        return match_stage + model_stage + reference_stage
+    else:
+        return match_stage + model_stage

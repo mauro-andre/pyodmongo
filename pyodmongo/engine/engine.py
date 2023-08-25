@@ -60,8 +60,8 @@ class DbEngine:
             result.append(self.save(obj))
         return result
 
-    def find_one(self, Model, query):
-        pipeline = mount_base_pipeline(Model=Model, query=query)
+    def find_one(self, Model, query={}, populate: bool = False):
+        pipeline = mount_base_pipeline(Model=Model, query=query, populate=populate)
         pipeline += [{'$limit': 1}]
         try:
             result = self.__aggregate(Model=Model, pipeline=pipeline)
@@ -69,7 +69,7 @@ class DbEngine:
         except IndexError:
             return None
 
-    def find_many(self, Model, query, current_page: int = 1, docs_per_page: int = 1000):
+    def find_many(self, Model, query={}, populate: bool = False, current_page: int = 1, docs_per_page: int = 1000) -> ResponsePaginate:
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
         docs_per_page = max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
@@ -79,7 +79,7 @@ class DbEngine:
         skip_stage = [{'$skip': skip}]
         limit_stage = [{'$limit': docs_per_page}]
 
-        pipeline = mount_base_pipeline(Model=Model, query=query)
+        pipeline = mount_base_pipeline(Model=Model, query=query, populate=populate)
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 
