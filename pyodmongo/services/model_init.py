@@ -59,6 +59,8 @@ def _field_annotation_infos(field, field_info) -> DbFieldInfo:
     has_model_fields = hasattr(field_type, 'model_fields')
     field_name = field
     field_alias = field_info.alias or field
+    if field_name == 'id':
+        field_alias = '_id'
     return DbFieldInfo(field_name=field_name,
                        field_alias=field_alias,
                        field_type=field_type,

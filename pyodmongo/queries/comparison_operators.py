@@ -1,17 +1,15 @@
 from bson import ObjectId
+from ..models.id_model import Id
 from ..models.db_field_info import DbFieldInfo
 
 
 def comparison_operator(field_info: DbFieldInfo, operator, value):
-    field_name = field_info.field_name
-    if field_name == 'id':
-        field_name = '_id'
-    if field_info.by_reference or field_name == '_id':
+    if field_info.by_reference or field_info.field_type == Id:
+        if type(value) != list and value is not None:
+            value = ObjectId(value)
         if type(value) == list:
             value = [ObjectId(v) for v in value]
-        else:
-            value = ObjectId(value)
-    return {field_name: {operator: value}}
+    return {field_info.path_str: {operator: value}}
 
 
 def eq(field_info: DbFieldInfo, v):

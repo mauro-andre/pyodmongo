@@ -1,4 +1,6 @@
+from bson import ObjectId
 from pyodmongo import DbModel, Field, Id
+from pyodmongo.queries import eq
 from pymongo import IndexModel
 from typing import ClassVar
 from pprint import pprint
@@ -32,4 +34,4 @@ class Lv1Filho(Lv1):
     lv1_filho_attr: str
 
 
-pprint(Lv1Filho._reference_pipeline)
+print(ObjectId())
