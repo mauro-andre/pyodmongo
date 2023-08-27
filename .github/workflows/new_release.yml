@@ -1,0 +1,25 @@
+name: New Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Get release version
+      id: get_version
+      run: |
+        python .github/get_release_version.py
+        echo "::set-output name=version::$(cat .github/release_version.txt)"
+
+    - name: Update version in pyproject.toml
+      run: |
+        VERSION=${{ steps.get_version.outputs.version }}
+        sed -i "s/^version = .*/version = '$VERSION'/" test.toml
