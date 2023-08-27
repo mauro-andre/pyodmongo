@@ -14,8 +14,8 @@ class AsyncDbEngine:
         self._db = self._client[db_name]
 
     # ----------DB OPERATIONS----------
-    async def __save_dict(self, dict_to_save: dict, collection, indexes, query=None, raw_query=None):
-        find_filter = query or raw_query or {'_id': ObjectId(dict_to_save.get('_id'))}
+    async def __save_dict(self, dict_to_save: dict, collection, indexes, query=None):
+        find_filter = query or {'_id': ObjectId(dict_to_save.get('_id'))}
         now = datetime.utcnow()
         dict_to_save['updated_at'] = now
         dict_to_save.pop('_id')
@@ -57,15 +57,19 @@ class AsyncDbEngine:
         return await self.__save_dict(dict_to_save=dct,
                                       collection=self._db[obj._collection],
                                       indexes=obj._indexes,
-                                      query=query.operator_dict() if query else query,
-                                      raw_query=raw_query)
+                                      query=query.operator_dict() if query else raw_query)
 
     async def save_all(self, obj_list: list):
         save_calls = [self.save(obj) for obj in obj_list]
         return await gather(*save_calls)
 
-    async def find_one(self, Model, query={}, populate: bool = False):
-        pipeline = mount_base_pipeline(Model=Model, query=query, populate=populate)
+    async def find_one(self, Model, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False):
+        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
+            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+        raw_query = {} if not raw_query else raw_query
+        pipeline = mount_base_pipeline(Model=Model,
+                                       query=query.operator_dict() if query else raw_query,
+                                       populate=populate)
         pipeline += [{'$limit': 1}]
         try:
             result = await self.__aggregate(Model=Model, pipeline=pipeline)
@@ -73,7 +77,9 @@ class AsyncDbEngine:
         except IndexError:
             return None
 
-    async def find_many(self, Model, query={}, populate: bool = False, current_page: int = 1, docs_per_page: int = 1000) -> ResponsePaginate:
+    async def find_many(self, Model, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False, current_page: int = 1, docs_per_page: int = 1000) -> ResponsePaginate:
+        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
+            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
         docs_per_page = max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
@@ -83,7 +89,10 @@ class AsyncDbEngine:
         skip_stage = [{'$skip': skip}]
         limit_stage = [{'$limit': docs_per_page}]
 
-        pipeline = mount_base_pipeline(Model=Model, query=query, populate=populate)
+        raw_query = {} if not raw_query else raw_query
+        pipeline = mount_base_pipeline(Model=Model,
+                                       query=query.operator_dict() if query else raw_query,
+                                       populate=populate)
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 

@@ -48,10 +48,12 @@ id_3 = '64e8fe13e6dcc2a63c365df6'
 id_4 = '64e8fe13e6dcc2a63c365df7'
 id_5 = '64e8fe13e6dcc2a63c365df8'
 
-obj_lv3_1 = Lv3(attr_lv3_one='valor_attr_lv3_one',
+obj_lv3_1 = Lv3(id=id_1,
+                attr_lv3_one='valor_attr_lv3_one',
                 attr_lv3_two='valor_attr_lv3_two')
 
-obj_lv3_2 = Lv3(attr_lv3_one='valor_attr_lv3_one',
+obj_lv3_2 = Lv3(id=id_2,
+                attr_lv3_one='valor_attr_lv3_one',
                 attr_lv3_two='valor_attr_lv3_two')
 
 obj_lv_2_1 = Lv2(id=id_3, attr_lv2_one='valor_attr_lv2_one',
@@ -72,12 +74,14 @@ obj_lv1_filho = Lv1Filho(id=id_5,
                          lv3_ref=obj_lv3_2,
                          lv3_list_ref=[obj_lv3_2, obj_lv3_1])
 
-
-query = eq(Lv3.attr_lv3_one, 'valor_attr_lv3_one')
+# db.save_all([obj_lv3_1, obj_lv3_2, obj_lv_2_1, obj_lv_2_2, obj_lv1_filho])
+query = eq(Lv2.attr_lv2_one, 'valor_attr_lv2_one')
 and_query = and_(
     eq(Lv3.attr_lv3_one, 'valor_attr_lv3_one'),
     eq(Lv3.attr_lv3_two, 'valor_attr_lv3_two')
 )
+# find_result = db.save(obj_lv_2_2, raw_query={'vrau': 'vrou'})
+# print(find_result)
 # print(and_query.operator_dict())
 # print(and_query)
 # result = db.save(obj_lv3_1, query=query, raw_query={'vrau': 'vreu'})
@@ -85,8 +89,8 @@ and_query = and_(
 
 
 async def main():
-    result = await db_async.save(obj_lv3_1, query=and_query)
-    print(result)
+    find_result = await db_async.find_one(Model=Lv2, raw_query={'vrau': 'vrou'})
+    print(find_result)
 asyncio.run(main())
 
 # query = eq(Lv2.id, '64e8fe13e6dcc2a63c365df6')
