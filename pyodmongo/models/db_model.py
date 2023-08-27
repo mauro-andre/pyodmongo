@@ -17,11 +17,11 @@ class DbModel(BaseModel):
 
     @classmethod
     def __pydantic_init_subclass__(cls):
-        setattr(cls, '_pipeline', [])
+        resolve_class_fields_db_info(cls=cls)
         ref_pipeline = resolve_ref_pipeline(cls=cls, pipeline=[], path=[])
         setattr(cls, '_reference_pipeline', ref_pipeline)
         indexes = resolve_indexes(cls=cls)
         setattr(cls, '_indexes', indexes)
-        resolve_class_fields_db_info(cls=cls)
+        setattr(cls, '_pipeline', [])
         if not hasattr(cls, '_collection'):
             raise AttributeError(f"Model {cls.__name__} has no '_collection: typing.ClassVar'")

@@ -14,13 +14,13 @@ db_async = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
 
 
 class Lv3(DbModel):
-    attr_lv3_one: str = Field(alias='attrLv3One')
-    attr_lv3_two: str
+    attr_lv3_one: str = Field(alias='attrLv3One', index=True, text_index=True)
+    attr_lv3_two: str = Field(text_index=True)
     _collection: ClassVar = 'lv3'
 
 
 class Lv2(DbModel):
-    attr_lv2_one: str = Field(alias='attrLv2One')
+    attr_lv2_one: str = Field(alias='attrLv2One', index=True, unique=True)
     attr_lv2_two: str
     lv3: Lv3 | Id = Field(alias='lv3Alias')
     lv3_list: list[Id | Lv3]
@@ -56,11 +56,11 @@ obj_lv3_2 = Lv3(id=id_2,
                 attr_lv3_one='valor_attr_lv3_one',
                 attr_lv3_two='valor_attr_lv3_two')
 
-obj_lv_2_1 = Lv2(id=id_3, attr_lv2_one='valor_attr_lv2_one',
+obj_lv_2_1 = Lv2(id=id_3, attr_lv2_one='valor_attr_lv2_one_1',
                  attr_lv2_two='valor_attr_lv2_two',
                  lv3=obj_lv3_1, lv3_list=[obj_lv3_1, obj_lv3_2])
 
-obj_lv_2_2 = Lv2(id=id_4, attr_lv2_one='valor_attr_lv2_one',
+obj_lv_2_2 = Lv2(id=id_4, attr_lv2_one='valor_attr_lv2_one_2',
                  attr_lv2_two='valor_attr_lv2_two',
                  lv3=obj_lv3_2, lv3_list=[obj_lv3_1, obj_lv3_2])
 
@@ -89,8 +89,7 @@ and_query = and_(
 
 
 async def main():
-    find_result = await db_async.find_one(Model=Lv2, raw_query={'vrau': 'vrou'})
-    print(find_result)
+    await db_async.save_all([obj_lv3_1, obj_lv3_2, obj_lv_2_1, obj_lv_2_2])
 asyncio.run(main())
 
 # query = eq(Lv2.id, '64e8fe13e6dcc2a63c365df6')

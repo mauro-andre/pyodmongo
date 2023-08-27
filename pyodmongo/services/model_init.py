@@ -14,11 +14,13 @@ def resolve_indexes(cls: BaseModel):
         is_index = cls.model_fields[key]._attributes_set.get('index') or False
         is_unique = cls.model_fields[key]._attributes_set.get('unique') or False
         is_text_index = cls.model_fields[key]._attributes_set.get('text_index') or False
+        db_field_info: DbFieldInfo = getattr(cls, key)
+        alias = db_field_info.field_alias
         if is_index:
             indexes.append(IndexModel(
-                [(key, ASCENDING)], name=key, unique=is_unique))
+                [(alias, ASCENDING)], name=alias, unique=is_unique))
         if is_text_index:
-            text_keys.append((key, TEXT))
+            text_keys.append((alias, TEXT))
     if len(text_keys) > 0:
         indexes.append(
             IndexModel(text_keys, name='texts', default_language='portuguese')
