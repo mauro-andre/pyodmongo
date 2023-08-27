@@ -9,6 +9,7 @@ class DbModel(BaseModel):
     created_at: datetime = None
     updated_at: datetime = None
     model_config = ConfigDict(populate_by_name=True)
+    # TODO set a _collection default for autocomplete and validate to raise an error if not filled
 
     def __init__(self, **attrs):
         if attrs.get('_id') is not None:

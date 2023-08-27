@@ -48,9 +48,9 @@ id_3 = '64e8fe13e6dcc2a63c365df6'
 id_4 = '64e8fe13e6dcc2a63c365df7'
 id_5 = '64e8fe13e6dcc2a63c365df8'
 
-obj_lv3_1 = Lv3(id=id_1,
-                attr_lv3_one='valor_attr_lv3_one',
-                attr_lv3_two='valor_attr_lv3_two')
+obj_lv3_1 = Lv3(
+    attr_lv3_one='valor_attr_lv3_one',
+    attr_lv3_two='valor_attr_lv3_two')
 
 obj_lv3_2 = Lv3(id=id_2,
                 attr_lv3_one='valor_attr_lv3_one',
@@ -80,6 +80,8 @@ and_query = and_(
     eq(Lv3.attr_lv3_one, 'valor_attr_lv3_one'),
     eq(Lv3.attr_lv3_two, 'valor_attr_lv3_two')
 )
+result = db.save(obj_lv3_1)
+print(result)
 # find_result = db.save(obj_lv_2_2, raw_query={'vrau': 'vrou'})
 # print(find_result)
 # print(and_query.operator_dict())
@@ -90,10 +92,13 @@ and_query = and_(
 
 async def main():
     await db_async.save_all([obj_lv3_1, obj_lv3_2, obj_lv_2_1, obj_lv_2_2])
-asyncio.run(main())
+# asyncio.run(main())
 
 # query = eq(Lv2.id, '64e8fe13e6dcc2a63c365df6')
 # obj = db.find_one(Model=Lv2, query=query, populate=True)
 # print(obj)
 # objs = db.find_many(Model=Lv2, populate=True)
 # print(objs)
+
+# {'n': 1, 'nModified': 1, 'ok': 1.0, 'updatedExisting': True}
+# {'n': 1, 'upserted': ObjectId('64ead6318257a081b9709d59'), 'nModified': 0, 'ok': 1.0, 'updatedExisting': False}
