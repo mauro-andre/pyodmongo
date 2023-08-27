@@ -1,8 +1,17 @@
 annotated-types==0.5.0
+autopep8==2.0.2
+click==8.1.7
 dnspython==2.4.2
+iniconfig==2.0.0
 motor==3.2.0
 mypy==1.5.1
 mypy-extensions==1.0.0
+packaging==23.1
+pluggy==1.2.0
+pycodestyle==2.11.0
+pydantic==2.2.1
 pydantic_core==2.6.1
 pymongo==4.4.1
+pytest==7.4.0
+toml==0.10.2
 typing_extensions==4.7.1

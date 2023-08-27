@@ -1,11 +1,16 @@
 from bson import ObjectId
-from pyodmongo import DbModel, Field, Id, DbEngine
-from pyodmongo.queries import eq
+from pyodmongo import DbModel, Field, Id, DbEngine, AsyncDbEngine
+from pyodmongo.queries import eq, and_, or_
 from pymongo import IndexModel
 from typing import ClassVar
 from pprint import pprint
+import asyncio
 
-db = DbEngine(mongo_uri='mongodb://localhost:27017/', db_name='pyodmongo_tests')
+
+mongo_uri = 'mongodb://localhost:27017/'
+db_name = 'pyodmongo_tests'
+db = DbEngine(mongo_uri=mongo_uri, db_name=db_name)
+db_async = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
 
 
 class Lv3(DbModel):
@@ -18,6 +23,7 @@ class Lv2(DbModel):
     attr_lv2_one: str = Field(alias='attrLv2One')
     attr_lv2_two: str
     lv3: Lv3 | Id = Field(alias='lv3Alias')
+    lv3_list: list[Id | Lv3]
     _collection: ClassVar = 'lv2'
 
 
@@ -42,19 +48,19 @@ id_3 = '64e8fe13e6dcc2a63c365df6'
 id_4 = '64e8fe13e6dcc2a63c365df7'
 id_5 = '64e8fe13e6dcc2a63c365df8'
 
-obj_lv3_1 = Lv3(id=id_1, attr_lv3_one='valor_attr_lv3_one',
+obj_lv3_1 = Lv3(attr_lv3_one='valor_attr_lv3_one',
                 attr_lv3_two='valor_attr_lv3_two')
 
-obj_lv3_2 = Lv3(id=id_2, attr_lv3_one='valor_attr_lv3_one',
+obj_lv3_2 = Lv3(attr_lv3_one='valor_attr_lv3_one',
                 attr_lv3_two='valor_attr_lv3_two')
 
 obj_lv_2_1 = Lv2(id=id_3, attr_lv2_one='valor_attr_lv2_one',
                  attr_lv2_two='valor_attr_lv2_two',
-                 lv3=obj_lv3_1)
+                 lv3=obj_lv3_1, lv3_list=[obj_lv3_1, obj_lv3_2])
 
 obj_lv_2_2 = Lv2(id=id_4, attr_lv2_one='valor_attr_lv2_one',
                  attr_lv2_two='valor_attr_lv2_two',
-                 lv3=obj_lv3_2)
+                 lv3=obj_lv3_2, lv3_list=[obj_lv3_1, obj_lv3_2])
 
 obj_lv1_filho = Lv1Filho(id=id_5,
                          lv1_filho_attr='value_lv1_filho_attr',
@@ -66,8 +72,25 @@ obj_lv1_filho = Lv1Filho(id=id_5,
                          lv3_ref=obj_lv3_2,
                          lv3_list_ref=[obj_lv3_2, obj_lv3_1])
 
-query = eq(Lv2.id, '64e8fe13e6dcc2a63c365df6')
+
+query = eq(Lv3.attr_lv3_one, 'valor_attr_lv3_one')
+and_query = and_(
+    eq(Lv3.attr_lv3_one, 'valor_attr_lv3_one'),
+    eq(Lv3.attr_lv3_two, 'valor_attr_lv3_two')
+)
+# print(and_query.operator_dict())
+# print(and_query)
+# result = db.save(obj_lv3_1, query=query, raw_query={'vrau': 'vreu'})
+# print(result)
+
+
+async def main():
+    result = await db_async.save(obj_lv3_1, query=and_query)
+    print(result)
+asyncio.run(main())
+
+# query = eq(Lv2.id, '64e8fe13e6dcc2a63c365df6')
 # obj = db.find_one(Model=Lv2, query=query, populate=True)
 # print(obj)
-objs = db.find_many(Model=Lv2, populate=True)
-print(objs)
+# objs = db.find_many(Model=Lv2, populate=True)
+# print(objs)

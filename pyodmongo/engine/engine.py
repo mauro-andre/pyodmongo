@@ -1,10 +1,10 @@
 from pymongo import MongoClient
 from ..engine.utils import consolidate_dict, mount_base_pipeline
 from ..models.paginate import ResponsePaginate
+from ..models.query_operators import LogicalOperator, ComparisonOperator
 from datetime import datetime
 from bson import ObjectId
 from math import ceil
-from pprint import pprint
 
 
 class DbEngine:
@@ -13,10 +13,9 @@ class DbEngine:
         self._db = self._client[db_name]
 
     # ----------DB OPERATIONS----------
-    def __save_dict(self, dict_to_save: dict, collection, indexes):
-        find_filter = {'_id': ObjectId(dict_to_save.get('_id'))}
+    def __save_dict(self, dict_to_save: dict, collection, indexes, query=None, raw_query=None):
+        find_filter = query or raw_query or {'_id': ObjectId(dict_to_save.get('_id'))}
         now = datetime.utcnow()
-        # TODO think about to change to pydantic alias generator
         dict_to_save['updated_at'] = now
         dict_to_save.pop('_id')
         dict_to_save.pop('created_at')
@@ -26,7 +25,7 @@ class DbEngine:
         }
         if len(indexes) > 0:
             collection.create_indexes(indexes)
-        result = collection.update_one(filter=find_filter, update=to_save, upsert=True)
+        result = collection.update_many(filter=find_filter, update=to_save, upsert=True)
         return result.raw_result
 
     def __aggregate(self, Model, pipeline):
@@ -50,10 +49,15 @@ class DbEngine:
 
     # ---------ACTIONS----------
 
-    def save(self, obj):
+    def save(self, obj, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None):
+        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
+            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         dct = consolidate_dict(obj=obj, dct={})
-        pprint(dct)
-        return self.__save_dict(dict_to_save=dct, collection=self._db[obj._collection], indexes=obj._indexes)
+        return self.__save_dict(dict_to_save=dct,
+                                collection=self._db[obj._collection],
+                                indexes=obj._indexes,
+                                query=query.operator_dict() if query else query,
+                                raw_query=raw_query)
 
     def save_all(self, obj_list: list):
         result = []
