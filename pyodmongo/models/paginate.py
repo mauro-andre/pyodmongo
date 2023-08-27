@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from ..pydantic_mod.main import BaseModel
 
 
 class ResponsePaginate(BaseModel):
@@ -6,6 +6,3 @@ class ResponsePaginate(BaseModel):
     page_quantity: int
     docs_quantity: int
     docs: list
-
-    class Config:
-        anystr_strip_whitespace = True

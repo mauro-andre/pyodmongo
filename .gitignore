@@ -128,3 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 venv_v2
+.vscode
+
+venv_pydantic_v2.3.0/

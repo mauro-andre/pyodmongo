@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pyodmongo"
+version = "0.0.2"
+license = "MIT"
+authors = [
+  { name="Mauro André", email="eng.mauroandre@gmail.com" },
+]
+description = "A syncrounous and asyncrounous Python ODM for MongoDB based on Pydantic"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Database",
+    "Topic :: Database :: Database Engines/Servers"
+]
+
+dependencies = [
+    "pydantic>=2.0.0,<3.0.0",
+    "motor>=3.2.0,<4.0.0",
+    "pymongo>=4.4.0,<5.0.0"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/mauro-andre/pyodmongo"
