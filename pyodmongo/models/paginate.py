@@ -1,4 +1,4 @@
-from ..pydantic_mod.main import BaseModel, ConfigDict
+from ..pydantic_mod.main import BaseModel
 
 
 class ResponsePaginate(BaseModel):
@@ -6,4 +6,3 @@ class ResponsePaginate(BaseModel):
     page_quantity: int
     docs_quantity: int
     docs: list
-    model_config = ConfigDict(str_strip_whitespace=True)

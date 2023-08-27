@@ -39,8 +39,11 @@ class DbEngine:
         except IndexError as e:
             return 0
 
-    def delete_one(self, Model, query):
-        result = self._db[Model._collection].delete_one(filter=query)
+    def delete_one(self, Model, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None):
+        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
+            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+        raw_query = {} if not raw_query else raw_query
+        result = self._db[Model._collection].delete_one(filter=query.operator_dict() if query else raw_query)
         if result.deleted_count == 0:
             {'document_deleted': 0}
         return {'document_deleted': result.deleted_count}
