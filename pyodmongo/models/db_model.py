@@ -9,7 +9,6 @@ class DbModel(BaseModel):
     created_at: datetime = None
     updated_at: datetime = None
     model_config = ConfigDict(populate_by_name=True)
-    # TODO set a _collection default for autocomplete and validate to raise an error if not filled
 
     def __init__(self, **attrs):
         if attrs.get('_id') is not None:
@@ -25,4 +24,5 @@ class DbModel(BaseModel):
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_pipeline', [])
         if not hasattr(cls, '_collection'):
+            # TODO remove this because some cases it necessary create a main model that generates others
             raise AttributeError(f"Model {cls.__name__} has no '_collection: typing.ClassVar'")
