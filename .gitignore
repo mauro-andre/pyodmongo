@@ -129,7 +129,3 @@ dmypy.json
 .pyre/
 venv_v2
 .vscode
-
-venv_pydantic_v2.3.0/
-venv_tests_libs/
-venv_dependencies_test/
