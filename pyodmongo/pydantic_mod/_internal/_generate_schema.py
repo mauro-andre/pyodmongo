@@ -1370,7 +1370,7 @@ class GenerateSchema:
 
                 self = self._current_generate_schema
 
-                from ._dataclasses import is_pydantic_dataclass
+                from pydantic.dataclasses import is_pydantic_dataclass
 
                 if is_pydantic_dataclass(dataclass):
                     fields = dataclass.__pydantic_fields__
@@ -1491,8 +1491,7 @@ class GenerateSchema:
         if typevar.__bound__:
             return self.generate_schema(typevar.__bound__)
         elif typevar.__constraints__:
-            # type: ignore
-            return self._union_schema(typing.Union[typevar.__constraints__])
+            return self._union_schema(typing.Union[typevar.__constraints__])  # type: ignore
         else:
             return core_schema.any_schema()
 
