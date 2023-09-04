@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyodmongo"
-version = "0.0.3"
+version = "0.0.4"
 license = "MIT"
 authors = [
   { name="Mauro André", email="eng.mauroandre@gmail.com" },
@@ -21,9 +21,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "pydantic>=2.0.0,<3.0.0",
-    "motor>=3.2.0,<4.0.0",
-    "pymongo>=4.4.0,<5.0.0"
+    "pydantic==2.3.0",
+    "motor>=3.2.0,<4.0.0"
 ]
 
 [project.urls]
