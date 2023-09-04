@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
-from ..pydantic_mod.main import BaseModel, ConfigDict
+from ..pydantic.main import BaseModel, ConfigDict
 
 
 class DbFieldInfo(BaseModel):

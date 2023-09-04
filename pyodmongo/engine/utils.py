@@ -1,5 +1,5 @@
 from bson import ObjectId
-from ..pydantic_mod.main import BaseModel
+from ..pydantic.main import BaseModel
 from ..models.db_field_info import DbFieldInfo
 from ..models.id_model import Id
 

@@ -1,4 +1,4 @@
-from ..pydantic_mod.main import BaseModel
+from ..pydantic.main import BaseModel
 from pymongo import IndexModel, ASCENDING, TEXT
 from typing import Any, Union, get_origin, get_args
 from types import UnionType

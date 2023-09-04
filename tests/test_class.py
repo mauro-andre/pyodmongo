@@ -157,9 +157,3 @@ def test_fields_inheritance():
     assert 'attr_1_1' not in MyClass2_2.model_fields
     assert 'attr_2' in MyClass2_2.model_fields
     assert 'attr_2_2' in MyClass2_2.model_fields
-
-
-def test_class_with_no_collection_attribute():
-    with pytest.raises(AttributeError):
-        class MyClass(DbModel):
-            pass

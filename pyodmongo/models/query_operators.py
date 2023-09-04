@@ -1,4 +1,4 @@
-from ..pydantic_mod.main import BaseModel
+from ..pydantic.main import BaseModel
 from typing import Any
 
 
