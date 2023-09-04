@@ -188,8 +188,8 @@ def collect_model_fields(  # noqa: C901
             # 1. To match the behaviour of annotation-only fields
             # 2. To avoid false positives in the NameError check above
             try:
-                # delattr(cls, ann_name)
-                pass
+                delattr(cls, ann_name)
+                # pass
             except AttributeError:
                 pass  # indicates the attribute was on a parent class
 
