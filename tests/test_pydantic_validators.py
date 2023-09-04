@@ -1,4 +1,5 @@
-from pyodmongo import DbModel, Id, BaseModel, field_validator, model_validator, ConfigDict
+from pyodmongo import DbModel
+from pyodmongo.pydantic import field_validator, ConfigDict
 from typing import ClassVar
 
 
