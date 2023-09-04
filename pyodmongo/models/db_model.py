@@ -1,4 +1,4 @@
-from ..pydantic_mod.main import BaseModel, ConfigDict
+from ..pydantic.main import BaseModel, ConfigDict
 from .id_model import Id
 from datetime import datetime
 from ..services.model_init import resolve_indexes, resolve_ref_pipeline, resolve_class_fields_db_info
@@ -24,6 +24,3 @@ class DbModel(BaseModel):
         indexes = resolve_indexes(cls=cls)
         setattr(cls, '_indexes', indexes)
         setattr(cls, '_pipeline', [])
-        if not hasattr(cls, '_collection'):
-            # TODO remove this because some cases it necessary create a main model that generates others
-            raise AttributeError(f"Model {cls.__name__} has no '_collection: typing.ClassVar'")

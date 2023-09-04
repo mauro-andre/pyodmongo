@@ -8,7 +8,7 @@ import re
 import sys
 import typing
 import warnings
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from copy import copy
 from enum import Enum
 from functools import partial
@@ -20,6 +20,7 @@ from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
+    ContextManager,
     Dict,
     ForwardRef,
     Iterable,
@@ -44,7 +45,7 @@ from ..version import version_short
 from ..warnings import PydanticDeprecatedSince20
 from . import _decorators, _discriminated_union, _known_annotated_metadata, _typing_extra
 from ._annotated_handlers import GetCoreSchemaHandler, GetJsonSchemaHandler
-from ._config import ConfigWrapper, ConfigWrapperStack
+from ._config import ConfigWrapper
 from ._core_metadata import (
     CoreMetadataHandler,
     build_metadata_dict,
@@ -66,7 +67,6 @@ from ._decorators import (
     ModelValidatorDecoratorInfo,
     RootValidatorDecoratorInfo,
     ValidatorDecoratorInfo,
-    get_attribute_from_bases,
     inspect_field_serializer,
     inspect_model_serializer,
     inspect_validator,
@@ -258,6 +258,34 @@ def _add_custom_serialization_from_json_encoders(
         return schema
 
     return schema
+
+
+class ConfigWrapperStack:
+    """A stack of `ConfigWrapper` instances."""
+
+    def __init__(self, config_wrapper: ConfigWrapper):
+        self._config_wrapper_stack: list[ConfigWrapper] = [config_wrapper]
+
+    @property
+    def tail(self) -> ConfigWrapper:
+        return self._config_wrapper_stack[-1]
+
+    def push(self, config_wrapper: ConfigWrapper | ConfigDict | None) -> ContextManager[None]:
+        if config_wrapper is None:
+            return nullcontext()
+
+        if not isinstance(config_wrapper, ConfigWrapper):
+            config_wrapper = ConfigWrapper(config_wrapper, check=False)
+
+        @contextmanager
+        def _context_manager() -> Iterator[None]:
+            self._config_wrapper_stack.append(config_wrapper)
+            try:
+                yield
+            finally:
+                self._config_wrapper_stack.pop()
+
+        return _context_manager()
 
 
 class GenerateSchema:
@@ -452,7 +480,7 @@ class GenerateSchema:
 
             model_validators = decorators.model_validators.values()
 
-            extras_schema = None
+            extra_validator = None
             if core_config.get('extra_fields_behavior') == 'allow':
                 for tp in (cls, *cls.__mro__):
                     extras_annotation = cls.__annotations__.get('__pydantic_extra__', None)
@@ -467,7 +495,7 @@ class GenerateSchema:
                             required=True,
                         )[1]
                         if extra_items_type is not Any:
-                            extras_schema = self.generate_schema(extra_items_type)
+                            extra_validator = self.generate_schema(extra_items_type)
                             break
 
             with self._config_wrapper_stack.push(config_wrapper):
@@ -493,7 +521,7 @@ class GenerateSchema:
                             self._computed_field_schema(d, decorators.field_serializers)
                             for d in computed_fields.values()
                         ],
-                        extras_schema=extras_schema,
+                        extra_validator=extra_validator,
                         model_name=cls.__name__,
                     )
                     inner_schema = apply_validators(fields_schema, decorators.root_validators.values(), None)
@@ -1029,10 +1057,11 @@ class GenerateSchema:
                     code='typed-dict-version',
                 )
 
-            try:
-                config: ConfigDict | None = get_attribute_from_bases(typed_dict_cls, '__pydantic_config__')
-            except AttributeError:
-                config = None
+            config: ConfigDict | None = None
+            for base in (typed_dict_cls, *typed_dict_cls.__orig_bases__):
+                config = getattr(base, '__pydantic_config__', None)
+                if config is not None:
+                    break
 
             with self._config_wrapper_stack.push(config):
                 core_config = self._config_wrapper.core_config(typed_dict_cls)
@@ -1069,9 +1098,7 @@ class GenerateSchema:
                         field_name, field_info, decorators, required=required
                     )
 
-                metadata = build_metadata_dict(
-                    js_functions=[partial(modify_model_json_schema, cls=typed_dict_cls)], typed_dict_cls=typed_dict_cls
-                )
+                metadata = build_metadata_dict(js_functions=[partial(modify_model_json_schema, cls=typed_dict_cls)])
 
                 td_schema = core_schema.typed_dict_schema(
                     fields,
@@ -1290,7 +1317,7 @@ class GenerateSchema:
 
                 self = self._current_generate_schema
 
-                from ..dataclasses import is_pydantic_dataclass
+                from ._dataclasses import is_pydantic_dataclass
 
                 if is_pydantic_dataclass(dataclass):
                     fields = dataclass.__pydantic_fields__

@@ -35,21 +35,13 @@ from typing import (
 )
 
 import pydantic_core
-from pydantic_core import CoreSchema, PydanticOmit, core_schema, to_jsonable_python
+from pydantic_core import CoreConfig, CoreSchema, PydanticOmit, core_schema, to_jsonable_python
 from pydantic_core.core_schema import ComputedField
 from typing_extensions import Annotated, Literal, assert_never
 
-from ._internal import (
-    _annotated_handlers,
-    _config,
-    _core_metadata,
-    _core_utils,
-    _decorators,
-    _internal_dataclass,
-    _mock_val_ser,
-    _schema_generation_shared,
-    _typing_extra,
-)
+from pydantic._internal import _annotated_handlers, _internal_dataclass
+
+from ._internal import _core_metadata, _core_utils, _mock_val_ser, _schema_generation_shared, _typing_extra
 from .config import JsonSchemaExtraCallable
 from .errors import PydanticInvalidForJsonSchema, PydanticUserError
 
@@ -274,7 +266,6 @@ class GenerateJsonSchema:
         self.json_to_defs_refs: dict[JsonRef, DefsRef] = {}
 
         self.definitions: dict[DefsRef, JsonSchemaValue] = {}
-        self._config_wrapper_stack = _config.ConfigWrapperStack(_config.ConfigWrapper({}))
 
         self.mode: JsonSchemaMode = 'validation'
 
@@ -299,10 +290,6 @@ class GenerateJsonSchema:
         # This changes to True after generating a schema, to prevent issues caused by accidental re-use
         # of a single instance of a schema generator
         self._used = False
-
-    @property
-    def _config(self) -> _config.ConfigWrapper:
-        return self._config_wrapper_stack.tail
 
     def build_schema_type_to_method(
         self,
@@ -662,7 +649,7 @@ class GenerateJsonSchema:
         Returns:
             The generated JSON schema.
         """
-        json_schema = {'type': 'string', 'format': 'base64url' if self._config.ser_json_bytes == 'base64' else 'binary'}
+        json_schema = {'type': 'string', 'format': 'binary'}
         self.update_with_validations(json_schema, schema, self.ValidationsMapping.bytes)
         return json_schema
 
@@ -710,8 +697,6 @@ class GenerateJsonSchema:
         Returns:
             The generated JSON schema.
         """
-        if self._config.ser_json_timedelta == 'float':
-            return {'type': 'number'}
         return {'type': 'string', 'format': 'duration'}
 
     def literal_schema(self, schema: core_schema.LiteralSchema) -> JsonSchemaValue:
@@ -810,8 +795,8 @@ class GenerateJsonSchema:
         prefixItems = [self.generate_inner(item) for item in schema['items_schema']]
         if prefixItems:
             json_schema['prefixItems'] = prefixItems
-        if 'extras_schema' in schema:
-            json_schema['items'] = self.generate_inner(schema['extras_schema'])
+        if 'extra_schema' in schema:
+            json_schema['items'] = self.generate_inner(schema['extra_schema'])
         else:
             json_schema['maxItems'] = len(schema['items_schema'])
         self.update_with_validations(json_schema, schema, self.ValidationsMapping.array)
@@ -1183,12 +1168,10 @@ class GenerateJsonSchema:
         ]
         if self.mode == 'serialization':
             named_required_fields.extend(self._name_required_computed_fields(schema.get('computed_fields', [])))
+        json_schema = self._named_required_fields_schema(named_required_fields)
+        config: CoreConfig | None = schema.get('config', None)
 
-        config = _get_typed_dict_config(schema)
-        with self._config_wrapper_stack.push(config):
-            json_schema = self._named_required_fields_schema(named_required_fields)
-
-        extra = config.get('extra', 'ignore')
+        extra = (config or {}).get('extra_fields_behavior', 'ignore')
         if extra == 'forbid':
             json_schema['additionalProperties'] = False
         elif extra == 'allow':
@@ -1303,12 +1286,11 @@ class GenerateJsonSchema:
         """
         # We do not use schema['model'].model_json_schema() here
         # because it could lead to inconsistent refs handling, etc.
+        json_schema = self.generate_inner(schema['schema'])
+
         cls = cast('type[BaseModel]', schema['cls'])
         config = cls.model_config
         title = config.get('title')
-
-        with self._config_wrapper_stack.push(config):
-            json_schema = self.generate_inner(schema['schema'])
 
         json_schema_extra = config.get('json_schema_extra')
         if cls.__pydantic_root_model__:
@@ -1401,10 +1383,10 @@ class GenerateJsonSchema:
         if self.mode == 'serialization':
             named_required_fields.extend(self._name_required_computed_fields(schema.get('computed_fields', [])))
         json_schema = self._named_required_fields_schema(named_required_fields)
-        extras_schema = schema.get('extras_schema', None)
-        if extras_schema is not None:
+        extra_validator = schema.get('extra_validator', None)
+        if extra_validator is not None:
             schema_to_update = self.resolve_schema_to_update(json_schema)
-            schema_to_update['additionalProperties'] = self.generate_inner(extras_schema)
+            schema_to_update['additionalProperties'] = self.generate_inner(extra_validator)
         return json_schema
 
     def field_is_present(self, field: CoreSchemaField) -> bool:
@@ -1479,12 +1461,12 @@ class GenerateJsonSchema:
         Returns:
             The generated JSON schema.
         """
+        json_schema = self.generate_inner(schema['schema']).copy()
+
         cls = schema['cls']
         config: ConfigDict = getattr(cls, '__pydantic_config__', cast('ConfigDict', {}))
-        title = config.get('title') or cls.__name__
 
-        with self._config_wrapper_stack.push(config):
-            json_schema = self.generate_inner(schema['schema']).copy()
+        title = config.get('title') or cls.__name__
 
         json_schema_extra = config.get('json_schema_extra')
         json_schema = self._update_class_schema(json_schema, title, config.get('extra', None), cls, json_schema_extra)
@@ -1960,12 +1942,7 @@ class GenerateJsonSchema:
         Returns:
             The encoded default value.
         """
-        config = self._config
-        return pydantic_core.to_jsonable_python(
-            dft,
-            timedelta_mode=config.ser_json_timedelta,
-            bytes_mode=config.ser_json_bytes,
-        )
+        return pydantic_core.to_jsonable_python(dft)
 
     def update_with_validations(
         self, json_schema: JsonSchemaValue, core_schema: CoreSchema, mapping: dict[str, str]
@@ -2344,14 +2321,3 @@ else:
 
         def __hash__(self) -> int:
             return hash(type(self))
-
-
-def _get_typed_dict_config(schema: core_schema.TypedDictSchema) -> ConfigDict:
-    metadata = _core_metadata.CoreMetadataHandler(schema).metadata
-    cls = metadata.get('pydantic_typed_dict_cls')
-    if cls is not None:
-        try:
-            return _decorators.get_attribute_from_bases(cls, '__pydantic_config__')
-        except AttributeError:
-            pass
-    return {}
