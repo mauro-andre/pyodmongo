@@ -49,7 +49,7 @@ plugins:
           name: English
           build: true
         - locale: pt-BR
-          name: Português brasileiro
+          name: Português - Br
           build: true
 
 markdown_extensions:
