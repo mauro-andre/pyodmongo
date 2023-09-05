@@ -36,16 +36,9 @@ Contributions to `pyodmongo` are welcome! If you find any issues or have ideas f
 ## License
 `pyodmongo` is licensed under the MIT License. See the [LICENSE file](https://github.com/mauro-andre/pyodmongo/blob/master/LICENSE) for more information.
 
-# <center>Getting Started</center>
 
+## Async exemple
 
-In this guide, we'll walk you through the initial steps to get started with `pyodmongo`, a Python MongoDB Object-Document Mapper (ODM). We'll cover creating the engine, defining a model, saving data, and reading from the database.
-
-## Creating the Engine
-
-To begin using `pyodmongo`, you first need to create an instance of the `AsyncDbEngine` or `DbEngine` class to connect to your MongoDB server. Here's how you can do it:
-
-/// tab | Async
 ```python hl_lines="5"
 from pyodmongo import AsyncDbEngine, DbModel
 from typing import ClassVar
@@ -69,9 +62,9 @@ async def main():
 
 asyncio.run(main())
 ```
-///
 
-/// tab | Sync
+## Sync exemple
+
 ```python hl_lines="4"
 from pyodmongo import DbEngine, DbModel
 from typing import ClassVar
@@ -90,4 +83,3 @@ box = Product(name='Box', price='5.99', is_available=True)
 
 result = engine.save(box)
 ```
-///
