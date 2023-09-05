@@ -1,0 +1,63 @@
+site_name: PyODMongo
+site_description: Documentation for PyODMongo
+site_url: https://pyodmongo.dev/
+
+theme:
+  language: en
+  name: material
+  icon:
+    repo: fontawesome/brands/github
+
+  palette:
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - scheme: default
+      primary: deep purple
+      toggle:
+        icon: material/weather-sunny 
+        name: Switch to dark mode
+
+
+nav:
+  - index.md
+  - getting_started.md
+
+# extra:
+#   alternate:
+#     - name: English
+#       link: / 
+#       lang: en
+#     - name: Portuguese (Brasilian)
+#       link: /pt-br/ 
+#       lang: pt-BR
+
+repo_url: https://github.com/mauro-andre/pyodmongo
+repo_name: mauro-andre/pyodmongo
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: pt-BR
+          name: Português - Br
+          build: true
+
+markdown_extensions:
+  - pymdownx.highlight:
+  - pymdownx.blocks.tab:
+      alternate_style: True
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format

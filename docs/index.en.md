@@ -1,4 +1,4 @@
-# <center>PyODMongo</center>
+# <center>Overview</center>
 [<center>![PyPI - Version](https://img.shields.io/pypi/v/pyodmongo)</center>](https://pypi.org/project/pyodmongo/)
 
 ## Overview
@@ -35,51 +35,3 @@ Contributions to `pyodmongo` are welcome! If you find any issues or have ideas f
 
 ## License
 `pyodmongo` is licensed under the MIT License. See the [LICENSE file](https://github.com/mauro-andre/pyodmongo/blob/master/LICENSE) for more information.
-
-
-## Async exemple
-
-```python hl_lines="5"
-from pyodmongo import AsyncDbEngine, DbModel
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-
-async def main():
-    result = await engine.save(box)
-
-asyncio.run(main())
-```
-
-## Sync exemple
-
-```python hl_lines="4"
-from pyodmongo import DbEngine, DbModel
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-result = engine.save(box)
-```

@@ -1,4 +1,5 @@
 from pyodmongo import DbModel, Id
+from pyodmongo.pydantic import EmailStr, ValidationError
 from datetime import datetime
 from typing import ClassVar
 import pytest
@@ -157,3 +158,11 @@ def test_fields_inheritance():
     assert 'attr_1_1' not in MyClass2_2.model_fields
     assert 'attr_2' in MyClass2_2.model_fields
     assert 'attr_2_2' in MyClass2_2.model_fields
+
+
+def test_field_with_email_str():
+    class MyClass(DbModel):
+        attr_1: str
+        email: EmailStr
+    with pytest.raises(ValidationError):
+        obj = MyClass(attr_1='Value one', email='shunda')
