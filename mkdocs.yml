@@ -1,5 +1,6 @@
 site_name: PyODMongo
 site_description: Documentation for PyODMongo
+site_url: https://pyodmongo.dev/
 
 theme:
   language: en
@@ -23,7 +24,6 @@ theme:
 
 
 nav:
-  - overview.md
   - index.md
   - getting_started.md
 
@@ -52,3 +52,12 @@ plugins:
           name: Português brasileiro
           build: true
 
+markdown_extensions:
+  - pymdownx.highlight:
+  - pymdownx.blocks.tab:
+      alternate_style: True
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
