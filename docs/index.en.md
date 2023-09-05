@@ -1,6 +1,5 @@
-# Overview
-
-[![PyPI - Version](https://img.shields.io/pypi/v/pyodmongo)](https://pypi.org/project/pyodmongo/)
+# <center>Overview</center>
+[<center>![PyPI - Version](https://img.shields.io/pypi/v/pyodmongo)</center>](https://pypi.org/project/pyodmongo/)
 
 ## Overview
 

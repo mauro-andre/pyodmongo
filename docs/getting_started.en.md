@@ -1,4 +1,4 @@
-# Getting Started
+# <center>Getting Started</center>
 
 
 In this guide, we'll walk you through the initial steps to get started with `pyodmongo`, a Python MongoDB Object-Document Mapper (ODM). We'll cover creating the engine, defining a model, saving data, and reading from the database.
