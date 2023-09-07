@@ -343,16 +343,3 @@ def collect_model_fields(  # noqa: C901
             field.apply_typevars_map(typevars_map, types_namespace)
 
     return fields, class_vars
-
-
-# def _is_finalvar_with_default_val(type_: type[Any], val: Any) -> bool:
-#     from pydantic.fields import FieldInfo
-
-#     if not is_finalvar(type_):
-#         return False
-#     elif val is PydanticUndefined:
-#         return False
-#     elif isinstance(val, FieldInfo) and (val.default is PydanticUndefined and val.default_factory is None):
-#         return False
-#     else:
-#         return True
