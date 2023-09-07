@@ -1,6 +1,6 @@
 from .meta import PyODMongoMeta
 from .id_model import Id
-from pydantic.main import BaseModel
+from pydantic import BaseModel
 from datetime import datetime
 
 

@@ -1,6 +1,5 @@
-# from ..pydantic.main import BaseModel, ConfigDict
 from .meta import PyODMongoMeta
-from pydantic.main import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict
 from .id_model import Id
 from datetime import datetime
 from ..services.model_init import resolve_indexes, resolve_ref_pipeline, resolve_class_fields_db_info
