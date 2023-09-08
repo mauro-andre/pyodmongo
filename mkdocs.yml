@@ -30,8 +30,7 @@ extra_css:
 nav:
   - index.md
   - getting_started.md
-  - Modeling Documents:
-    - db_model.md
+  - db_model.md
 
 # extra:
 #   alternate:
