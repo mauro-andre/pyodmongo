@@ -18,9 +18,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        python3 -m pip install --upgrade build
-        python3 -m pip install --upgrade twine
+        python3 -m pip install --upgrade pip build twine
 
     - name: Building version
       run: |
