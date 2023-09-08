@@ -1,9 +1,17 @@
 # <center>Overview</center>
-[<center>![PyPI - Version](https://img.shields.io/pypi/v/pyodmongo)</center>](https://pypi.org/project/pyodmongo/)
-
 
 ![Image title](./assets/images/pyodmongo_Logo_BG_Dark.png#only-dark)
 ![Image title](./assets/images/pyodmongo_Logo_BG_White.png#only-light)
+
+<div align="center">
+    <a href="https://pypi.org/project/pyodmongo/" target="_blank">
+      <img src="https://img.shields.io/pypi/v/pyodmongo" alt="coverage">
+    </a>
+    <a href="https://pypi.org/project/pyodmongo/" target="_blank">
+      <img src="https://img.shields.io/badge/Python-3.11-green" alt="pre-commit">
+    </a>
+</div>
+
 
 `pyodmongo` is a Python library that serves as an Object-Document Mapper (ODM) for MongoDB. It is built on top of the popular `pydantic V2` library, making it easy to work with MongoDB documents in a Pythonic and efficient way.
 
