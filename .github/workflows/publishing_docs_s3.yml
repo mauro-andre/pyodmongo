@@ -7,7 +7,7 @@ on:
 
 
 jobs:
-  publishing-on-pypi:
+  update-docs-on-s3-bucket:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -19,8 +19,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip
-        python3 -m pip install --upgrade mkdocs-material
+        python3 -m pip install --upgrade pip mkdocs-material mkdocs-static-i18n
 
     - name: Install AWS CLI
       run: |
