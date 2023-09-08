@@ -1,6 +1,8 @@
 # PyODMongo
 
-![Image title](https://raw.githubusercontent.com/mauro-andre/pyodmongo/mkdocs/docs/assets/images/pyodmongo_Logo_BG_White.png)
+<div align="center">
+      <img src="https://raw.githubusercontent.com/mauro-andre/pyodmongo/mkdocs/docs/assets/images/pyodmongo_Logo_BG_White.png" alt="coverage">
+</div>
 
 <div align="center">
     <a href="https://pypi.org/project/pyodmongo/" target="_blank">
