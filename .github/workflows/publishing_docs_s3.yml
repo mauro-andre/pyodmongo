@@ -1,0 +1,45 @@
+name: Update docs on AWS S3
+
+on:
+  push:
+    branches:
+      - master
+
+
+jobs:
+  publishing-on-pypi:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.x'
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        python3 -m pip install --upgrade mkdocs-material
+
+    - name: Install AWS CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install awscli
+  
+    - name: Configuring AWS CLI
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws configure set region us-east-1
+
+    - name: Building docs
+      run: |
+        mkdocs build
+
+    - name: Upload S3 Bucket
+      run: |
+        aws s3 sync ./site s3://pyodmongo.dev/
+
+
+    
