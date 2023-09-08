@@ -30,7 +30,8 @@ extra_css:
 nav:
   - index.md
   - getting_started.md
-  - db_model.md
+  - Modeling Documents:
+    - db_model.md
 
 # extra:
 #   alternate:
@@ -54,7 +55,6 @@ plugins:
           name: English
           build: true
           nav_translations:
-            Modeling Documents: Modeling Documents
         - locale: pt-BR
           name: Português - Br
           build: true
