@@ -5,23 +5,27 @@ site_url: https://pyodmongo.dev/
 theme:
   language: en
   name: material
+  logo: assets/images/logo.png
   icon:
     repo: fontawesome/brands/github
+
 
   palette:
     # Palette toggle for dark mode
     - scheme: slate
-      primary: deep purple
+      primary: green
       toggle:
         icon: material/weather-night
         name: Switch to light mode
     # Palette toggle for light mode
     - scheme: default
-      primary: deep purple
+      primary: green
       toggle:
         icon: material/weather-sunny 
         name: Switch to dark mode
 
+extra_css:
+  - stylesheets/extras.css
 
 nav:
   - index.md
