@@ -30,6 +30,8 @@ extra_css:
 nav:
   - index.md
   - getting_started.md
+  - Modeling Documents:
+    - db_model.md
 
 # extra:
 #   alternate:
@@ -55,11 +57,15 @@ plugins:
         - locale: pt-BR
           name: Português - Br
           build: true
+          nav_translations:
+            Modeling Documents: Modelando documentos
 
 markdown_extensions:
   - pymdownx.highlight:
   - pymdownx.blocks.tab:
       alternate_style: True
+  - admonition:
+  - pymdownx.details:
   - pymdownx.superfences:
       custom_fences:
         - name: mermaid
