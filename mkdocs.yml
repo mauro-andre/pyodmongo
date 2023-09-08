@@ -54,6 +54,8 @@ plugins:
           default: true
           name: English
           build: true
+          nav_translations:
+            Modeling Documents: Modeling Documents
         - locale: pt-BR
           name: Português - Br
           build: true
