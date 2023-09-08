@@ -1,5 +1,5 @@
 from pyodmongo import DbModel, Id
-from pyodmongo.pydantic import EmailStr, ValidationError
+from pydantic import EmailStr, ValidationError
 from datetime import datetime
 from typing import ClassVar
 import pytest

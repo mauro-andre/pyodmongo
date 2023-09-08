@@ -1,6 +1,6 @@
 from typing import Any
 from bson import ObjectId
-from ..pydantic import GetCoreSchemaHandler
+from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema, CoreSchema
 from pydantic_core.core_schema import ValidationInfo, str_schema
 
@@ -9,6 +9,12 @@ class Id(str):
 
     @classmethod
     def validate(cls, v, _: ValidationInfo):
+        if not ObjectId.is_valid(v):
+            raise ValueError('invalid Id')
+        return str(v)
+
+    @classmethod
+    def serialization(cls, v):
         if not ObjectId.is_valid(v):
             raise ValueError('invalid Id')
         return str(v)
@@ -23,6 +29,17 @@ class Id(str):
             ),
             json_schema=str_schema(),
             serialization=core_schema.plain_serializer_function_ser_schema(
-                lambda instance: str(instance)
+                lambda v: str(v) if ObjectId.is_valid(v) else v
             ),
         )
+
+    # @classmethod
+    # def __get_pydantic_json_schema__(
+    #     cls, schema: core_schema.CoreSchema, handler: GetJsonSchemaHandler  # type: ignore
+    # ) -> JsonSchemaValue:
+    #     json_schema = handler(schema)
+    #     # json_schema.update(
+    #     #     type="string",
+    #     #     example="5eb7cf5a86d9755df3a6c593",
+    #     # )
+    #     return json_schema
