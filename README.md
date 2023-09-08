@@ -1,4 +1,3 @@
-# PyODMongo
 
 <div align="center">
     <a href="https://pyodmongo.dev" target="_blank">
