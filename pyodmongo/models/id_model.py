@@ -9,6 +9,8 @@ class Id(str):
 
     @classmethod
     def validate(cls, v, _: ValidationInfo):
+        if v is None:
+            return v
         if not ObjectId.is_valid(v):
             raise ValueError('invalid Id')
         return str(v)

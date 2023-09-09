@@ -1,10 +1,17 @@
 from pymongo import MongoClient
+from pymongo.results import UpdateResult, DeleteResult
+from ..models.responses import SaveResponse, DeleteResponse
 from ..engine.utils import consolidate_dict, mount_base_pipeline
 from ..models.paginate import ResponsePaginate
 from ..models.query_operators import LogicalOperator, ComparisonOperator
+from ..models.db_model import DbModel
 from datetime import datetime
+from typing import TypeVar
 from bson import ObjectId
 from math import ceil
+
+
+Model = TypeVar('Model', bound=DbModel)
 
 
 class DbEngine:
@@ -25,10 +32,14 @@ class DbEngine:
         }
         if len(indexes) > 0:
             collection.create_indexes(indexes)
-        result = collection.update_many(filter=find_filter, update=to_save, upsert=True)
-        return result.raw_result
+        result: UpdateResult = collection.update_many(filter=find_filter, update=to_save, upsert=True)
+        return SaveResponse(acknowledged=result.acknowledged,
+                            matched_count=result.matched_count,
+                            modified_count=result.modified_count,
+                            upserted_id=result.upserted_id,
+                            raw_result=result.raw_result)
 
-    def __aggregate(self, Model, pipeline):
+    def __aggregate(self, Model: type[Model], pipeline):
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
         return [Model(**doc) for doc in docs_cursor]
 
@@ -39,20 +50,29 @@ class DbEngine:
         except IndexError as e:
             return 0
 
-    def delete_one(self, Model, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None):
+    def delete_one(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> DeleteResponse:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         raw_query = {} if not raw_query else raw_query
-        result = self._db[Model._collection].delete_one(filter=query.operator_dict() if query else raw_query)
-        if result.deleted_count == 0:
-            {'document_deleted': 0}
-        return {'document_deleted': result.deleted_count}
+        result: DeleteResult = self._db[Model._collection].delete_one(filter=query.operator_dict() if query else raw_query)
+        return DeleteResponse(acknowledged=result.acknowledged,
+                              deleted_count=result.deleted_count,
+                              raw_result=result.raw_result)
+
+    def delete(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> DeleteResponse:
+        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
+            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+        raw_query = {} if not raw_query else raw_query
+        result: DeleteResult = self._db[Model._collection].delete_many(filter=query.operator_dict() if query else raw_query)
+        return DeleteResponse(acknowledged=result.acknowledged,
+                              deleted_count=result.deleted_count,
+                              raw_result=result.raw_result)
 
     # ----------END DB OPERATIONS----------
 
     # ---------ACTIONS----------
 
-    def save(self, obj, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None):
+    def save(self, obj, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> SaveResponse:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         dct = consolidate_dict(obj=obj, dct={})
@@ -61,13 +81,13 @@ class DbEngine:
                                 indexes=obj._indexes,
                                 query=query.operator_dict() if query else raw_query)
 
-    def save_all(self, obj_list: list):
+    def save_all(self, obj_list: list) -> list[SaveResponse]:
         result = []
         for obj in obj_list:
             result.append(self.save(obj))
         return result
 
-    def find_one(self, Model, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False):
+    def find_one(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False) -> type[Model]:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         raw_query = {} if not raw_query else raw_query
@@ -81,7 +101,7 @@ class DbEngine:
         except IndexError:
             return None
 
-    def find_many(self, Model, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False, current_page: int = 1, docs_per_page: int = 1000) -> ResponsePaginate:
+    def find_many(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False, current_page: int = 1, docs_per_page: int = 1000) -> ResponsePaginate:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         max_docs_per_page = 1000
