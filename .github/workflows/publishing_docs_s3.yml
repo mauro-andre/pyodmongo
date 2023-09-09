@@ -39,6 +39,10 @@ jobs:
     - name: Upload S3 Bucket
       run: |
         aws s3 sync ./site s3://pyodmongo.dev/
+    
+    - name: CloudFront Invalidation
+      run: |
+        aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
 
 
     
