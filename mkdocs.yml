@@ -32,7 +32,8 @@ nav:
   - getting_started.md
   - Modeling Documents:
     - db_model.md
-
+  - CRUD:
+    - save.md
 # extra:
 #   alternate:
 #     - name: English
