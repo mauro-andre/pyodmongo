@@ -1,3 +1,10 @@
-.md-header {
-    background-color: #071F2A;
+[data-md-color-accent=indigo] {
+    --md-accent-fg-color: #5D9B40;
+    --md-typeset-a-color: #5D9B40;
+}
+
+:root {
+    --md-primary-fg-color: #071F2A;
+    --md-primary-fg-color--light: #071F2A;
+    --md-primary-fg-color--dark: #0e2833;
 }
