@@ -14,6 +14,14 @@
     </a>
 </div>
 
+---
+
+**Documentation** (*Under construction*): <a href="https://pyodmongo.dev" target="_blank">https://pyodmongo.dev</a>
+
+**Source Code**: <a href="https://github.com/mauro-andre/pyodmongo" target="_blank">https://github.com/mauro-andre/pyodmongo</a>
+
+---
+
 `pyodmongo` is a Python library that serves as an Object-Document Mapper (ODM) for MongoDB. It is built on top of the popular `pydantic V2` library, making it easy to work with MongoDB documents in a Pythonic and efficient way.
 
 With `pyodmongo`, you can seamlessly map your Python classes to MongoDB documents, allowing you to work with data in a more intuitive and Pythonic manner. It simplifies the process of defining and interacting with MongoDB collections, documents, and queries.
