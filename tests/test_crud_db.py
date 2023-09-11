@@ -3,7 +3,6 @@ from pyodmongo.queries import eq, gte, gt
 from typing import ClassVar
 from bson import ObjectId
 import pytest
-from random import randint
 
 mongo_uri = 'mongodb://localhost:27017'
 db_name = 'pyodmongo_pytest'
@@ -13,7 +12,7 @@ db = DbEngine(mongo_uri=mongo_uri, db_name=db_name)
 class MyClass(DbModel):
     attr1: str
     attr2: str
-    random_number: int = None
+    random_number: int | None = None
     _collection: ClassVar = 'my_class_test'
 
 
@@ -34,7 +33,7 @@ def create_100_docs_in_db():
 
 @pytest.fixture()
 def new_obj() -> type[MyClass]:
-    yield MyClass(attr1='attr_1', attr2='attr_2', random_number=randint(1, 100))
+    yield MyClass(attr1='attr_1', attr2='attr_2')
 
 
 def test_check_if_create_a_new_doc_on_save(drop_collection, new_obj):
