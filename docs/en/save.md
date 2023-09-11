@@ -101,7 +101,7 @@ The `save` method in PyODMongo returns a `SaveResponse` object that provides inf
 
 - `matched_count`: An integer that represents the number of documents in the database that matched the query or criteria specified during the save operation. This count indicates how many existing documents were updated as part of the save operation.
 
-- `modified_count`: An integer that represents the number of documents in the database that were actually modified during the save operation. This count is usually the same as or a subset of the matched_count and indicates how many documents had their fields changed.
+- `modified_count`: An integer that represents the number of documents in the database that were actually modified during the save operation. This count is usually the same as or a subset of the `matched_count` and indicates how many documents had their fields changed.
 
 - `upserted_id`: If the save operation resulted in the insertion of a new document (upsert), this attribute holds the `_id` of the newly inserted document. When no upsert occurs, this attribute is `None`.
 
