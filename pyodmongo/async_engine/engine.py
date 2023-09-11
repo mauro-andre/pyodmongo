@@ -40,7 +40,7 @@ class AsyncDbEngine:
                             upserted_id=result.upserted_id,
                             raw_result=result.raw_result)
 
-    async def __aggregate(self, Model: type[Model], pipeline):
+    async def __aggregate(self, Model: type[Model], pipeline) -> list[type[Model]]:
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
         return [Model(**doc) async for doc in docs_cursor]
 
@@ -100,9 +100,21 @@ class AsyncDbEngine:
         except IndexError:
             return None
 
-    async def find_many(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False, current_page: int = 1, docs_per_page: int = 1000) -> ResponsePaginate:
+    async def find_many(
+            self, Model: type[Model],
+            query: ComparisonOperator | LogicalOperator = None,
+            raw_query: dict = None, populate: bool = False,
+            paginate: bool = False,
+            current_page: int = 1,
+            docs_per_page: int = 1000
+    ):
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+        pipeline = mount_base_pipeline(Model=Model,
+                                       query=query.operator_dict() if query else raw_query,
+                                       populate=populate)
+        if not paginate:
+            return await self.__aggregate(Model=Model, pipeline=pipeline)
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
         docs_per_page = max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
@@ -113,9 +125,6 @@ class AsyncDbEngine:
         limit_stage = [{'$limit': docs_per_page}]
 
         raw_query = {} if not raw_query else raw_query
-        pipeline = mount_base_pipeline(Model=Model,
-                                       query=query.operator_dict() if query else raw_query,
-                                       populate=populate)
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 

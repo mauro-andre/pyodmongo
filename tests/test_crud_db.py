@@ -1,5 +1,5 @@
-from pyodmongo import DbEngine, DbModel, SaveResponse, DeleteResponse
-from pyodmongo.queries import eq
+from pyodmongo import DbEngine, DbModel, SaveResponse, DeleteResponse, ResponsePaginate
+from pyodmongo.queries import eq, gte, gt
 from typing import ClassVar
 from bson import ObjectId
 import pytest
@@ -12,6 +12,7 @@ db = DbEngine(mongo_uri=mongo_uri, db_name=db_name)
 class MyClass(DbModel):
     attr1: str
     attr2: str
+    random_number: int | None = None
     _collection: ClassVar = 'my_class_test'
 
 
@@ -20,6 +21,14 @@ def drop_collection():
     db._db[MyClass._collection].drop()
     yield MyClass(attr1='attr_1', attr2='attr_2')
     db._db[MyClass._collection].drop()
+
+
+@pytest.fixture()
+def create_100_docs_in_db():
+    obj_list = []
+    for n in range(1, 101):
+        obj_list.append(MyClass(attr1='Value 1', attr2='Value 2', random_number=n))
+    db.save_all(obj_list)
 
 
 @pytest.fixture()
@@ -87,3 +96,21 @@ def test_delete(drop_collection, objs):
     db.save_all(objs)
     response: DeleteResponse = db.delete(MyClass, eq(MyClass.attr1, 'attr_1'))
     assert response.deleted_count == 3
+
+
+def test_find_many_without_paginate(drop_collection, create_100_docs_in_db):
+    obj_list_50 = db.find_many(Model=MyClass, query=gt(MyClass.random_number, 50))
+    obj_list_100 = db.find_many(Model=MyClass, query=gt(MyClass.random_number, 0))
+    assert len(obj_list_50) == 50
+    assert len(obj_list_100) == 100
+    assert all(isinstance(obj, MyClass) for obj in obj_list_100)
+
+
+def test_find_many_with_paginate(drop_collection, create_100_docs_in_db):
+    response_paginate: ResponsePaginate = db.find_many(Model=MyClass,
+                                                       query=gt(MyClass.random_number, 50),
+                                                       paginate=True,
+                                                       docs_per_page=10)
+    assert isinstance(response_paginate, ResponsePaginate)
+    assert response_paginate.docs_quantity == 50
+    assert len(response_paginate.docs) == 10
