@@ -13,13 +13,13 @@ theme:
   palette:
     # Palette toggle for dark mode
     - scheme: slate
-      primary: green
+      primary: custom
       toggle:
         icon: material/weather-night
         name: Switch to light mode
     # Palette toggle for light mode
     - scheme: default
-      primary: green
+      primary: custom
       toggle:
         icon: material/weather-sunny 
         name: Switch to dark mode
@@ -32,7 +32,8 @@ nav:
   - getting_started.md
   - Modeling Documents:
     - db_model.md
-
+  - CRUD:
+    - save.md
 # extra:
 #   alternate:
 #     - name: English
