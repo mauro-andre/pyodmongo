@@ -80,12 +80,12 @@ def objs() -> list[SaveResponse]:
 @pytest.mark.asyncio
 async def test_save_all_created(drop_collection, objs):
     response: list[SaveResponse] = await db.save_all(objs)
-    upseted_quantity = 0
+    upserted_quantity = 0
     for obj_response in response:
         obj_response: SaveResponse
-        upseted_quantity += 1 if ObjectId.is_valid(obj_response.upserted_id) else 0
+        upserted_quantity += 1 if ObjectId.is_valid(obj_response.upserted_id) else 0
 
-    assert upseted_quantity == 6
+    assert upserted_quantity == 6
 
 
 @pytest.mark.asyncio
