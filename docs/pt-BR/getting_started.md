@@ -1,10 +1,10 @@
 # <center>Primeiros passos</center>
 
-Neste guia, orientaremos você nas etapas iniciais para começar a usar o `pyodmongo`, um Mapeador de Objetos-Documentos (ODM) do MongoDB em Python. Abordaremos a criação de um motor, a definição de um modelo, o salvamento de dados e a leitura do banco de dados.
+Neste guia, orientaremos você nas etapas iniciais para começar a usar o PyODMongo, um Mapeador de Objetos-Documentos (ODM) do MongoDB em Python. Abordaremos a criação de um motor, a definição de um modelo, o salvamento de dados e a leitura do banco de dados.
 
 ## Criando o motor
 
-Para começar a usar o `pyodmongo`, primeiro você precisa criar uma instância da classe `AsyncDbEngine` ou `DbEngine` para se conectar ao seu servidor MongoDB. Veja como você pode fazer isso:
+Para começar a usar o PyODMongo, primeiro você precisa criar uma instância da classe `AsyncDbEngine` ou `DbEngine` para se conectar ao seu servidor MongoDB. Veja como você pode fazer isso:
 
 /// tab | Async
 ```python hl_lines="5"
@@ -210,4 +210,4 @@ box: Product = engine.find_one(Model=Product, query=query)
 
 Este código consulta o banco de dados em busca de um produto com o nome 'Box' e cria um objeto do tipo `Product` com o documento encontrado no banco de dados.
 
-Estes são os primeiros passos para você começar a usar o `pyodmongo`. Agora você pode criar, salvar e ler dados de seu banco de dados MongoDB usando este Mapeador de Objetos-Documentos MongoDB em Python.
+Estes são os primeiros passos para você começar a usar o PyODMongo. Agora você pode criar, salvar e ler dados de seu banco de dados MongoDB usando este Mapeador de Objetos-Documentos MongoDB em Python.
