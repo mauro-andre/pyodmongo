@@ -2,12 +2,13 @@ from bson import ObjectId
 from pydantic import BaseModel
 from ..models.db_field_info import DbFieldInfo
 from ..models.id_model import Id
+from typing import Any
 
 
-def consolidate_dict(obj: BaseModel, dct: dict):
+def consolidate_dict(obj: BaseModel, dct: dict, base_class: Any):
     for field in obj.model_fields.keys():
         value = getattr(obj, field)
-        db_field_info: DbFieldInfo = getattr(obj.__class__, field)
+        db_field_info: DbFieldInfo = getattr(base_class, field)
         alias = db_field_info.field_alias
         has_model_fields = db_field_info.has_model_fields
         is_list = db_field_info.is_list
@@ -24,7 +25,7 @@ def consolidate_dict(obj: BaseModel, dct: dict):
                         dct[alias] = ObjectId(value)
                 else:
                     dct[alias] = {}
-                    consolidate_dict(obj=value, dct=dct[alias])
+                    consolidate_dict(obj=value, dct=dct[alias], base_class=db_field_info)
             else:
                 if by_reference:
                     try:
@@ -35,16 +36,17 @@ def consolidate_dict(obj: BaseModel, dct: dict):
                     dct[alias] = []
                     for v in value:
                         obj_lst_elem = {}
-                        consolidate_dict(obj=v, dct=obj_lst_elem)
+                        consolidate_dict(obj=v, dct=obj_lst_elem, base_class=db_field_info)
                         dct[alias].append(obj_lst_elem)
         else:
             if alias == 'id':
                 alias = '_id'
             if db_field_info.field_type == Id:
                 if is_list:
-                    dct[alias] = [ObjectId(o) for o in value]
+                    dct[alias] = [ObjectId(o) for o in value if ObjectId.is_valid(o)]
+                    # TODO test this condition
                 else:
-                    dct[alias] = ObjectId(value)
+                    dct[alias] = ObjectId(value) if ObjectId.is_valid(value) else value
             else:
                 dct[alias] = value
     return dct
