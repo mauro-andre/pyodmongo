@@ -66,6 +66,7 @@ result: SaveResponse = engine.save(box)
 
 In addition to the `save` method, PyODMongo provides the `save_all` method, which enables you to save a list of objects. This method is particularly useful when you need to save multiple documents.
 
+/// tab | Async
 ```python hl_lines="22"
 class Product(DbModel):
     name: str
@@ -87,9 +88,37 @@ obj_list = [
     User(name='John', email='john@email.com', password='john_pwd')
 ]
 
+async def main():
+    result: list[SaveResponse] = await engine.save_all(obj_list)
+
+asyncio.run(main())
+```
+///
+/// tab | Sync
+```python hl_lines="21"
+class Product(DbModel):
+    name: str
+    price: float
+    is_available: bool
+    _collection: ClassVar = 'products'
+
+
+class User(DbModel):
+    name: str
+    email: str
+    password: str
+    _collection: ClassVar = 'users'
+
+
+obj_list = [
+    Product(name='Box', price='5.99', is_available=True),
+    Product(name='Ball', price='6.99', is_available=True),
+    User(name='John', email='john@email.com', password='john_pwd')
+]
 
 result: list[SaveResponse] = engine.save_all(obj_list)
 ```
+///
 
 ## Save response
 
