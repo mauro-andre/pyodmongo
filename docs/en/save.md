@@ -2,7 +2,7 @@
 
 ## Save
 
-The `save` method is a part of the `AsyncDbEngine` and `DbEngine` classes in PyODMongo. It is responsible for saving or updating documents in the database.
+The `save` method is a part of the `AsyncDbEngine` and `DbEngine` classes in **PyODMongo**. It is responsible for saving or updating documents in the database.
 
 /// tab | Async
 ```python hl_lines="19"
@@ -61,12 +61,12 @@ result: SaveResponse = engine.save(box)
     If `raw_query` is passed, `query` will not be considered.
 
 !!! note
-    Under the hood, PyODMongo uses the `update_many` operation with `upsert=True`, which means it can add or update one or multiple documents.
+    Under the hood, **PyODMongo** uses the `update_many` operation with `upsert=True`, which means it can add or update one or multiple documents.
 
 
 ## Save all
 
-In addition to the `save` method, PyODMongo provides the `save_all` method, which enables you to save a list of objects. This method is particularly useful when you need to save multiple documents.
+In addition to the `save` method, **PyODMongo** provides the `save_all` method, which enables you to save a list of objects. This method is particularly useful when you need to save multiple documents.
 
 /// tab | Async
 ```python hl_lines="22"
@@ -124,7 +124,7 @@ result: list[SaveResponse] = engine.save_all(obj_list)
 
 ## Save response
 
-The `save` method in PyODMongo returns a `SaveResponse` object that provides information about the outcome of the save operation. This object contains several attributes that give insights into how the save operation affected the database.
+The `save` method in **PyODMongo** returns a `SaveResponse` object that provides information about the outcome of the save operation. This object contains several attributes that give insights into how the save operation affected the database.
 
 ### Attributes
 
