@@ -82,7 +82,7 @@ async def main():
     # Define a query (in this case, we're using the 'eq' method from 'pyodmongo.queries')
     query = gte(Product.price, 5)
 
-    # Use 'find_one' to retrieve a single product based on the query
+    # Use 'find_many' to retrieve a list of products based on the query
     result: Product = await engine.find_many(Model=Product, query=query)
 
 asyncio.run(main())
