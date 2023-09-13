@@ -16,7 +16,7 @@
 
 Ao usar o **PyODMongo**, você pode mapear facilmente suas classes Python para documentos MongoDB, permitindo uma abordagem mais Pythonica para lidar com dados. Esta biblioteca simplifica todo o processo de definição e trabalho com coleções, documentos e consultas do MongoDB.
 
-**PyODMongo** é construído sobre **Pydantic V2**, tornando a classe `DbModel` uma extensão da `BaseModel` do Pydantic. Isso significa que toda a rica funcionalidade da `BaseModel` do Pydantic, incluindo validadores e Fields, está prontamente disponível em `DbModel`.
+**PyODMongo** é construído sobre **Pydantic V2**, tornando a classe `DbModel` uma extensão da `BaseModel` do Pydantic. Isso significa que toda a rica funcionalidade da `BaseModel` do Pydantic, incluindo **Validators**, **Fields** e **Model Config**, está prontamente disponível em `DbModel`.
 
 ## Principais Recursos
 

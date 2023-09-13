@@ -17,7 +17,7 @@
 
 By using **PyODMongo**, you can effortlessly map your Python classes to MongoDB documents, allowing for a more Pythonic approach to handling data. This library simplifies the entire process of defining and working with MongoDB collections, documents, and queries.
 
-**PyODMongo** is built on top of **Pydantic V2**, making the `DbModel` class an extension of Pydantic's `BaseModel`. This means that all the rich functionality of Pydantic's `BaseModel`, including validators and Fields, is readily available in `DbModel`.
+**PyODMongo** is built on top of **Pydantic V2**, making the `DbModel` class an extension of Pydantic's `BaseModel`. This means that all the rich functionality of Pydantic's `BaseModel`, including **Validators**, **Fields** and **Model Config**, is readily available in `DbModel`.
 
 ## Key Features
 
