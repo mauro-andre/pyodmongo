@@ -1,11 +1,11 @@
 # <center>Getting Started</center>
 
 
-In this guide, we'll walk you through the initial steps to get started with PyODMongo, a Python MongoDB Object-Document Mapper (ODM). We'll cover creating the engine, defining a model, saving data, and reading from the database.
+In this guide, we'll walk you through the initial steps to get started with **PyODMongo**, a Python MongoDB Object-Document Mapper (ODM). We'll cover creating the engine, defining a model, saving data, and reading from the database.
 
 ## Creating the Engine
 
-To begin using PyODMongo, you first need to create an instance of the `AsyncDbEngine` or `DbEngine` class to connect to your MongoDB server. Here's how you can do it:
+To begin using **PyODMongo**, you first need to create an instance of the `AsyncDbEngine` or `DbEngine` class to connect to your MongoDB server. Here's how you can do it:
 
 /// tab | Async
 ```python hl_lines="5"
@@ -211,4 +211,4 @@ box: Product = engine.find_one(Model=Product, query=query)
 
 This code queries the database for a product with name 'Box' and creates a `Product` type object with the document found in database.
 
-These are the first steps to get you started with PyODMongo. You can now create, save, and read data from your MongoDB database using this Python MongoDB Object-Document Mapper.
+These are the first steps to get you started with **PyODMongo**. You can now create, save, and read data from your MongoDB database using this Python MongoDB Object-Document Mapper.

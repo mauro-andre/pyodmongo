@@ -2,7 +2,7 @@
 
 ## Find one
 
-The `find_one` method is available in both `AsyncDbEngine` and `DbEngine` classes of the PyODMongo library. This method is used to retrieve a single object from the database based on specified criteria.
+The `find_one` method is available in both `AsyncDbEngine` and `DbEngine` classes of the **PyODMongo** library. This method is used to retrieve a single object from the database based on specified criteria.
 
 /// tab | Async
 ```python hl_lines="21"
@@ -67,7 +67,7 @@ result: Product = engine.find_one(Model=Product, query=query)
 
 ## Find many
 
-The `find_many` method in the PyODMongo library is similar to the `find_one` method, but it retrieves a list of objects that match the specified criteria.
+The `find_many` method in the **PyODMongo** library is similar to the `find_one` method, but it retrieves a list of objects that match the specified criteria.
 
 /// tab | Async
 ```python hl_lines="13"
@@ -119,7 +119,7 @@ Additionally, it includes three extra arguments for pagination control:
 
 ### Paginate
 
-When you set `paginate=True` in the `find_many` method of PyODMongo, the result of the query will be encapsulated in an object of type `ResponsePaginate`. This allows for efficient and organized retrieval of query results across multiple pages. The `ResponsePaginate` object contains the following attributes:
+When you set `paginate=True` in the `find_many` method of **PyODMongo**, the result of the query will be encapsulated in an object of type `ResponsePaginate`. This allows for efficient and organized retrieval of query results across multiple pages. The `ResponsePaginate` object contains the following attributes:
 
 - `current_page: int`: Indicates the current page of the search results.
 - `page_quantity: int`: Represents the total number of pages in the search results.
@@ -159,12 +159,12 @@ result: ResponsePaginate = engine.find_many(Model=Product, query=query, paginate
 
 ## Populate
 
-The populate feature in the PyODMongo library is a powerful mechanism for automatically populating all references within an object, including nested references. This feature simplifies working with related data in MongoDB and allows you to access linked documents without having to manually retrieve them one by one. The populate functionality has the following behavior:
+The populate feature in the **PyODMongo** library is a powerful mechanism for automatically populating all references within an object, including nested references. This feature simplifies working with related data in MongoDB and allows you to access linked documents without having to manually retrieve them one by one. The populate functionality has the following behavior:
 
-- When you enable `populate=True` in `find_one` o `find_many `, PyODMongo will populate all references within that object.
-- If the references themselves have additional references, PyODMongo will recursively populate those as well, traversing through all levels of reference until it encounters a reference that is a list.
+- When you enable `populate=True` in `find_one` o `find_many `, **PyODMongo** will populate all references within that object.
+- If the references themselves have additional references, **PyODMongo** will recursively populate those as well, traversing through all levels of reference until it encounters a reference that is a list.
 - Reference lists are also populated, but if the objects within the list have their own references, they will not be populated.
 
 !!! note
-    To ensure excellent performance, PyODMongo leverages the power of MongoDB's Aggregation framework under the hood. The Aggregation framework is a powerful and efficient tool for processing and transforming data within MongoDB. 
+    To ensure excellent performance, **PyODMongo** leverages the power of MongoDB's Aggregation framework under the hood. The Aggregation framework is a powerful and efficient tool for processing and transforming data within MongoDB. 
 
