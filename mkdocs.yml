@@ -33,6 +33,7 @@ nav:
   - getting_started.md
   - Modeling Documents:
     - db_model.md
+    - fields.md
   - CRUD:
     - save.md
     - find.md
