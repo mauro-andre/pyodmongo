@@ -83,7 +83,7 @@ async def main():
     query = gte(Product.price, 5)
 
     #  Use 'find_many' to retrieve a list of products based on the query
-    result: Product = await engine.find_many(Model=Product, query=query)
+    result: list[Product] = await engine.find_many(Model=Product, query=query)
 
 asyncio.run(main())
 ```
