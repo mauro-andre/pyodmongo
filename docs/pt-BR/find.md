@@ -2,7 +2,7 @@
 
 ## Find one
 
-O método `find_one` está disponível nas classes `AsyncDbEngine` e `DbEngine` da biblioteca PyODMongo. Este método é usado para recuperar um único objeto do banco de dados com base em critérios especificados.
+O método `find_one` está disponível nas classes `AsyncDbEngine` e `DbEngine` da biblioteca **PyODMongo**. Este método é usado para recuperar um único objeto do banco de dados com base em critérios especificados.
 
 /// tab | Async
 ```python hl_lines="21"
@@ -67,7 +67,7 @@ result: Product = engine.find_one(Model=Product, query=query)
 
 ## Find many
 
-O método `find_many` na biblioteca PyODMongo é semelhante ao método `find_one`, mas recupera uma lista de objetos que correspondem aos critérios especificados.
+O método `find_many` na biblioteca **PyODMongo** é semelhante ao método `find_one`, mas recupera uma lista de objetos que correspondem aos critérios especificados.
 
 /// tab | Async
 ```python hl_lines="13"
@@ -82,7 +82,7 @@ async def main():
     # Define a query (in this case, we're using the 'eq' method from 'pyodmongo.queries')
     query = gte(Product.price, 5)
 
-    # Use 'find_one' to retrieve a single product based on the query
+    # Use 'find_many' to retrieve a list of products based on the query
     result: Product = await engine.find_many(Model=Product, query=query)
 
 asyncio.run(main())
@@ -119,7 +119,7 @@ Além disso, inclui três argumentos extras para controle de paginação:
 
 ### Paginate
 
-Quando você define `paginate=True` no método `find_many` do PyODMongo, o resultado da consulta será encapsulado em um objeto do tipo `ResponsePaginate`. Isso permite a recuperação eficiente e organizada dos resultados da consulta em várias páginas. O objeto `ResponsePaginate` contém os seguintes atributos:
+Quando você define `paginate=True` no método `find_many` do **PyODMongo**, o resultado da consulta será encapsulado em um objeto do tipo `ResponsePaginate`. Isso permite a recuperação eficiente e organizada dos resultados da consulta em várias páginas. O objeto `ResponsePaginate` contém os seguintes atributos:
 
 - `current_page: int`: Indica a página atual do resultado da pesquisa.
 - `page_quantity: int`: Representa o número total de páginas no resultado da pesquisa.
@@ -159,12 +159,12 @@ result: ResponsePaginate = engine.find_many(Model=Product, query=query, paginate
 
 ## Populate
 
-O recurso populate da biblioteca PyODMongo é um mecanismo poderoso para preencher automaticamente todas as referências dentro de um objeto, incluindo referências aninhadas. Este recurso simplifica o trabalho com dados relacionados no MongoDB e permite acessar documentos vinculados sem precisar recuperá-los manualmente, um por um. A funcionalidade populate tem o seguinte comportamento:
+O recurso populate da biblioteca **PyODMongo** é um mecanismo poderoso para preencher automaticamente todas as referências dentro de um objeto, incluindo referências aninhadas. Este recurso simplifica o trabalho com dados relacionados no MongoDB e permite acessar documentos vinculados sem precisar recuperá-los manualmente, um por um. A funcionalidade populate tem o seguinte comportamento:
 
-- Quando você habilita `populate=True` em `find_one` ou `find_many `, o PyODMongo preencherá todas as referências dentro desse objeto.
-- Se as próprias referências tiverem referências adicionais, o PyODMongo também as preencherá recursivamente, percorrendo todos os níveis de referência até encontrar uma referência que seja uma lista.
+- Quando você habilita `populate=True` em `find_one` ou `find_many `, o **PyODMongo** preencherá todas as referências dentro desse objeto.
+- Se as próprias referências tiverem referências adicionais, o **PyODMongo** também as preencherá recursivamente, percorrendo todos os níveis de referência até encontrar uma referência que seja uma lista.
 - Listas de referências também são populadas, mas se os objetos dentro da lista tiverem referências próprias, elas não serão preenchidas.
 
 !!! note
-    Para garantir um excelente desempenho, o PyODMongo aproveita o poder da estrutura de agregação do MongoDB. Trata-se de uma ferramenta poderosa e eficiente para processar e transformar dados no MongoDB.
+    Para garantir um excelente desempenho, o **PyODMongo** aproveita o poder da estrutura de agregação do MongoDB. Trata-se de uma ferramenta poderosa e eficiente para processar e transformar dados no MongoDB.
 

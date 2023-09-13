@@ -1,6 +1,7 @@
 site_name: PyODMongo
-site_description: Documentation for PyODMongo
+site_description: A modern Python ODM for MongoDB
 site_url: https://pyodmongo.dev/
+site_author: Mauro André
 
 theme:
   language: en
@@ -32,9 +33,11 @@ nav:
   - getting_started.md
   - Modeling Documents:
     - db_model.md
+    - fields.md
   - CRUD:
     - save.md
     - find.md
+    - delete.md
 # extra:
 #   alternate:
 #     - name: English
