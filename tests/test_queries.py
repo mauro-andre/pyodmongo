@@ -1,7 +1,7 @@
 from pyodmongo import DbModel, Field, Id
 from typing import ClassVar
 from bson import ObjectId
-from pyodmongo.queries import (eq, gt, gte, in_, lt, lte, ne, nin, text, and_, or_, mount_query_filter)
+from pyodmongo.queries import (eq, gt, gte, in_, lt, lte, ne, nin, text, and_, or_, nor, mount_query_filter)
 import pytest
 from pprint import pprint
 
@@ -41,9 +41,11 @@ def test_logical_operators():
     op2 = gt(Model3.f.id, '64e8ef019af47dc6f91c5a48')
     and_query = and_(op1, op2)
     or_query = or_(op1, op2)
+    nor_query = nor(op1, op2)
 
     assert and_query.operator_dict() == {'$and': [{'f.eAlias.aAlias': {'$eq': 'value'}}, {'f._id': {'$gt': ObjectId('64e8ef019af47dc6f91c5a48')}}]}
     assert or_query.operator_dict() == {'$or': [{'f.eAlias.aAlias': {'$eq': 'value'}}, {'f._id': {'$gt': ObjectId('64e8ef019af47dc6f91c5a48')}}]}
+    assert nor_query.operator_dict() == {'$nor': [{'f.eAlias.aAlias': {'$eq': 'value'}}, {'f._id': {'$gt': ObjectId('64e8ef019af47dc6f91c5a48')}}]}
 
 
 def test_mount_query_filter_with_invalid_field():
