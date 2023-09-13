@@ -36,6 +36,7 @@ nav:
   - CRUD:
     - save.md
     - find.md
+    - delete.md
 # extra:
 #   alternate:
 #     - name: English
