@@ -76,7 +76,7 @@ class AsyncDbEngine:
     async def save(self, obj: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> SaveResponse:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
-        dct = consolidate_dict(obj=obj, dct={}, base_class=obj.__class__)
+        dct = consolidate_dict(obj=obj, dct={})
         now, save_response = await self.__save_dict(dict_to_save=dct,
                                                     collection=self._db[obj._collection],
                                                     indexes=obj._indexes,
