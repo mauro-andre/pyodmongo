@@ -143,3 +143,18 @@ def test_multiples_nested_references():
                                                          'from': 'my_type_4',
                                                          'localField': 'my_type_4'}},
                                             {'$set': {'my_type_4': {'$arrayElemAt': ['$my_type_4', 0]}}}]
+
+
+def test_manual_pipeline():
+    class MyModel1(DbModel):
+        attr1: str
+        _collection: ClassVar = 'my_model_1'
+
+    class MyModel2(DbModel):
+        attr2: str
+        my_model_1: MyModel1
+        _collection: ClassVar = 'my_model_2'
+        _pipeline: ClassVar = ['manual pipeline here']
+
+    assert MyModel1._pipeline == []
+    assert MyModel2._pipeline == ['manual pipeline here']
