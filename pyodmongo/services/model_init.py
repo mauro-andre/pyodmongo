@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from pymongo import IndexModel, ASCENDING, TEXT
 from typing import Any, Union, get_origin, get_args
-from types import UnionType
+from types import UnionType, NoneType
 from ..models.id_model import Id
 from ..models.db_field_info import DbFieldInfo
 from .aggregate_stages import lookup_and_set
@@ -32,22 +32,36 @@ def _is_union(field_type: Any):
     return get_origin(field_type) is UnionType or get_origin(field_type) is Union
 
 
+def _has_a_list_in_union(field_type: Any):
+    for ft in get_args(field_type):
+        if get_origin(ft) is list:
+            return ft
+    # return list in get_args(field_type)
+
+
 def _union_collector_info(args):
     args = get_args(args)
     by_reference = Id in args
     if by_reference:
-        id_index = args.index(Id)
-        field_type_index = int(abs(id_index - 1))
+        field_type_index = 0
+        for arg in args:
+            if hasattr(arg, 'model_fields'):
+                break
+            field_type_index += 1
         field_type = args[field_type_index]
     else:
         field_type = args[0]
     return field_type, by_reference
 
 
-def _field_annotation_infos(field, field_info) -> DbFieldInfo:
+def field_annotation_infos(field, field_info) -> DbFieldInfo:
     field_annotation = field_info.annotation
     by_reference = False
     field_type = field_annotation
+    if _is_union(field_type=field_annotation):
+        has_a_list_in_union = _has_a_list_in_union(field_type=field_annotation)
+        if has_a_list_in_union is not None:
+            field_annotation = has_a_list_in_union
     is_list = get_origin(field_annotation) is list
     if is_list:
         args = get_args(field_annotation)[0]
@@ -73,7 +87,7 @@ def _field_annotation_infos(field, field_info) -> DbFieldInfo:
 
 def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     for field, field_info in cls.model_fields.items():
-        db_field_info = _field_annotation_infos(field=field, field_info=field_info)
+        db_field_info = field_annotation_infos(field=field, field_info=field_info)
         if db_field_info.has_model_fields:
             path.append(db_field_info.field_alias)
             path_str = '.'.join(path)
@@ -95,7 +109,7 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
 def _recursice_db_fields_info(db_field_info: DbFieldInfo, path: list) -> DbFieldInfo:
     if db_field_info.has_model_fields:
         for field, field_info in db_field_info.field_type.model_fields.items():
-            rec_db_field_info = _field_annotation_infos(field=field, field_info=field_info)
+            rec_db_field_info = field_annotation_infos(field=field, field_info=field_info)
             path.append(rec_db_field_info.field_alias)
             path_str = '.'.join(path)
             rec_db_field_info.path_str = path_str
@@ -107,7 +121,7 @@ def _recursice_db_fields_info(db_field_info: DbFieldInfo, path: list) -> DbField
 
 def resolve_class_fields_db_info(cls: BaseModel):
     for field, field_info in cls.model_fields.items():
-        db_field_info = _field_annotation_infos(field=field, field_info=field_info)
+        db_field_info = field_annotation_infos(field=field, field_info=field_info)
         path = db_field_info.field_alias
         db_field_info.path_str = path
         field_to_set = _recursice_db_fields_info(db_field_info=db_field_info, path=[path])
