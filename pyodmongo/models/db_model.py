@@ -22,5 +22,7 @@ class DbModel(BaseModel, metaclass=PyODMongoMeta):
         ref_pipeline = resolve_ref_pipeline(cls=cls, pipeline=[], path=[])
         setattr(cls, '_reference_pipeline', ref_pipeline)
         indexes = resolve_indexes(cls=cls)
-        setattr(cls, '_indexes', indexes)
-        setattr(cls, '_pipeline', [])
+        if not hasattr(cls, '_indexes'):
+            setattr(cls, '_indexes', indexes)
+        if not hasattr(cls, '_pipeline'):
+            setattr(cls, '_pipeline', [])
