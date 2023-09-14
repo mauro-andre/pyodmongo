@@ -174,3 +174,26 @@ def test_multiples_nested_references():
     assert consolidate_dict(obj=obj1, dct={}) == dct1
     assert consolidate_dict(obj=obj2, dct={}) == dct2
     assert consolidate_dict(obj=obj3, dct={}) == dct3
+
+
+def test_list_of_ids_with_none():
+    class MyType1(DbModel):
+        attr_type_1: str = None
+        _collection: ClassVar = 'my_type1'
+
+    class DbMyType(DbModel):
+        attr_db: str = None
+        my_type: list[MyType1 | Id] = None
+        _collection: ClassVar = 'db_my_type'
+
+    obj = DbMyType()
+    dct_expected = {'_id': None, 'created_at': None, 'updated_at': None, 'attr_db': None, 'my_type': None}
+    assert consolidate_dict(obj=obj, dct={}) == dct_expected
+
+    class DbMyType(DbModel):
+        attr_db: str = None
+        my_type: list[Id] = None
+        _collection: ClassVar = 'db_my_type'
+
+    obj = DbMyType()
+    assert consolidate_dict(obj=obj, dct={}) == dct_expected
