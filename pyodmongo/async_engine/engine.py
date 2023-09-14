@@ -34,11 +34,11 @@ class AsyncDbEngine:
         if len(indexes) > 0:
             await collection.create_indexes(indexes)
         result: UpdateResult = await collection.update_many(filter=find_filter, update=to_save, upsert=True)
-        return SaveResponse(acknowledged=result.acknowledged,
-                            matched_count=result.matched_count,
-                            modified_count=result.modified_count,
-                            upserted_id=result.upserted_id,
-                            raw_result=result.raw_result)
+        return now, SaveResponse(acknowledged=result.acknowledged,
+                                 matched_count=result.matched_count,
+                                 modified_count=result.modified_count,
+                                 upserted_id=result.upserted_id,
+                                 raw_result=result.raw_result)
 
     async def __aggregate(self, Model: type[Model], pipeline) -> list[type[Model]]:
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
@@ -73,14 +73,19 @@ class AsyncDbEngine:
 
     # ---------ACTIONS----------
 
-    async def save(self, obj, query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> SaveResponse:
+    async def save(self, obj: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> SaveResponse:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         dct = consolidate_dict(obj=obj, dct={}, base_class=obj.__class__)
-        return await self.__save_dict(dict_to_save=dct,
-                                      collection=self._db[obj._collection],
-                                      indexes=obj._indexes,
-                                      query=query.operator_dict() if query else raw_query)
+        now, save_response = await self.__save_dict(dict_to_save=dct,
+                                                    collection=self._db[obj._collection],
+                                                    indexes=obj._indexes,
+                                                    query=query.operator_dict() if query else raw_query)
+        if save_response.upserted_id:
+            obj.id = save_response.upserted_id
+            obj.created_at = now
+            obj.updated_at = now
+        return save_response
 
     async def save_all(self, obj_list: list) -> list[SaveResponse]:
         save_calls = [self.save(obj) for obj in obj_list]
