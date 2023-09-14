@@ -2,9 +2,9 @@ from pyodmongo import AsyncDbEngine, DbModel, SaveResponse, DeleteResponse, Resp
 from pyodmongo.queries import eq, gte, gt
 from typing import ClassVar
 from bson import ObjectId
+from datetime import datetime
 import pytest
 import pytest_asyncio
-import asyncio
 
 mongo_uri = 'mongodb://localhost:27017'
 db_name = 'pyodmongo_pytest'
@@ -42,6 +42,10 @@ def new_obj() -> type[MyClass]:
 async def test_check_if_create_a_new_doc_on_save(drop_collection, new_obj):
     result: SaveResponse = await db.save(new_obj)
     assert ObjectId.is_valid(result.upserted_id)
+    assert new_obj.id == result.upserted_id
+    assert isinstance(new_obj.created_at, datetime)
+    assert isinstance(new_obj.updated_at, datetime)
+    assert new_obj.created_at == new_obj.updated_at
 
 
 @pytest.mark.asyncio

@@ -2,6 +2,7 @@ from pyodmongo import DbEngine, DbModel, SaveResponse, DeleteResponse, ResponseP
 from pyodmongo.queries import eq, gte, gt
 from typing import ClassVar
 from bson import ObjectId
+from datetime import datetime
 import pytest
 
 mongo_uri = 'mongodb://localhost:27017'
@@ -39,6 +40,10 @@ def new_obj() -> type[MyClass]:
 def test_check_if_create_a_new_doc_on_save(drop_collection, new_obj):
     result: SaveResponse = db.save(new_obj)
     assert ObjectId.is_valid(result.upserted_id)
+    assert new_obj.id == result.upserted_id
+    assert isinstance(new_obj.created_at, datetime)
+    assert isinstance(new_obj.updated_at, datetime)
+    assert new_obj.created_at == new_obj.updated_at
 
 
 def test_create_and_delete_one(drop_collection, new_obj):
