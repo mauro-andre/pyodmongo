@@ -51,6 +51,8 @@ result: SaveResponse = engine.save(box)
 ```
 ///
 
+Se o resultado do método `save` corresponder à criação de um novo documento no banco de dados, a instância do objeto receberá os atributos `id`, `created_at` e `updated_at`.
+
 ## Argumentos
 
 - `obj: Any`: Objeto a ser salvo no banco de dados.
