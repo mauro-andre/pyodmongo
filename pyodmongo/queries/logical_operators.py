@@ -7,4 +7,7 @@ def and_(*operators: tuple[ComparisonOperator]) -> LogicalOperator:
 
 def or_(*operators: tuple[ComparisonOperator]) -> LogicalOperator:
     return LogicalOperator(operator='$or', comparison_operators=operators)
-    return {'$or': list(operators)}
+
+
+def nor(*operators: tuple[ComparisonOperator]) -> LogicalOperator:
+    return LogicalOperator(operator='$nor', comparison_operators=operators)
