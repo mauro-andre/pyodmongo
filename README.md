@@ -22,9 +22,11 @@
 
 ---
 
-`pyodmongo` is a Python library that serves as an Object-Document Mapper (ODM) for MongoDB. It is built on top of the popular `pydantic V2` library, making it easy to work with MongoDB documents in a Pythonic and efficient way.
+**PyODMongo** is a modern Python library that functions as a robust Object-Document Mapper (ODM) for **MongoDB**. Leveraging the power of **Pydantic V2**, it seamlessly bridges the gap between Python and MongoDB, offering an intuitive and efficient way to interact with MongoDB documents.
 
-With `pyodmongo`, you can seamlessly map your Python classes to MongoDB documents, allowing you to work with data in a more intuitive and Pythonic manner. It simplifies the process of defining and interacting with MongoDB collections, documents, and queries.
+By using **PyODMongo**, you can effortlessly map your Python classes to MongoDB documents, allowing for a more Pythonic approach to handling data. This library simplifies the entire process of defining and working with MongoDB collections, documents, and queries.
+
+**PyODMongo** is built on top of **Pydantic V2**, making the `DbModel` class an extension of Pydantic's `BaseModel`. This means that all the rich functionality of Pydantic's `BaseModel`, including **Validators**, **Fields** and **Model Config**, is readily available in `DbModel`.
 
 ## Key Features
 
