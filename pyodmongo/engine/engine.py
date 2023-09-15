@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from pymongo.results import UpdateResult, DeleteResult
 from ..models.responses import SaveResponse, DeleteResponse
 from ..engine.utils import consolidate_dict, mount_base_pipeline
+from ..services.query_operators import query_dict
 from ..models.paginate import ResponsePaginate
 from ..models.query_operators import LogicalOperator, ComparisonOperator
 from ..models.db_model import DbModel
@@ -54,7 +55,7 @@ class DbEngine:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         raw_query = {} if not raw_query else raw_query
-        result: DeleteResult = self._db[Model._collection].delete_one(filter=query.operator_dict() if query else raw_query)
+        result: DeleteResult = self._db[Model._collection].delete_one(filter=query_dict(query_operator=query, dct={}) if query else raw_query)
         return DeleteResponse(acknowledged=result.acknowledged,
                               deleted_count=result.deleted_count,
                               raw_result=result.raw_result)
@@ -63,7 +64,7 @@ class DbEngine:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         raw_query = {} if not raw_query else raw_query
-        result: DeleteResult = self._db[Model._collection].delete_many(filter=query.operator_dict() if query else raw_query)
+        result: DeleteResult = self._db[Model._collection].delete_many(filter=query_dict(query_operator=query, dct={}) if query else raw_query)
         return DeleteResponse(acknowledged=result.acknowledged,
                               deleted_count=result.deleted_count,
                               raw_result=result.raw_result)
@@ -83,7 +84,7 @@ class DbEngine:
         now, save_response = self.__save_dict(dict_to_save=dct,
                                               collection=self._db[obj._collection],
                                               indexes=indexes,
-                                              query=query.operator_dict() if query else raw_query)
+                                              query=query_dict(query_operator=query, dct={}) if query else raw_query)
         if save_response.upserted_id:
             obj.id = save_response.upserted_id
             obj.created_at = now
@@ -101,7 +102,7 @@ class DbEngine:
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         raw_query = {} if not raw_query else raw_query
         pipeline = mount_base_pipeline(Model=Model,
-                                       query=query.operator_dict() if query else raw_query,
+                                       query=query_dict(query_operator=query, dct={}) if query else raw_query,
                                        populate=populate)
         pipeline += [{'$limit': 1}]
         try:
@@ -121,7 +122,7 @@ class DbEngine:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         pipeline = mount_base_pipeline(Model=Model,
-                                       query=query.operator_dict() if query else raw_query,
+                                       query=query_dict(query_operator=query, dct={}) if query else raw_query,
                                        populate=populate)
         if not paginate:
             return self.__aggregate(Model=Model, pipeline=pipeline)

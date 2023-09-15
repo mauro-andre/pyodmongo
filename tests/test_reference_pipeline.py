@@ -1,7 +1,6 @@
 from pyodmongo import DbModel, Id, Field
 from pydantic import BaseModel
 from typing import ClassVar
-from pprint import pprint
 
 
 def test_if_reference_pipeline_is_correct():

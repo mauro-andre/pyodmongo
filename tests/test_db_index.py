@@ -3,7 +3,6 @@ from pymongo import IndexModel, ASCENDING, DESCENDING
 from typing import ClassVar
 import pytest
 import pytest_asyncio
-from pprint import pprint
 
 
 mongo_uri = 'mongodb://localhost:27017'
