@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from typing import ClassVar
 from bson import ObjectId
 from pyodmongo.engine.utils import consolidate_dict
-from pprint import pprint
 
 
 def test_save_dict_is_correct():
