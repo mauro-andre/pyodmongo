@@ -16,13 +16,13 @@ jobs:
       with:
         python-version: '3.11.x'
 
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip requests build twine
+
     - name: Update pyproject.toml and version.py
       run: |
         python pyproject.py
-    
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip build twine
 
     - name: Building version
       run: |
