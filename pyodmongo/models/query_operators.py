@@ -7,13 +7,11 @@ class ComparisonOperator(BaseModel):
     operator: str
     value: Any
 
-    def operator_dict(self):
-        return {self.path_str: {self.operator: self.value}}
 
-
-class LogicalOperator(BaseModel):
+class _LogicalOperator(BaseModel):
     operator: str
-    comparison_operators: tuple[ComparisonOperator, ...]
+    operators: tuple[ComparisonOperator, ...]
 
-    def operator_dict(self):
-        return {self.operator: [lo.operator_dict() for lo in self.comparison_operators]}
+
+class LogicalOperator(_LogicalOperator):
+    operators: tuple[ComparisonOperator | _LogicalOperator, ...]
