@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pyodmongo"
-version = "0.2.0"
+version = "__VERSION__"
 license = "MIT"
 authors = [
   { name="Mauro André", email="eng.mauroandre@gmail.com" },
@@ -27,3 +27,4 @@ dependencies = [
 
 [project.urls]
 "Homepage" = "https://github.com/mauro-andre/pyodmongo"
+"Documentation" = "https://pyodmongo.dev"
