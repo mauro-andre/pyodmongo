@@ -25,6 +25,7 @@ def resolve_indexes(cls: BaseModel):
         indexes.append(
             IndexModel(text_keys, name='texts', default_language='portuguese')
         )
+        # TODO chande to dynamic default_language
     return indexes
 
 

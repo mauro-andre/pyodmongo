@@ -78,7 +78,7 @@ class DbEngine:
         dct = consolidate_dict(obj=obj, dct={})
         now, save_response = self.__save_dict(dict_to_save=dct,
                                               collection=self._db[obj._collection],
-                                              indexes=obj._indexes,
+                                              indexes=obj._init_indexes,
                                               query=query.operator_dict() if query else raw_query)
         if save_response.upserted_id:
             obj.id = save_response.upserted_id
