@@ -1,5 +1,5 @@
 from pyodmongo import DbModel, Field, DbEngine, AsyncDbEngine
-from pymongo import IndexModel
+from pymongo import IndexModel, ASCENDING, DESCENDING
 from typing import ClassVar
 import pytest
 import pytest_asyncio
@@ -147,3 +147,54 @@ def test_create_indexes_on_two_inheritance():
     assert 'attr_3' in indexes_in_db['texts']['weights']
     assert 'attr_4' in indexes_in_db['texts']['weights']
     sync_db._db[MyClass._collection].drop()
+
+
+def test_create_custom_indexes():
+
+    class MyClassCustomIndex(DbModel):
+        attr_0: str = Field(default=None, index=True)
+        attr_1: str = Field(default=None)
+        _collection: ClassVar = 'my_class_custom_index'
+        _indexes: ClassVar = [
+            IndexModel([('attr_0', ASCENDING), ('attr_1', DESCENDING)], name='attr_0_and_attr_1')
+        ]
+
+    sync_db._db[MyClassCustomIndex._collection].drop()
+
+    obj = MyClassCustomIndex()
+    sync_db.save(obj)
+    indexes_in_db = sync_db._db[MyClassCustomIndex._collection].index_information()
+    assert 'attr_0_and_attr_1' in indexes_in_db
+    assert 'attr_0' not in indexes_in_db
+    assert 'attr_1' not in indexes_in_db
+    assert len(indexes_in_db['attr_0_and_attr_1']['key']) == 2
+    assert indexes_in_db['attr_0_and_attr_1']['key'][0] == ('attr_0', 1)
+    assert indexes_in_db['attr_0_and_attr_1']['key'][1] == ('attr_1', -1)
+
+    sync_db._db[MyClassCustomIndex._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_async_create_custom_indexes():
+
+    class MyClassCustomIndex(DbModel):
+        attr_0: str = Field(default=None, index=True)
+        attr_1: str = Field(default=None)
+        _collection: ClassVar = 'my_class_custom_index'
+        _indexes: ClassVar = [
+            IndexModel([('attr_0', ASCENDING), ('attr_1', DESCENDING)], name='attr_0_and_attr_1')
+        ]
+
+    await async_db._db[MyClassCustomIndex._collection].drop()
+
+    obj = MyClassCustomIndex()
+    await async_db.save(obj)
+    indexes_in_db = sync_db._db[MyClassCustomIndex._collection].index_information()
+    assert 'attr_0_and_attr_1' in indexes_in_db
+    assert 'attr_0' not in indexes_in_db
+    assert 'attr_1' not in indexes_in_db
+    assert len(indexes_in_db['attr_0_and_attr_1']['key']) == 2
+    assert indexes_in_db['attr_0_and_attr_1']['key'][0] == ('attr_0', 1)
+    assert indexes_in_db['attr_0_and_attr_1']['key'][1] == ('attr_1', -1)
+
+    sync_db._db[MyClassCustomIndex._collection].drop()
