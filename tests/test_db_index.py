@@ -21,6 +21,12 @@ class MyClass(DbModel):
     _collection: ClassVar = 'my_class'
 
 
+class MyClass2(DbModel):
+    attr_5: str
+    attr_6: str = Field(index=True)
+    _collection: ClassVar = 'my_class_2'
+
+
 @pytest.fixture()
 def sync_drop_collection():
     sync_db._db[MyClass._collection].drop()
@@ -111,3 +117,32 @@ def test_create_indexes_on_inheritance(sync_drop_collection):
     assert 'attr_5' in indexes_in_db
     assert 'attr_3' in indexes_in_db['texts']['weights']
     assert 'attr_4' in indexes_in_db['texts']['weights']
+
+
+def test_create_indexes_on_two_inheritance():
+    class MyClass3(MyClass, MyClass2):
+        attr_7: str = Field(index=True)
+
+    sync_db._db[MyClass._collection].drop()
+    obj = MyClass3(attr_0='attr_0',
+                   attr_1='attr_1',
+                   attr_2='attr_2',
+                   attr_3='attr_3',
+                   attr_4='attr_4',
+                   attr_5='attr_5',
+                   attr_6='attr_6',
+                   attr_7='attr_7',
+                   )
+    result = sync_db.save(obj)
+    indexes_in_db = sync_db._db[MyClass._collection].index_information()
+    assert 'attr_0' not in indexes_in_db
+    assert 'attr_1' in indexes_in_db
+    assert 'attr_2' not in indexes_in_db
+    assert 'attr_3' not in indexes_in_db
+    assert 'attr_4' in indexes_in_db
+    assert 'attr_5' not in indexes_in_db
+    assert 'attr_6' in indexes_in_db
+    assert 'attr_7' in indexes_in_db
+    assert 'attr_3' in indexes_in_db['texts']['weights']
+    assert 'attr_4' in indexes_in_db['texts']['weights']
+    sync_db._db[MyClass._collection].drop()
