@@ -17,7 +17,7 @@ class MyClass(DbModel):
     attr_1: str = Field(index=True)
     attr_2: str = Field(unique=True)
     attr_3: str = Field(text_index=True)
-    attr_4: str = Field(index=True, text_index=True)
+    attr_4: str = Field(index=True, text_index=True, default_language='portuguese')
     _collection: ClassVar = 'my_class'
 
 
@@ -94,6 +94,7 @@ async def test_async_check_index_in_db(async_drop_collection):
     assert 'attr_4' in indexes_in_db
     assert 'attr_3' in indexes_in_db['texts']['weights']
     assert 'attr_4' in indexes_in_db['texts']['weights']
+    assert indexes_in_db['texts']['default_language'] == 'portuguese'
 
 
 def test_create_indexes_on_inheritance(sync_drop_collection):
