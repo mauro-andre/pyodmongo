@@ -14,6 +14,7 @@ def resolve_indexes(cls: BaseModel):
         is_index = cls.model_fields[key]._attributes_set.get('index') or False
         is_unique = cls.model_fields[key]._attributes_set.get('unique') or False
         is_text_index = cls.model_fields[key]._attributes_set.get('text_index') or False
+        default_language = cls.model_fields[key]._attributes_set.get('default_language') or False
         db_field_info: DbFieldInfo = getattr(cls, key)
         alias = db_field_info.field_alias
         if is_index:
@@ -22,10 +23,15 @@ def resolve_indexes(cls: BaseModel):
         if is_text_index:
             text_keys.append((alias, TEXT))
     if len(text_keys) > 0:
-        indexes.append(
-            IndexModel(text_keys, name='texts', default_language='portuguese')
-        )
-        # TODO chande to dynamic default_language
+        if default_language:
+            indexes.append(
+                IndexModel(text_keys, name='texts', default_language=default_language)
+            )
+        else:
+            indexes.append(
+                IndexModel(text_keys, name='texts')
+            )
+
     return indexes
 
 
