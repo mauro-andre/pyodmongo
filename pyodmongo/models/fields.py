@@ -66,6 +66,7 @@ def Field(  # noqa: C901
     index: bool = False,
     unique: bool = False,
     text_index: bool = False,
+    default_language: str = None,
     **extra: Unpack[_EmptyKwargs],
 ) -> Any:
     """Usage docs: https://docs.pydantic.dev/2.2/usage/fields
@@ -220,4 +221,5 @@ def Field(  # noqa: C901
         index=index,
         unique=unique,
         text_index=text_index,
+        default_language=default_language,
     )

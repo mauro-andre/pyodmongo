@@ -22,7 +22,7 @@ class DbModel(BaseModel, metaclass=PyODMongoMeta):
         ref_pipeline = resolve_ref_pipeline(cls=cls, pipeline=[], path=[])
         setattr(cls, '_reference_pipeline', ref_pipeline)
         indexes = resolve_indexes(cls=cls)
-        if not hasattr(cls, '_indexes'):
-            setattr(cls, '_indexes', indexes)
+        setattr(cls, '_init_indexes', indexes)
+        # TODO make the sabe logic indexes
         if not hasattr(cls, '_pipeline'):
             setattr(cls, '_pipeline', [])

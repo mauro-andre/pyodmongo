@@ -77,9 +77,13 @@ class AsyncDbEngine:
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
         dct = consolidate_dict(obj=obj, dct={})
+        try:
+            indexes = obj._indexes
+        except AttributeError:
+            indexes = obj._init_indexes
         now, save_response = await self.__save_dict(dict_to_save=dct,
                                                     collection=self._db[obj._collection],
-                                                    indexes=obj._indexes,
+                                                    indexes=indexes,
                                                     query=query.operator_dict() if query else raw_query)
         if save_response.upserted_id:
             obj.id = save_response.upserted_id
