@@ -1,0 +1,43 @@
+name: 🐛 PyODMongo Bug
+description: Report a bug in PyODMongo
+labels: [bug, unconfirmed]
+
+body:
+  - type: markdown
+    attributes:
+      value:  Thank you for contributing to PyODMongo
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Please, explain the bug as clearly as possible. Please, try to be straightforward and to the point.
+    validations:
+      required: true
+
+  - type: textarea
+    id: example
+    attributes:
+      label: Example Code
+      description: >
+        If applicable and if necessary, include the portion of your code where the bug occurs. Insert it in a way that makes it possible to replicate your bug.
+      placeholder: |
+        import pyodmongo
+        ...
+      render: Python
+
+  - type: textarea
+    id: version
+    attributes:
+      label: Python, PyODMongo & OS Version
+      description: |
+        Please run the following command and copy the output below:
+
+        ```bash
+        python -c "import pyodmongo.version"
+        ```
+
+      render: Text
+    validations:
+      required: true
