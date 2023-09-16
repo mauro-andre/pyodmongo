@@ -1,0 +1,17 @@
+name: 🚀 Feature Request
+description: Request a new feature to make PyODMongo even better.
+labels: [enhancement]
+
+body:
+  - type: markdown
+    attributes:
+      value:  Thank you for contributing to PyODMongo.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: |
+        Tell me what I can do to improve PyODMongo.
+    validations:
+      required: true
