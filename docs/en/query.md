@@ -46,7 +46,7 @@ class Product(DbModel):
 
 async def main():
     query = gte(Product.price, 5)
-    result: Product = engine.find_one(Model=Product, query=query)
+    result: Product = await engine.find_one(Model=Product, query=query)
 
 asyncio.run(main())
 ```
@@ -113,7 +113,7 @@ async def main():
         eq(Product.is_available, True),
         gte(Product.price, 5)
     )
-    result: Product = engine.find_one(Model=Product, query=query)
+    result: Product = await engine.find_one(Model=Product, query=query)
 
 asyncio.run(main())
 ```
