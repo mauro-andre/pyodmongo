@@ -39,6 +39,7 @@ nav:
     - find.md
     - delete.md
   - query.md
+  - contributing.md
 
 extra:
   analytics:
