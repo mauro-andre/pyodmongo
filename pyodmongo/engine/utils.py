@@ -1,6 +1,6 @@
 from bson import ObjectId
 from pydantic import BaseModel
-from ..models.db_field_info import DbFieldInfo
+from ..models.db_field_info import DbField
 from ..models.id_model import Id
 from ..services.model_init import field_annotation_infos
 from typing import Any

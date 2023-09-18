@@ -38,14 +38,11 @@ nav:
     - save.md
     - find.md
     - delete.md
-# extra:
-#   alternate:
-#     - name: English
-#       link: / 
-#       lang: en
-#     - name: Portuguese (Brasilian)
-#       link: /pt-br/ 
-#       lang: pt-BR
+
+extra:
+  analytics:
+    provider: google
+    property: G-Q63PNQN3DY
 
 repo_url: https://github.com/mauro-andre/pyodmongo
 repo_name: mauro-andre/pyodmongo

@@ -3,7 +3,7 @@ from pymongo import IndexModel, ASCENDING, TEXT
 from typing import Any, Union, get_origin, get_args
 from types import UnionType, NoneType
 from ..models.id_model import Id
-from ..models.db_field_info import DbFieldInfo
+from ..models.db_field_info import DbField
 from .aggregate_stages import lookup_and_set
 
 
@@ -15,7 +15,7 @@ def resolve_indexes(cls: BaseModel):
         is_unique = cls.model_fields[key]._attributes_set.get('unique') or False
         is_text_index = cls.model_fields[key]._attributes_set.get('text_index') or False
         default_language = cls.model_fields[key]._attributes_set.get('default_language') or False
-        db_field_info: DbFieldInfo = getattr(cls, key)
+        db_field_info: DbField = getattr(cls, key)
         alias = db_field_info.field_alias
         if is_index:
             indexes.append(IndexModel(
@@ -61,7 +61,7 @@ def _union_collector_info(args):
     return field_type, by_reference
 
 
-def field_annotation_infos(field, field_info) -> DbFieldInfo:
+def field_annotation_infos(field, field_info) -> DbField:
     field_annotation = field_info.annotation
     by_reference = False
     field_type = field_annotation
@@ -84,12 +84,12 @@ def field_annotation_infos(field, field_info) -> DbFieldInfo:
     field_alias = field_info.alias or field
     if field_name == 'id':
         field_alias = '_id'
-    return DbFieldInfo(field_name=field_name,
-                       field_alias=field_alias,
-                       field_type=field_type,
-                       by_reference=by_reference,
-                       is_list=is_list,
-                       has_model_fields=has_model_fields)
+    return DbField(field_name=field_name,
+                   field_alias=field_alias,
+                   field_type=field_type,
+                   by_reference=by_reference,
+                   is_list=is_list,
+                   has_model_fields=has_model_fields)
 
 
 def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
@@ -113,7 +113,7 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     return pipeline
 
 
-def _recursice_db_fields_info(db_field_info: DbFieldInfo, path: list) -> DbFieldInfo:
+def _recursice_db_fields_info(db_field_info: DbField, path: list) -> DbField:
     if db_field_info.has_model_fields:
         for field, field_info in db_field_info.field_type.model_fields.items():
             rec_db_field_info = field_annotation_infos(field=field, field_info=field_info)
