@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 
 
-class DbFieldInfo(BaseModel):
+class DbField(BaseModel):
     field_name: str = None
     field_alias: str = None
     path_str: str = None
