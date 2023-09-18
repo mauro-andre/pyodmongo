@@ -38,6 +38,7 @@ nav:
     - save.md
     - find.md
     - delete.md
+  - query.md
 
 extra:
   analytics:
@@ -64,6 +65,7 @@ plugins:
             Modeling Documents: Modelando documentos
 
 markdown_extensions:
+  - tables:
   - pymdownx.highlight:
   - pymdownx.blocks.tab:
       alternate_style: True
