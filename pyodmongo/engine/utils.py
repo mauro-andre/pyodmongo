@@ -2,13 +2,14 @@ from bson import ObjectId
 from pydantic import BaseModel
 from ..models.db_field_info import DbFieldInfo
 from ..models.id_model import Id
+from ..services.model_init import field_annotation_infos
 from typing import Any
 
 
-def consolidate_dict(obj: BaseModel, dct: dict, base_class: Any):
-    for field in obj.model_fields.keys():
+def consolidate_dict(obj: BaseModel, dct: dict):
+    for field, field_info in obj.model_fields.items():
         value = getattr(obj, field)
-        db_field_info: DbFieldInfo = getattr(base_class, field)
+        db_field_info = field_annotation_infos(field=field, field_info=field_info)
         alias = db_field_info.field_alias
         has_model_fields = db_field_info.has_model_fields
         is_list = db_field_info.is_list
@@ -25,7 +26,7 @@ def consolidate_dict(obj: BaseModel, dct: dict, base_class: Any):
                         dct[alias] = ObjectId(value)
                 else:
                     dct[alias] = {}
-                    consolidate_dict(obj=value, dct=dct[alias], base_class=db_field_info)
+                    consolidate_dict(obj=value, dct=dct[alias])
             else:
                 if by_reference:
                     try:
@@ -36,15 +37,14 @@ def consolidate_dict(obj: BaseModel, dct: dict, base_class: Any):
                     dct[alias] = []
                     for v in value:
                         obj_lst_elem = {}
-                        consolidate_dict(obj=v, dct=obj_lst_elem, base_class=db_field_info)
+                        consolidate_dict(obj=v, dct=obj_lst_elem)
                         dct[alias].append(obj_lst_elem)
         else:
             if alias == 'id':
                 alias = '_id'
-            if db_field_info.field_type == Id:
+            if db_field_info.field_type == Id and value is not None:
                 if is_list:
                     dct[alias] = [ObjectId(o) for o in value if ObjectId.is_valid(o)]
-                    # TODO test this condition
                 else:
                     dct[alias] = ObjectId(value) if ObjectId.is_valid(value) else value
             else:

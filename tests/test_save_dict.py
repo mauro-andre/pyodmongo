@@ -98,9 +98,9 @@ def test_save_dict_is_correct():
                                                   ObjectId('64e8fe13e6dcc2a63c365df4')],
                                  'updated_at': None}
 
-    assert consolidate_dict(obj=obj_lv3_1, dct={}, base_class=obj_lv3_1.__class__) == obj_lv3_1_expected_dict
-    assert consolidate_dict(obj=obj_lv_2_1, dct={}, base_class=obj_lv_2_1.__class__) == obj_lv_2_1_expected_dict
-    assert consolidate_dict(obj=obj_lv1_son, dct={}, base_class=obj_lv1_son.__class__) == obj_lv1_son_expected_dict
+    assert consolidate_dict(obj=obj_lv3_1, dct={}) == obj_lv3_1_expected_dict
+    assert consolidate_dict(obj=obj_lv_2_1, dct={}) == obj_lv_2_1_expected_dict
+    assert consolidate_dict(obj=obj_lv1_son, dct={}) == obj_lv1_son_expected_dict
 
 
 def test_save_dict_with_basemodel_reference():
@@ -117,5 +117,82 @@ def test_save_dict_with_basemodel_reference():
         bm=BaseModelClass(attr_bm='attr_bm')
     )
 
-    dct = consolidate_dict(obj=obj, dct={}, base_class=obj.__class__)
+    dct = consolidate_dict(obj=obj, dct={})
     assert dct == {'_id': None, 'created_at': None, 'updated_at': None, 'attr_dbm': 'attr_dbm', 'bm': {'attr_bm': 'attr_bm'}}
+
+
+def test_field_with_union_more_than_two():
+    class MyFirstClass(DbModel):
+        attr_first: str = None
+        _collection: ClassVar = 'my_first_class'
+
+    class MyClass(DbModel):
+        email: str = None
+        mfc: list[MyFirstClass | Id] | None = None
+        _collection: ClassVar = 'my_class'
+
+    obj = MyClass(mfc=None)
+    dct = consolidate_dict(obj=obj, dct={})
+    assert dct == {'_id': None, 'created_at': None, 'updated_at': None, 'email': None, 'mfc': None}
+
+
+def test_multiples_nested_references():
+    class MyType1(BaseModel):
+        attr_type_1: str = None
+
+    class MyType2(BaseModel):
+        attr_type_2: str = None
+
+    class MyType3(BaseModel):
+        attr_type_3: str = None
+
+    class DbMyType(DbModel):
+        attr_db: str = None
+        my_type: MyType1 | MyType2 | MyType3 | None = None
+        _collection: ClassVar = 'db_my_type'
+
+    obj1 = DbMyType(my_type=MyType1())
+    obj2 = DbMyType(my_type=MyType2())
+    obj3 = DbMyType(my_type=MyType3())
+    dct1 = {'_id': None,
+            'attr_db': None,
+            'created_at': None,
+            'my_type': {'attr_type_1': None},
+            'updated_at': None}
+    dct2 = {'_id': None,
+            'attr_db': None,
+            'created_at': None,
+            'my_type': {'attr_type_2': None},
+            'updated_at': None}
+    dct3 = {'_id': None,
+            'attr_db': None,
+            'created_at': None,
+            'my_type': {'attr_type_3': None},
+            'updated_at': None}
+
+    assert consolidate_dict(obj=obj1, dct={}) == dct1
+    assert consolidate_dict(obj=obj2, dct={}) == dct2
+    assert consolidate_dict(obj=obj3, dct={}) == dct3
+
+
+def test_list_of_ids_with_none():
+    class MyType1(DbModel):
+        attr_type_1: str = None
+        _collection: ClassVar = 'my_type1'
+
+    class DbMyType(DbModel):
+        attr_db: str = None
+        my_type: list[MyType1 | Id] = None
+        _collection: ClassVar = 'db_my_type'
+
+    obj = DbMyType()
+    dct_expected = {'_id': None, 'created_at': None, 'updated_at': None, 'attr_db': None, 'my_type': None}
+    assert consolidate_dict(obj=obj, dct={}) == dct_expected
+
+    class DbMyType(DbModel):
+        attr_db: str = None
+        my_type: list[Id] = None
+        _collection: ClassVar = 'db_my_type'
+
+    obj = DbMyType()
+    assert consolidate_dict(obj=obj, dct={}) == dct_expected

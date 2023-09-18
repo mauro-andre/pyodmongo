@@ -18,7 +18,11 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip build twine
+        python3 -m pip install --upgrade pip requests build twine
+
+    - name: Update pyproject.toml and version.py
+      run: |
+        python pyproject.py
 
     - name: Building version
       run: |
