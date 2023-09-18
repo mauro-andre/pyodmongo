@@ -39,6 +39,9 @@ nav:
     - find.md
     - delete.md
   - query.md
+  - Advanced:
+    - indexes.md
+    - aggregate.md
   - contributing.md
 
 extra:
@@ -64,6 +67,7 @@ plugins:
           build: true
           nav_translations:
             Modeling Documents: Modelando documentos
+            Advanced: Avançado
 
 markdown_extensions:
   - tables:
