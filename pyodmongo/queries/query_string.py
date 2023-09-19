@@ -6,8 +6,17 @@ from .logical_operators import and_
 from typing import Type
 
 
+def is_inheritance_of_db_model(Model):
+    if DbModel in Model.__bases__:
+        return True
+    else:
+        for base in Model.__bases__:
+            return is_inheritance_of_db_model(Model=base)
+    return False
+
+
 def mount_query_filter(Model: Type[DbModel], items: dict, initial_comparison_operators: list[ComparisonOperator]) -> LogicalOperator:
-    if DbModel not in Model.__bases__:
+    if not is_inheritance_of_db_model(Model=Model):
         raise TypeError('Model must be a DbModel')
     for key, value in items.items():
         value = value.strip()
