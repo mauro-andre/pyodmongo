@@ -68,6 +68,9 @@ plugins:
           nav_translations:
             Modeling Documents: Modelando documentos
             Advanced: Avançado
+  - social:
+      cards_layout_options:
+        background_color: "#071F2A" 
 
 markdown_extensions:
   - tables:
