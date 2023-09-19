@@ -19,8 +19,13 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip mkdocs-material mkdocs-static-i18n
+        python3 -m pip install --upgrade pip mkdocs-material mkdocs-static-i18n "mkdocs-material[imaging]"
 
+    - name: Install Image processing Dependencies
+      run: |
+        sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+        sudo apt-get install -y pngquant
+        
     - name: Install AWS CLI
       run: |
         sudo apt-get update
