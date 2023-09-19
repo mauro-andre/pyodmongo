@@ -23,8 +23,8 @@ jobs:
 
     - name: Install Image processing Dependencies
       run: |
-        apt-get install libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
-        apt-get install pngquant
+        sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+        sudo apt-get install -y pngquant
         
     - name: Install AWS CLI
       run: |
