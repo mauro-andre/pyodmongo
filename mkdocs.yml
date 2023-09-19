@@ -31,17 +31,14 @@ extra_css:
 nav:
   - index.md
   - getting_started.md
-  - Modeling Documents:
-    - db_model.md
-    - fields.md
+  - db_model.md
   - CRUD:
     - save.md
     - find.md
     - delete.md
   - query.md
-  - Advanced:
-    - indexes.md
-    - aggregate.md
+  - indexes.md
+  - aggregate.md
   - contributing.md
 
 extra:
