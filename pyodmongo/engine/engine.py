@@ -121,6 +121,7 @@ class DbEngine:
     ):
         if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
             raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+        raw_query = {} if not raw_query else raw_query
         pipeline = mount_base_pipeline(Model=Model,
                                        query=query_dict(query_operator=query, dct={}) if query else raw_query,
                                        populate=populate)
@@ -135,7 +136,6 @@ class DbEngine:
         skip_stage = [{'$skip': skip}]
         limit_stage = [{'$limit': docs_per_page}]
 
-        raw_query = {} if not raw_query else raw_query
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 
