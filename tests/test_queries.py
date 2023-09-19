@@ -1,9 +1,11 @@
 from pyodmongo import DbModel, Field, Id
+from pydantic import BaseModel
 from typing import ClassVar
 from bson import ObjectId
 from pyodmongo.queries import (eq, gt, gte, in_, lt, lte, ne, nin, text, and_, or_, nor, mount_query_filter)
 from pyodmongo.services.query_operators import query_dict
 import pytest
+from pprint import pprint
 
 
 class Model1(DbModel):
@@ -64,8 +66,37 @@ def test_mount_query_filter():
     }
     query = mount_query_filter(Model=Model3, items=dict_input, initial_comparison_operators=[])
     assert query_dict(query_operator=query, dct={}) == {'$and': [{'_id': {'$eq': ObjectId('64e8ef019af47dc6f91c5a48')}},
-                                                                      {'g': {'$in': [ObjectId('64e8ef019af47dc6f91c5a48'),
-                                                                                     ObjectId('64e8f1a5f1dae6703924546a')]}}]}
+                                                                 {'g': {'$in': [ObjectId('64e8ef019af47dc6f91c5a48'),
+                                                                                ObjectId('64e8f1a5f1dae6703924546a')]}}]}
+
+
+def test_mount_query_filter_inheritance():
+    class MainModel(DbModel):
+        attr_1: str = None
+        _collection: ClassVar = 'main_model'
+
+    class SecondModel(MainModel):
+        attr_2: str = None
+
+    class ThirdModel(SecondModel):
+        attr_3: str = None
+
+    class FourthModel(ThirdModel, SecondModel):
+        attr_4: str = None
+
+    input_dict = {
+        'attr_1_eq': 'Value1',
+        'attr_2_eq': 'Value2',
+        'attr_3_eq': 'Value3',
+        'attr_4_eq': 'Value4',
+    }
+    query = mount_query_filter(Model=FourthModel, items=input_dict, initial_comparison_operators=[])
+    expected_query_dict = {'$and': [{'attr_1': {'$eq': 'Value1'}},
+                                    {'attr_2': {'$eq': 'Value2'}},
+                                    {'attr_3': {'$eq': 'Value3'}},
+                                    {'attr_4': {'$eq': 'Value4'}}]}
+
+    assert query_dict(query_operator=query, dct={}) == expected_query_dict
 
 
 def test_logical_operator_inside_another():

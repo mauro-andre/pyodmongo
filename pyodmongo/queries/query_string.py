@@ -6,8 +6,17 @@ from .logical_operators import and_
 from typing import Type
 
 
+def is_inheritance_of_db_model(Model):
+    if DbModel in Model.__bases__:
+        return True
+    else:
+        for base in Model.__bases__:
+            return is_inheritance_of_db_model(Model=base)
+    return False
+
+
 def mount_query_filter(Model: Type[DbModel], items: dict, initial_comparison_operators: list[ComparisonOperator]) -> LogicalOperator:
-    if DbModel not in Model.__bases__:
+    if not is_inheritance_of_db_model(Model=Model):
         raise TypeError('Model must be a DbModel')
     for key, value in items.items():
         value = value.strip()
@@ -28,5 +37,5 @@ def mount_query_filter(Model: Type[DbModel], items: dict, initial_comparison_ope
             raise AttributeError(f"There's no field '{field_name}' in {Model.__name__}")
         initial_comparison_operators.append(comparison_operator(field=db_field_info, operator=operator, value=value))
     if len(initial_comparison_operators) == 0:
-        return {}
+        return None
     return and_(*initial_comparison_operators)

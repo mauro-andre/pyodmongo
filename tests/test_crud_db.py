@@ -119,3 +119,8 @@ def test_find_many_with_paginate(drop_collection, create_100_docs_in_db):
     assert isinstance(response_paginate, ResponsePaginate)
     assert response_paginate.docs_quantity == 50
     assert len(response_paginate.docs) == 10
+
+
+def test_with_query_and_raw_query_none(drop_collection, create_100_docs_in_db):
+    all_obj = db.find_many(Model=MyClass)
+    assert len(all_obj) == 100
