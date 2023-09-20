@@ -22,15 +22,16 @@ class AsyncDbEngine:
         self._db = self._client[db_name]
 
     # ----------DB OPERATIONS----------
-    async def __save_dict(self, dict_to_save: dict, collection, indexes, query=None):
+    async def __save_dict(self, obj: type[Model], dict_to_save: dict, collection, indexes, query=None):
         find_filter = query or {'_id': ObjectId(dict_to_save.get('_id'))}
         now = datetime.utcnow()
-        dict_to_save['updated_at'] = now
+        now = now.replace(microsecond=int(now.microsecond / 1000) * 1000)
+        dict_to_save[obj.__class__.updated_at.field_alias] = now
         dict_to_save.pop('_id')
-        dict_to_save.pop('created_at')
+        dict_to_save.pop(obj.__class__.created_at.field_alias)
         to_save = {
             '$set': dict_to_save,
-            '$setOnInsert': {'created_at': now}
+            '$setOnInsert': {obj.__class__.created_at.field_alias: now}
         }
         if len(indexes) > 0:
             await collection.create_indexes(indexes)
@@ -82,7 +83,8 @@ class AsyncDbEngine:
             indexes = obj._indexes
         except AttributeError:
             indexes = obj._init_indexes
-        now, save_response = await self.__save_dict(dict_to_save=dct,
+        now, save_response = await self.__save_dict(obj=obj,
+                                                    dict_to_save=dct,
                                                     collection=self._db[obj._collection],
                                                     indexes=indexes,
                                                     query=query_dict(query_operator=query, dct={}) if query else raw_query)
