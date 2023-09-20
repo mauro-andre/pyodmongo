@@ -1,7 +1,7 @@
 
 <div align="center">
     <a href="https://pyodmongo.dev" target="_blank">
-      <img src="https://raw.githubusercontent.com/mauro-andre/pyodmongo/mkdocs/docs/assets/images/pyodmongo_Logo_BG_White.png" alt="coverage">
+      <img src="https://raw.githubusercontent.com/mauro-andre/pyodmongo/master/docs/assets/images/pyodmongo_Logo_BG_White.png" alt="coverage">
     </a>
 </div>
 
