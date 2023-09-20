@@ -19,7 +19,7 @@
 
 ---
 
-**Documentation** (*Under construction*): <a href="https://pyodmongo.dev" target="_blank">https://pyodmongo.dev</a>
+**Documentation**: <a href="https://pyodmongo.dev" target="_blank">https://pyodmongo.dev</a>
 
 **Source Code**: <a href="https://github.com/mauro-andre/pyodmongo" target="_blank">https://github.com/mauro-andre/pyodmongo</a>
 
