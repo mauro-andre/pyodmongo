@@ -10,6 +10,9 @@
     <a href="https://pypi.org/project/pyodmongo/" target="_blank">
       <img src="https://img.shields.io/badge/Python-3.11-green" alt="pre-commit">
     </a>
+    <a href="https://pepy.tech/project/pyodmongo" target="_blank">
+      <img src="https://static.pepy.tech/badge/pyodmongo/month">
+    </a>
 </div>
 
 **PyODMongo** é uma biblioteca Python moderna que funciona como um mapeador de objetos-documentos (ODM) robusto para **MongoDB**. Aproveitando o poder do **Pydantic V2**, ele preenche perfeitamente a lacuna entre o Python e o MongoDB, oferecendo uma maneira intuitiva e eficiente de interagir com documentos do MongoDB.
@@ -40,7 +43,7 @@ Você pode instalar o **PyODMongo** usando pip:
 pip install pyodmongo
 ```
 ## Contribuições
-Contribuições para o **PyODMongo** são bem-vindas! Se você encontrar problemas ou tiver ideias de melhorias, abra uma issue ou envie uma pull request no [repositório do GitHub](https://github.com/mauro-andre/pyodmongo).
+Contribuições para o **PyODMongo** são bem-vindas! Se você encontrar problemas ou tiver ideias de melhorias, abra uma issue ou envie uma pull request no <a href="https://github.com/mauro-andre/pyodmongo" target="_blank">repositório do GitHub</a>.
 
 ## Licença
-**PyODMongo** é licenciado sob a Licença MIT. Consulte o [arquivo LICENSE](https://github.com/mauro-andre/pyodmongo/blob/master/LICENSE) para obter mais informações.
+**PyODMongo** é licenciado sob a Licença MIT. Consulte o <a href="https://github.com/mauro-andre/pyodmongo/blob/master/LICENSE" target="_blank">arquivo LICENSE</a> para obter mais informações.

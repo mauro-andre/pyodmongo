@@ -10,6 +10,9 @@
     <a href="https://pypi.org/project/pyodmongo/" target="_blank">
       <img src="https://img.shields.io/badge/Python-3.11-green" alt="pre-commit">
     </a>
+    <a href="https://pepy.tech/project/pyodmongo" target="_blank">
+      <img src="https://static.pepy.tech/badge/pyodmongo/month">
+    </a>
 </div>
 
 
@@ -43,7 +46,7 @@ pip install pyodmongo
 
 ## Contributing
 
-Contributions to **PyODMongo** are welcome! If you find any issues or have ideas for improvements, please open an issue or submit a pull request on the [GitHub repository](https://github.com/mauro-andre/pyodmongo).
+Contributions to **PyODMongo** are welcome! If you find any issues or have ideas for improvements, please open an issue or submit a pull request on the <a href="https://github.com/mauro-andre/pyodmongo" target="_blank">GitHub repository</a>.
 
 ## License
-**PyODMongo** is licensed under the MIT License. See the [LICENSE file](https://github.com/mauro-andre/pyodmongo/blob/master/LICENSE) for more information.
+**PyODMongo** is licensed under the MIT License. See the <a href="https://github.com/mauro-andre/pyodmongo/blob/master/LICENSE" target="_blank">LICENSE file</a> for more information.
