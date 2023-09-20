@@ -38,7 +38,7 @@ nav:
     - delete.md
   - query.md
   - indexes.md
-  - aggregate.md
+  - aggregation.md
   - contributing.md
 
 extra:

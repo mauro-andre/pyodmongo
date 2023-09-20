@@ -1,9 +1,12 @@
-from pyodmongo import DbEngine, DbModel, SaveResponse, DeleteResponse, ResponsePaginate
+from pyodmongo import DbEngine, DbModel, SaveResponse, DeleteResponse, ResponsePaginate, Field
 from pyodmongo.queries import eq, gte, gt
+from pyodmongo.engine.utils import consolidate_dict
+from pydantic import ConfigDict
 from typing import ClassVar
 from bson import ObjectId
 from datetime import datetime
 import pytest
+from pprint import pprint
 
 mongo_uri = 'mongodb://localhost:27017'
 db_name = 'pyodmongo_pytest'
@@ -124,3 +127,60 @@ def test_find_many_with_paginate(drop_collection, create_100_docs_in_db):
 def test_with_query_and_raw_query_none(drop_collection, create_100_docs_in_db):
     all_obj = db.find_many(Model=MyClass)
     assert len(all_obj) == 100
+
+
+def test_field_alias():
+    class MyClass(DbModel):
+        first_name: str = Field(alias='firstName', default=None)
+        second_name: str = Field(alias='secondName', default=None)
+        third_name: str = None
+        _collection: ClassVar = 'alias_test'
+
+    db._db[MyClass._collection].drop()
+
+    obj = MyClass(first_name='First Name', second_name='Second Name', third_name='Third Name')
+    expected_dict = {'_id': None,
+                     'created_at': None,
+                     'firstName': 'First Name',
+                     'secondName': 'Second Name',
+                     'third_name': 'Third Name',
+                     'updated_at': None}
+    dict_to_save = consolidate_dict(obj=obj, dct={})
+    assert dict_to_save == expected_dict
+    db.save(obj)
+    obj_found = db.find_one(Model=MyClass)
+    assert obj == obj_found
+
+    db._db[MyClass._collection].drop()
+
+
+def test_fields_alias_generator():
+    def to_camel(string: str) -> str:
+        return ''.join(word.capitalize() for word in string.split('_'))
+
+    def to_lower_camel(string: str) -> str:
+        words = string.split('_')
+        return ''.join(words[:1] + [word.capitalize() for word in words[1:]])
+
+    class MyClass(DbModel):
+        first_name: str = None
+        second_name: str = None
+        third_name: str = None
+        _collection: ClassVar = 'alias_test'
+        model_config = ConfigDict(alias_generator=to_lower_camel)
+
+    db._db[MyClass._collection].drop()
+
+    obj = MyClass(first_name='First Name', second_name='Second Name', third_name='Third Name')
+    dict_to_save = consolidate_dict(obj=obj, dct={})
+    expected_dict = {'_id': None,
+                     'createdAt': None,
+                     'firstName': 'First Name',
+                     'secondName': 'Second Name',
+                     'thirdName': 'Third Name',
+                     'updatedAt': None}
+    assert dict_to_save == expected_dict
+    db.save(obj)
+    obj_found = db.find_one(Model=MyClass)
+    assert obj == obj_found
+    db._db[MyClass._collection].drop()
