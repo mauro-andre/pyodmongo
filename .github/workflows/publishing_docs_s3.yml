@@ -1,9 +1,6 @@
 name: Update docs on AWS S3
 
-on:
-  push:
-    branches:
-      - mkdocs
+on: workflow_dispatch
 
 
 jobs:
