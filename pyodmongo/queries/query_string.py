@@ -18,7 +18,6 @@ def is_inheritance_of_db_model(Model):
 
 def mount_query_filter(Model: Type[DbModel], items: dict, initial_comparison_operators: list[ComparisonOperator]) -> LogicalOperator:
     is_inheritance = is_inheritance_of_db_model(Model=Model)
-    print(f'is_inheritance: {is_inheritance}')
     if not is_inheritance:
         raise TypeError('Model must be a DbModel')
     for key, value in items.items():
