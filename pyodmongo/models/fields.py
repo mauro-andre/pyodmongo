@@ -1,31 +1,16 @@
 from __future__ import annotations as _annotations
 
-import dataclasses
-import inspect
-import sys
 import typing
-from copy import copy
-from dataclasses import Field as DataclassField
-from typing import Any, ClassVar
+from typing import Any
 from warnings import warn
 
-import annotated_types
-import typing_extensions
 from pydantic_core import PydanticUndefined
 from typing_extensions import Literal, Unpack
 
-from pydantic import types
-from pydantic._internal import _decorators, _fields, _generics, _internal_dataclass, _repr, _typing_extra, _utils
 from pydantic.errors import PydanticUserError
-from pydantic.warnings import PydanticDeprecatedSince20
 from pydantic.fields import AliasPath, AliasChoices, _EmptyKwargs, FieldInfo
 
-if typing.TYPE_CHECKING:
-    from pydantic._internal._repr import ReprArgs
-else:
-    # See PyCharm issues https://youtrack.jetbrains.com/issue/PY-21915
-    # and https://youtrack.jetbrains.com/issue/PY-51428
-    DeprecationWarning = PydanticDeprecatedSince20
+
 
 
 _Unset: Any = PydanticUndefined
