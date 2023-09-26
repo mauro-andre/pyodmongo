@@ -1,4 +1,4 @@
-from ..models.query_operators import ComparisonOperator, LogicalOperator, _LogicalOperator
+from ..models.query_operators import ComparisonOperator, LogicalOperator
 
 
 def comparison_operator_dict(co: ComparisonOperator):

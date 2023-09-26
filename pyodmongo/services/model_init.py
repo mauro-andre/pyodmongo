@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from pymongo import IndexModel, ASCENDING, TEXT
 from typing import Any, Union, get_origin, get_args
-from types import UnionType, NoneType
+from types import UnionType
 from ..models.id_model import Id
 from ..models.db_field_info import DbField
 from .aggregate_stages import lookup_and_set

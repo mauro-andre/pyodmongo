@@ -49,7 +49,7 @@ class DbEngine:
         docs = list(self._db[Model._collection].aggregate(pipeline))
         try:
             return docs[0]['count']
-        except IndexError as e:
+        except IndexError:
             return 0
 
     def delete_one(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> DeleteResponse:
