@@ -1,0 +1,32 @@
+name: Test - Pytest
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-pytest:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.x'
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install pytest pytest_asyncio motor fastapi httpx pydantic "pydantic[email]"
+    
+    - name: Run pytest
+      run: |
+        pytest

@@ -196,3 +196,4 @@ def test_list_of_ids_with_none():
 
     obj = DbMyType()
     assert consolidate_dict(obj=obj, dct={}) == dct_expected
+
