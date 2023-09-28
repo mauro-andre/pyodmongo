@@ -8,6 +8,14 @@ on:
 jobs:
   test-pytest:
     runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:latest
+        ports:
+          - 27017:27017
+        options: --health-cmd "echo 'db.runCommand({ ping: 1 })' | mongo localhost:27017/test --quiet"
+
     steps:
     - uses: actions/checkout@v3
 
