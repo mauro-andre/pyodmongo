@@ -1,4 +1,11 @@
-from pyodmongo import AsyncDbEngine, DbModel, SaveResponse, DeleteResponse, ResponsePaginate, Field
+from pyodmongo import (
+    AsyncDbEngine,
+    DbModel,
+    SaveResponse,
+    DeleteResponse,
+    ResponsePaginate,
+    Field,
+)
 from pyodmongo.queries import eq, gte, gt
 from pyodmongo.engine.utils import consolidate_dict
 from pydantic import ConfigDict
@@ -8,8 +15,8 @@ from datetime import datetime
 import pytest
 import pytest_asyncio
 
-mongo_uri = 'mongodb://localhost:27017'
-db_name = 'pyodmongo_pytest'
+mongo_uri = "mongodb://localhost:27017"
+db_name = "pyodmongo_pytest"
 db = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
 
 
@@ -17,13 +24,13 @@ class MyClass(DbModel):
     attr1: str
     attr2: str
     random_number: int | None = None
-    _collection: ClassVar = 'my_class_test'
+    _collection: ClassVar = "my_class_test"
 
 
 @pytest_asyncio.fixture()
 async def drop_collection():
     await db._db[MyClass._collection].drop()
-    yield MyClass(attr1='attr_1', attr2='attr_2')
+    yield MyClass(attr1="attr_1", attr2="attr_2")
     await db._db[MyClass._collection].drop()
 
 
@@ -31,13 +38,13 @@ async def drop_collection():
 async def create_100_docs_in_db():
     obj_list = []
     for n in range(1, 101):
-        obj_list.append(MyClass(attr1='Value 1', attr2='Value 2', random_number=n))
+        obj_list.append(MyClass(attr1="Value 1", attr2="Value 2", random_number=n))
     await db.save_all(obj_list)
 
 
 @pytest.fixture()
 def new_obj() -> type[MyClass]:
-    yield MyClass(attr1='attr_1', attr2='attr_2')
+    yield MyClass(attr1="attr_1", attr2="attr_2")
 
 
 @pytest.mark.asyncio
@@ -73,12 +80,12 @@ async def test_find_one(drop_collection, new_obj):
 @pytest.fixture()
 def objs() -> list[SaveResponse]:
     objs = [
-        MyClass(attr1='attr_1', attr2='attr_2'),
-        MyClass(attr1='attr_1', attr2='attr_2'),
-        MyClass(attr1='attr_1', attr2='attr_2'),
-        MyClass(attr1='attr_3', attr2='attr_4'),
-        MyClass(attr1='attr_3', attr2='attr_4'),
-        MyClass(attr1='attr_5', attr2='attr_6'),
+        MyClass(attr1="attr_1", attr2="attr_2"),
+        MyClass(attr1="attr_1", attr2="attr_2"),
+        MyClass(attr1="attr_1", attr2="attr_2"),
+        MyClass(attr1="attr_3", attr2="attr_4"),
+        MyClass(attr1="attr_3", attr2="attr_4"),
+        MyClass(attr1="attr_5", attr2="attr_6"),
     ]
     return objs
 
@@ -97,8 +104,8 @@ async def test_save_all_created(drop_collection, objs):
 @pytest.mark.asyncio
 async def test_update_on_save(drop_collection, objs):
     await db.save_all(objs)
-    obj = MyClass(attr1='value_1', attr2='value_2')
-    response: SaveResponse = await db.save(obj, eq(MyClass.attr1, 'attr_3'))
+    obj = MyClass(attr1="value_1", attr2="value_2")
+    response: SaveResponse = await db.save(obj, eq(MyClass.attr1, "attr_3"))
 
     assert response.matched_count == 2
     assert response.modified_count == 2
@@ -108,7 +115,7 @@ async def test_update_on_save(drop_collection, objs):
 @pytest.mark.asyncio
 async def test_delete(drop_collection, objs):
     await db.save_all(objs)
-    response: DeleteResponse = await db.delete(MyClass, eq(MyClass.attr1, 'attr_1'))
+    response: DeleteResponse = await db.delete(MyClass, eq(MyClass.attr1, "attr_1"))
     assert response.deleted_count == 3
 
 
@@ -123,10 +130,12 @@ async def test_find_many_without_paginate(drop_collection, create_100_docs_in_db
 
 @pytest.mark.asyncio
 async def test_find_many_with_paginate(drop_collection, create_100_docs_in_db):
-    response_paginate: ResponsePaginate = await db.find_many(Model=MyClass,
-                                                             query=gt(MyClass.random_number, 50),
-                                                             paginate=True,
-                                                             docs_per_page=10)
+    response_paginate: ResponsePaginate = await db.find_many(
+        Model=MyClass,
+        query=gt(MyClass.random_number, 50),
+        paginate=True,
+        docs_per_page=10,
+    )
     assert isinstance(response_paginate, ResponsePaginate)
     assert response_paginate.docs_quantity == 50
     assert len(response_paginate.docs) == 10
@@ -141,20 +150,24 @@ async def test_with_query_and_raw_query_none(drop_collection, create_100_docs_in
 @pytest.mark.asyncio
 async def test_field_alias():
     class MyClass(DbModel):
-        first_name: str = Field(alias='firstName', default=None)
-        second_name: str = Field(alias='secondName', default=None)
+        first_name: str = Field(alias="firstName", default=None)
+        second_name: str = Field(alias="secondName", default=None)
         third_name: str = None
-        _collection: ClassVar = 'alias_test'
+        _collection: ClassVar = "alias_test"
 
     await db._db[MyClass._collection].drop()
 
-    obj = MyClass(first_name='First Name', second_name='Second Name', third_name='Third Name')
-    expected_dict = {'_id': None,
-                     'created_at': None,
-                     'firstName': 'First Name',
-                     'secondName': 'Second Name',
-                     'third_name': 'Third Name',
-                     'updated_at': None}
+    obj = MyClass(
+        first_name="First Name", second_name="Second Name", third_name="Third Name"
+    )
+    expected_dict = {
+        "_id": None,
+        "created_at": None,
+        "firstName": "First Name",
+        "secondName": "Second Name",
+        "third_name": "Third Name",
+        "updated_at": None,
+    }
     dict_to_save = consolidate_dict(obj=obj, dct={})
     assert dict_to_save == expected_dict
     await db.save(obj)
@@ -167,29 +180,33 @@ async def test_field_alias():
 @pytest.mark.asyncio
 async def test_fields_alias_generator():
     def to_camel(string: str) -> str:
-        return ''.join(word.capitalize() for word in string.split('_'))
+        return "".join(word.capitalize() for word in string.split("_"))
 
     def to_lower_camel(string: str) -> str:
-        words = string.split('_')
-        return ''.join(words[:1] + [word.capitalize() for word in words[1:]])
+        words = string.split("_")
+        return "".join(words[:1] + [word.capitalize() for word in words[1:]])
 
     class MyClass(DbModel):
         first_name: str = None
         second_name: str = None
         third_name: str = None
-        _collection: ClassVar = 'alias_test'
+        _collection: ClassVar = "alias_test"
         model_config = ConfigDict(alias_generator=to_lower_camel)
 
     await db._db[MyClass._collection].drop()
 
-    obj = MyClass(first_name='First Name', second_name='Second Name', third_name='Third Name')
+    obj = MyClass(
+        first_name="First Name", second_name="Second Name", third_name="Third Name"
+    )
     dict_to_save = consolidate_dict(obj=obj, dct={})
-    expected_dict = {'_id': None,
-                     'createdAt': None,
-                     'firstName': 'First Name',
-                     'secondName': 'Second Name',
-                     'thirdName': 'Third Name',
-                     'updatedAt': None}
+    expected_dict = {
+        "_id": None,
+        "createdAt": None,
+        "firstName": "First Name",
+        "secondName": "Second Name",
+        "thirdName": "Third Name",
+        "updatedAt": None,
+    }
     assert dict_to_save == expected_dict
     await db.save(obj)
     obj_found = await db.find_one(Model=MyClass)

@@ -12,7 +12,7 @@ from bson import ObjectId
 from math import ceil
 
 
-Model = TypeVar('Model', bound=DbModel)
+Model = TypeVar("Model", bound=DbModel)
 
 
 class DbEngine:
@@ -21,25 +21,31 @@ class DbEngine:
         self._db = self._client[db_name]
 
     # ----------DB OPERATIONS----------
-    def __save_dict(self, obj: type[Model], dict_to_save: dict, collection, indexes, query=None):
-        find_filter = query or {'_id': ObjectId(dict_to_save.get('_id'))}
+    def __save_dict(
+        self, obj: type[Model], dict_to_save: dict, collection, indexes, query=None
+    ):
+        find_filter = query or {"_id": ObjectId(dict_to_save.get("_id"))}
         now = datetime.utcnow()
         now = now.replace(microsecond=int(now.microsecond / 1000) * 1000)
         dict_to_save[obj.__class__.updated_at.field_alias] = now
-        dict_to_save.pop('_id')
+        dict_to_save.pop("_id")
         dict_to_save.pop(obj.__class__.created_at.field_alias)
         to_save = {
-            '$set': dict_to_save,
-            '$setOnInsert': {obj.__class__.created_at.field_alias: now}
+            "$set": dict_to_save,
+            "$setOnInsert": {obj.__class__.created_at.field_alias: now},
         }
         if len(indexes) > 0:
             collection.create_indexes(indexes)
-        result: UpdateResult = collection.update_many(filter=find_filter, update=to_save, upsert=True)
-        return now, SaveResponse(acknowledged=result.acknowledged,
-                                 matched_count=result.matched_count,
-                                 modified_count=result.modified_count,
-                                 upserted_id=result.upserted_id,
-                                 raw_result=result.raw_result)
+        result: UpdateResult = collection.update_many(
+            filter=find_filter, update=to_save, upsert=True
+        )
+        return now, SaveResponse(
+            acknowledged=result.acknowledged,
+            matched_count=result.matched_count,
+            modified_count=result.modified_count,
+            upserted_id=result.upserted_id,
+            raw_result=result.raw_result,
+        )
 
     def __aggregate(self, Model: type[Model], pipeline) -> list[type[Model]]:
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
@@ -48,45 +54,82 @@ class DbEngine:
     def __resolve_count_pipeline(self, Model, pipeline):
         docs = list(self._db[Model._collection].aggregate(pipeline))
         try:
-            return docs[0]['count']
+            return docs[0]["count"]
         except IndexError:
             return 0
 
-    def delete_one(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> DeleteResponse:
-        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
-            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+    def delete_one(
+        self,
+        Model: type[Model],
+        query: ComparisonOperator | LogicalOperator = None,
+        raw_query: dict = None,
+    ) -> DeleteResponse:
+        if query and (
+            type(query) != ComparisonOperator and type(query) != LogicalOperator
+        ):
+            raise TypeError(
+                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+            )
         raw_query = {} if not raw_query else raw_query
-        result: DeleteResult = self._db[Model._collection].delete_one(filter=query_dict(query_operator=query, dct={}) if query else raw_query)
-        return DeleteResponse(acknowledged=result.acknowledged,
-                              deleted_count=result.deleted_count,
-                              raw_result=result.raw_result)
+        result: DeleteResult = self._db[Model._collection].delete_one(
+            filter=query_dict(query_operator=query, dct={}) if query else raw_query
+        )
+        return DeleteResponse(
+            acknowledged=result.acknowledged,
+            deleted_count=result.deleted_count,
+            raw_result=result.raw_result,
+        )
 
-    def delete(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> DeleteResponse:
-        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
-            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+    def delete(
+        self,
+        Model: type[Model],
+        query: ComparisonOperator | LogicalOperator = None,
+        raw_query: dict = None,
+    ) -> DeleteResponse:
+        if query and (
+            type(query) != ComparisonOperator and type(query) != LogicalOperator
+        ):
+            raise TypeError(
+                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+            )
         raw_query = {} if not raw_query else raw_query
-        result: DeleteResult = self._db[Model._collection].delete_many(filter=query_dict(query_operator=query, dct={}) if query else raw_query)
-        return DeleteResponse(acknowledged=result.acknowledged,
-                              deleted_count=result.deleted_count,
-                              raw_result=result.raw_result)
+        result: DeleteResult = self._db[Model._collection].delete_many(
+            filter=query_dict(query_operator=query, dct={}) if query else raw_query
+        )
+        return DeleteResponse(
+            acknowledged=result.acknowledged,
+            deleted_count=result.deleted_count,
+            raw_result=result.raw_result,
+        )
 
     # ----------END DB OPERATIONS----------
 
     # ---------ACTIONS----------
 
-    def save(self, obj: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None) -> SaveResponse:
-        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
-            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+    def save(
+        self,
+        obj: type[Model],
+        query: ComparisonOperator | LogicalOperator = None,
+        raw_query: dict = None,
+    ) -> SaveResponse:
+        if query and (
+            type(query) != ComparisonOperator and type(query) != LogicalOperator
+        ):
+            raise TypeError(
+                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+            )
         dct = consolidate_dict(obj=obj, dct={})
         try:
             indexes = obj._indexes
         except AttributeError:
             indexes = obj._init_indexes
-        now, save_response = self.__save_dict(obj=obj,
-                                              dict_to_save=dct,
-                                              collection=self._db[obj._collection],
-                                              indexes=indexes,
-                                              query=query_dict(query_operator=query, dct={}) if query else raw_query)
+        now, save_response = self.__save_dict(
+            obj=obj,
+            dict_to_save=dct,
+            collection=self._db[obj._collection],
+            indexes=indexes,
+            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+        )
         if save_response.upserted_id:
             obj.id = save_response.upserted_id
             obj.created_at = now
@@ -99,14 +142,26 @@ class DbEngine:
             result.append(self.save(obj))
         return result
 
-    def find_one(self, Model: type[Model], query: ComparisonOperator | LogicalOperator = None, raw_query: dict = None, populate: bool = False) -> type[Model]:
-        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
-            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+    def find_one(
+        self,
+        Model: type[Model],
+        query: ComparisonOperator | LogicalOperator = None,
+        raw_query: dict = None,
+        populate: bool = False,
+    ) -> type[Model]:
+        if query and (
+            type(query) != ComparisonOperator and type(query) != LogicalOperator
+        ):
+            raise TypeError(
+                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+            )
         raw_query = {} if not raw_query else raw_query
-        pipeline = mount_base_pipeline(Model=Model,
-                                       query=query_dict(query_operator=query, dct={}) if query else raw_query,
-                                       populate=populate)
-        pipeline += [{'$limit': 1}]
+        pipeline = mount_base_pipeline(
+            Model=Model,
+            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+            populate=populate,
+        )
+        pipeline += [{"$limit": 1}]
         try:
             result = self.__aggregate(Model=Model, pipeline=pipeline)
             return result[0]
@@ -114,29 +169,39 @@ class DbEngine:
             return None
 
     def find_many(
-            self, Model: type[Model],
-            query: ComparisonOperator | LogicalOperator = None,
-            raw_query: dict = None, populate: bool = False,
-            paginate: bool = False,
-            current_page: int = 1,
-            docs_per_page: int = 1000
+        self,
+        Model: type[Model],
+        query: ComparisonOperator | LogicalOperator = None,
+        raw_query: dict = None,
+        populate: bool = False,
+        paginate: bool = False,
+        current_page: int = 1,
+        docs_per_page: int = 1000,
     ):
-        if query and (type(query) != ComparisonOperator and type(query) != LogicalOperator):
-            raise TypeError('query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument')
+        if query and (
+            type(query) != ComparisonOperator and type(query) != LogicalOperator
+        ):
+            raise TypeError(
+                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+            )
         raw_query = {} if not raw_query else raw_query
-        pipeline = mount_base_pipeline(Model=Model,
-                                       query=query_dict(query_operator=query, dct={}) if query else raw_query,
-                                       populate=populate)
+        pipeline = mount_base_pipeline(
+            Model=Model,
+            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+            populate=populate,
+        )
         if not paginate:
             return self.__aggregate(Model=Model, pipeline=pipeline)
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
-        docs_per_page = max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
+        docs_per_page = (
+            max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
+        )
 
-        count_stage = [{'$count': 'count'}]
+        count_stage = [{"$count": "count"}]
         skip = (docs_per_page * current_page) - docs_per_page
-        skip_stage = [{'$skip': skip}]
-        limit_stage = [{'$limit': docs_per_page}]
+        skip_stage = [{"$skip": skip}]
+        limit_stage = [{"$limit": docs_per_page}]
 
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
@@ -145,7 +210,9 @@ class DbEngine:
         count = self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline)
 
         page_quantity = ceil(count / docs_per_page)
-        return ResponsePaginate(current_page=current_page,
-                                page_quantity=page_quantity,
-                                docs_quantity=count,
-                                docs=result)
+        return ResponsePaginate(
+            current_page=current_page,
+            page_quantity=page_quantity,
+            docs_quantity=count,
+            docs=result,
+        )

@@ -25,17 +25,17 @@ client = TestClient(app)
 
 def test_response_model_and_output_obj():
     json_body = {
-        'attr2': 'Value 2',
-        'attr3': 'Value 3',
+        "attr2": "Value 2",
+        "attr3": "Value 3",
     }
-    response = client.post(url='/', json=json_body)
+    response = client.post(url="/", json=json_body)
     assert response.status_code == 200
     assert response.json() == {
-        'id': None,
-        'created_at': None,
-        'updated_at': None,
-        'attr1': None,
-        'attr2': 'Value 2',
-        'attr3': 'Value 3',
-        'attr4': None
+        "id": None,
+        "created_at": None,
+        "updated_at": None,
+        "attr1": None,
+        "attr2": "Value 2",
+        "attr3": "Value 3",
+        "attr4": None,
     }

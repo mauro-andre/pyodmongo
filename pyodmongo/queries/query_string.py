@@ -16,17 +16,21 @@ def is_inheritance_of_db_model(Model):
     return False
 
 
-def mount_query_filter(Model: Type[DbModel], items: dict, initial_comparison_operators: list[ComparisonOperator]) -> LogicalOperator:
+def mount_query_filter(
+    Model: Type[DbModel],
+    items: dict,
+    initial_comparison_operators: list[ComparisonOperator],
+) -> LogicalOperator:
     is_inheritance = is_inheritance_of_db_model(Model=Model)
     if not is_inheritance:
-        raise TypeError('Model must be a DbModel')
+        raise TypeError("Model must be a DbModel")
     for key, value in items.items():
         value = value.strip()
-        if value == '':
+        if value == "":
             continue
-        split_result = key.strip().rsplit(sep='_', maxsplit=1)
-        operator = f'${split_result[-1]}'
-        if operator not in ['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin']:
+        split_result = key.strip().rsplit(sep="_", maxsplit=1)
+        operator = f"${split_result[-1]}"
+        if operator not in ["$eq", "$gt", "$gte", "$in", "$lt", "$lte", "$ne", "$nin"]:
             continue
         try:
             value = eval(value)
@@ -37,7 +41,9 @@ def mount_query_filter(Model: Type[DbModel], items: dict, initial_comparison_ope
             db_field_info: DbField = getattr(Model, field_name)
         except AttributeError:
             raise AttributeError(f"There's no field '{field_name}' in {Model.__name__}")
-        initial_comparison_operators.append(comparison_operator(field=db_field_info, operator=operator, value=value))
+        initial_comparison_operators.append(
+            comparison_operator(field=db_field_info, operator=operator, value=value)
+        )
     if len(initial_comparison_operators) == 0:
         return None
     return and_(*initial_comparison_operators)

@@ -13,5 +13,7 @@ def query_dict(query_operator: ComparisonOperator | LogicalOperator, dct: dict):
         if isinstance(operator, ComparisonOperator):
             dct[query_operator.operator].append(comparison_operator_dict(co=operator))
         else:
-            dct[query_operator.operator].append(query_dict(query_operator=operator, dct={}))
+            dct[query_operator.operator].append(
+                query_dict(query_operator=operator, dct={})
+            )
     return dct

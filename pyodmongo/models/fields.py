@@ -11,8 +11,6 @@ from pydantic.errors import PydanticUserError
 from pydantic.fields import AliasPath, AliasChoices, _EmptyKwargs, FieldInfo
 
 
-
-
 _Unset: Any = PydanticUndefined
 
 
@@ -29,7 +27,9 @@ def Field(  # noqa: C901
     examples: list[Any] | None = _Unset,
     exclude: bool | None = _Unset,
     discriminator: str | None = _Unset,
-    json_schema_extra: dict[str, Any] | typing.Callable[[dict[str, Any]], None] | None = _Unset,
+    json_schema_extra: dict[str, Any]
+    | typing.Callable[[dict[str, Any]], None]
+    | None = _Unset,
     frozen: bool | None = _Unset,
     validate_default: bool | None = _Unset,
     repr: bool = _Unset,
@@ -47,7 +47,7 @@ def Field(  # noqa: C901
     decimal_places: int | None = _Unset,
     min_length: int | None = _Unset,
     max_length: int | None = _Unset,
-    union_mode: Literal['smart', 'left_to_right'] = _Unset,
+    union_mode: Literal["smart", "left_to_right"] = _Unset,
     index: bool = False,
     unique: bool = False,
     text_index: bool = False,
@@ -109,46 +109,59 @@ def Field(  # noqa: C901
             type annotated fields without causing a typing error.
     """
     # Check deprecated and removed params from V1. This logic should eventually be removed.
-    const = extra.pop('const', None)  # type: ignore
+    const = extra.pop("const", None)  # type: ignore
     if const is not None:
-        raise PydanticUserError('`const` is removed, use `Literal` instead', code='removed-kwargs')
+        raise PydanticUserError(
+            "`const` is removed, use `Literal` instead", code="removed-kwargs"
+        )
 
-    min_items = extra.pop('min_items', None)  # type: ignore
+    min_items = extra.pop("min_items", None)  # type: ignore
     if min_items is not None:
-        warn('`min_items` is deprecated and will be removed, use `min_length` instead', DeprecationWarning)
+        warn(
+            "`min_items` is deprecated and will be removed, use `min_length` instead",
+            DeprecationWarning,
+        )
         if min_length in (None, _Unset):
             min_length = min_items  # type: ignore
 
-    max_items = extra.pop('max_items', None)  # type: ignore
+    max_items = extra.pop("max_items", None)  # type: ignore
     if max_items is not None:
-        warn('`max_items` is deprecated and will be removed, use `max_length` instead', DeprecationWarning)
+        warn(
+            "`max_items` is deprecated and will be removed, use `max_length` instead",
+            DeprecationWarning,
+        )
         if max_length in (None, _Unset):
             max_length = max_items  # type: ignore
 
-    unique_items = extra.pop('unique_items', None)  # type: ignore
+    unique_items = extra.pop("unique_items", None)  # type: ignore
     if unique_items is not None:
         raise PydanticUserError(
             (
-                '`unique_items` is removed, use `Set` instead'
-                '(this feature is discussed in https://github.com/pydantic/pydantic-core/issues/296)'
+                "`unique_items` is removed, use `Set` instead"
+                "(this feature is discussed in https://github.com/pydantic/pydantic-core/issues/296)"
             ),
-            code='removed-kwargs',
+            code="removed-kwargs",
         )
 
-    allow_mutation = extra.pop('allow_mutation', None)  # type: ignore
+    allow_mutation = extra.pop("allow_mutation", None)  # type: ignore
     if allow_mutation is not None:
-        warn('`allow_mutation` is deprecated and will be removed. use `frozen` instead', DeprecationWarning)
+        warn(
+            "`allow_mutation` is deprecated and will be removed. use `frozen` instead",
+            DeprecationWarning,
+        )
         if allow_mutation is False:
             frozen = True
 
-    regex = extra.pop('regex', None)  # type: ignore
+    regex = extra.pop("regex", None)  # type: ignore
     if regex is not None:
-        raise PydanticUserError('`regex` is removed. use `pattern` instead', code='removed-kwargs')
+        raise PydanticUserError(
+            "`regex` is removed. use `pattern` instead", code="removed-kwargs"
+        )
 
     if extra:
         warn(
-            'Using extra keyword arguments on `Field` is deprecated and will be removed.'
-            ' Use `json_schema_extra` instead.'
+            "Using extra keyword arguments on `Field` is deprecated and will be removed."
+            " Use `json_schema_extra` instead."
             f' (Extra keys: {", ".join(k.__repr__() for k in extra.keys())})',
             DeprecationWarning,
         )
@@ -160,7 +173,9 @@ def Field(  # noqa: C901
         and validation_alias is not _Unset
         and not isinstance(validation_alias, (str, AliasChoices, AliasPath))
     ):
-        raise TypeError('Invalid `validation_alias` type. it should be `str`, `AliasChoices`, or `AliasPath`')
+        raise TypeError(
+            "Invalid `validation_alias` type. it should be `str`, `AliasChoices`, or `AliasPath`"
+        )
 
     if serialization_alias in (_Unset, None) and isinstance(alias, str):
         serialization_alias = alias
@@ -168,9 +183,12 @@ def Field(  # noqa: C901
     if validation_alias in (_Unset, None):
         validation_alias = alias
 
-    include = extra.pop('include', None)  # type: ignore
+    include = extra.pop("include", None)  # type: ignore
     if include is not None:
-        warn('`include` is deprecated and does nothing. It will be removed, use `exclude` instead', DeprecationWarning)
+        warn(
+            "`include` is deprecated and does nothing. It will be removed, use `exclude` instead",
+            DeprecationWarning,
+        )
 
     return FieldInfo.from_field(
         default,

@@ -1,12 +1,14 @@
 """Private logic for creating models."""
 from __future__ import annotations as _annotations
-from pydantic._internal._model_construction import (ModelMetaclass,
-                                                    inspect_namespace,
-                                                    init_private_attributes,
-                                                    set_default_hash_func,
-                                                    complete_model_class,
-                                                    unpack_lenient_weakvaluedict,
-                                                    build_lenient_weakvaluedict)
+from pydantic._internal._model_construction import (
+    ModelMetaclass,
+    inspect_namespace,
+    init_private_attributes,
+    set_default_hash_func,
+    complete_model_class,
+    unpack_lenient_weakvaluedict,
+    build_lenient_weakvaluedict,
+)
 
 
 import typing
@@ -21,10 +23,21 @@ from typing_extensions import dataclass_transform
 from pydantic.fields import Field, FieldInfo
 from pydantic.warnings import PydanticDeprecatedSince20
 from pydantic._internal._config import ConfigWrapper
-from pydantic._internal._decorators import ComputedFieldInfo, DecoratorInfos, PydanticDescriptorProxy
-from pydantic._internal._fields import is_valid_field_name, _is_finalvar_with_default_val
+from pydantic._internal._decorators import (
+    ComputedFieldInfo,
+    DecoratorInfos,
+    PydanticDescriptorProxy,
+)
+from pydantic._internal._fields import (
+    is_valid_field_name,
+    _is_finalvar_with_default_val,
+)
 from pydantic._internal._generics import PydanticGenericMetadata, get_model_typevars_map
-from pydantic._internal._typing_extra import get_cls_types_namespace, is_classvar, parent_frame_namespace
+from pydantic._internal._typing_extra import (
+    get_cls_types_namespace,
+    is_classvar,
+    parent_frame_namespace,
+)
 from pydantic._internal._validate_call import ValidateCallWrapper
 from pydantic._internal._typing_extra import get_cls_type_hints_lenient
 from copy import copy
@@ -79,31 +92,40 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
         # that `BaseModel` itself won't have any bases, but any subclass of it will, to determine whether the `__new__`
         # call we're in the middle of is for the `BaseModel` class.
         if bases:
-            base_field_names, class_vars, base_private_attributes = mcs._collect_bases_data(bases)
+            (
+                base_field_names,
+                class_vars,
+                base_private_attributes,
+            ) = mcs._collect_bases_data(bases)
 
             config_wrapper = ConfigWrapper.for_model(bases, namespace, kwargs)
-            namespace['model_config'] = config_wrapper.config_dict
+            namespace["model_config"] = config_wrapper.config_dict
             private_attributes = inspect_namespace(
                 namespace, config_wrapper.ignored_types, class_vars, base_field_names
             )
             if private_attributes:
-                if 'model_post_init' in namespace:
+                if "model_post_init" in namespace:
                     # if there are private_attributes and a model_post_init function, we handle both
-                    original_model_post_init = namespace['model_post_init']
+                    original_model_post_init = namespace["model_post_init"]
 
-                    def wrapped_model_post_init(self: BaseModel, __context: Any) -> None:
+                    def wrapped_model_post_init(
+                        self: BaseModel, __context: Any
+                    ) -> None:
                         """We need to both initialize private attributes and call the user-defined model_post_init
                         method.
                         """
                         init_private_attributes(self, __context)
                         original_model_post_init(self, __context)
 
-                    namespace['model_post_init'] = wrapped_model_post_init
+                    namespace["model_post_init"] = wrapped_model_post_init
                 else:
-                    namespace['model_post_init'] = init_private_attributes
+                    namespace["model_post_init"] = init_private_attributes
 
-            namespace['__class_vars__'] = class_vars
-            namespace['__private_attributes__'] = {**base_private_attributes, **private_attributes}
+            namespace["__class_vars__"] = class_vars
+            namespace["__private_attributes__"] = {
+                **base_private_attributes,
+                **private_attributes,
+            }
 
             if config_wrapper.frozen:
                 set_default_hash_func(namespace, bases)
@@ -111,8 +133,14 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
 
             from .main import BaseModel
 
-            cls.__pydantic_custom_init__ = not getattr(cls.__init__, '__pydantic_base_init__', False)
-            cls.__pydantic_post_init__ = None if cls.model_post_init is BaseModel.model_post_init else 'model_post_init'
+            cls.__pydantic_custom_init__ = not getattr(
+                cls.__init__, "__pydantic_base_init__", False
+            )
+            cls.__pydantic_post_init__ = (
+                None
+                if cls.model_post_init is BaseModel.model_post_init
+                else "model_post_init"
+            )
 
             cls.__pydantic_decorators__ = DecoratorInfos.build(cls)
 
@@ -120,34 +148,44 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
             if __pydantic_generic_metadata__:
                 cls.__pydantic_generic_metadata__ = __pydantic_generic_metadata__
             else:
-                parent_parameters = getattr(cls, '__pydantic_generic_metadata__', {}).get('parameters', ())
-                parameters = getattr(cls, '__parameters__', None) or parent_parameters
-                if parameters and parent_parameters and not all(x in parameters for x in parent_parameters):
-                    combined_parameters = parent_parameters + tuple(x for x in parameters if x not in parent_parameters)
-                    parameters_str = ', '.join([str(x) for x in combined_parameters])
-                    generic_type_label = f'typing.Generic[{parameters_str}]'
+                parent_parameters = getattr(
+                    cls, "__pydantic_generic_metadata__", {}
+                ).get("parameters", ())
+                parameters = getattr(cls, "__parameters__", None) or parent_parameters
+                if (
+                    parameters
+                    and parent_parameters
+                    and not all(x in parameters for x in parent_parameters)
+                ):
+                    combined_parameters = parent_parameters + tuple(
+                        x for x in parameters if x not in parent_parameters
+                    )
+                    parameters_str = ", ".join([str(x) for x in combined_parameters])
+                    generic_type_label = f"typing.Generic[{parameters_str}]"
                     error_message = (
-                        f'All parameters must be present on typing.Generic;'
-                        f' you should inherit from {generic_type_label}.'
+                        f"All parameters must be present on typing.Generic;"
+                        f" you should inherit from {generic_type_label}."
                     )
                     if Generic not in bases:  # pragma: no cover
                         # We raise an error here not because it is desirable, but because some cases are mishandled.
                         # It would be nice to remove this error and still have things behave as expected, it's just
                         # challenging because we are using a custom `__class_getitem__` to parametrize generic models,
                         # and not returning a typing._GenericAlias from it.
-                        bases_str = ', '.join([x.__name__ for x in bases] + [generic_type_label])
-                        error_message += (
-                            f' Note: `typing.Generic` must go last: `class {cls.__name__}({bases_str}): ...`)'
+                        bases_str = ", ".join(
+                            [x.__name__ for x in bases] + [generic_type_label]
                         )
+                        error_message += f" Note: `typing.Generic` must go last: `class {cls.__name__}({bases_str}): ...`)"
                     raise TypeError(error_message)
 
                 cls.__pydantic_generic_metadata__ = {
-                    'origin': None,
-                    'args': (),
-                    'parameters': parameters,
+                    "origin": None,
+                    "args": (),
+                    "parameters": parameters,
                 }
 
-            cls.__pydantic_complete__ = False  # Ensure this specific class gets completed
+            cls.__pydantic_complete__ = (
+                False  # Ensure this specific class gets completed
+            )
 
             # preserve `__set_name__` protocol defined in https://peps.python.org/pep-0487
             # for attributes not in `new_namespace` (e.g. private attributes)
@@ -155,8 +193,10 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
                 obj.__set_name__(cls, name)
 
             if __pydantic_reset_parent_namespace__:
-                cls.__pydantic_parent_namespace__ = build_lenient_weakvaluedict(parent_frame_namespace())
-            parent_namespace = getattr(cls, '__pydantic_parent_namespace__', None)
+                cls.__pydantic_parent_namespace__ = build_lenient_weakvaluedict(
+                    parent_frame_namespace()
+                )
+            parent_namespace = getattr(cls, "__pydantic_parent_namespace__", None)
             if isinstance(parent_namespace, dict):
                 parent_namespace = unpack_lenient_weakvaluedict(parent_namespace)
 
@@ -182,7 +222,10 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
 
 
 def set_model_fields(
-    cls: type[DbModel], bases: tuple[type[Any], ...], config_wrapper: ConfigWrapper, types_namespace: dict[str, Any]
+    cls: type[DbModel],
+    bases: tuple[type[Any], ...],
+    config_wrapper: ConfigWrapper,
+    types_namespace: dict[str, Any],
 ) -> None:
     """Collect and set `cls.model_fields` and `cls.__class_vars__`.
 
@@ -193,7 +236,9 @@ def set_model_fields(
         types_namespace: Optional extra namespace to look for types in.
     """
     typevars_map = get_model_typevars_map(cls)
-    fields, class_vars = collect_model_fields(cls, bases, config_wrapper, types_namespace, typevars_map=typevars_map)
+    fields, class_vars = collect_model_fields(
+        cls, bases, config_wrapper, types_namespace, typevars_map=typevars_map
+    )
     cls.model_fields = fields
     cls.__class_vars__.update(class_vars)
     for k in class_vars:
@@ -245,11 +290,11 @@ def collect_model_fields(  # noqa: C901
 
     # https://docs.python.org/3/howto/annotations.html#accessing-the-annotations-dict-of-an-object-in-python-3-9-and-older
     # annotations is only used for finding fields in parent classes
-    annotations = cls.__dict__.get('__annotations__', {})
+    annotations = cls.__dict__.get("__annotations__", {})
     fields: dict[str, FieldInfo] = {}
     class_vars: set[str] = set()
     for ann_name, ann_type in type_hints.items():
-        if ann_name == 'model_config':
+        if ann_name == "model_config":
             # We never want to treat `model_config` as a field
             # Note: we may need to change this logic if/when we introduce a `BareModel` class with no
             # protected namespaces (where `model_config` might be allowed as a field name)
@@ -260,37 +305,43 @@ def collect_model_fields(  # noqa: C901
                     if hasattr(b, ann_name):
                         from .main import BaseModel
 
-                        if not (issubclass(b, BaseModel) and ann_name in b.model_fields):
+                        if not (
+                            issubclass(b, BaseModel) and ann_name in b.model_fields
+                        ):
                             raise NameError(
                                 f'Field "{ann_name}" conflicts with member {getattr(b, ann_name)}'
                                 f' of protected namespace "{protected_namespace}".'
                             )
                 else:
                     valid_namespaces = tuple(
-                        x for x in config_wrapper.protected_namespaces if not ann_name.startswith(x)
+                        x
+                        for x in config_wrapper.protected_namespaces
+                        if not ann_name.startswith(x)
                     )
                     warnings.warn(
                         f'Field "{ann_name}" has conflict with protected namespace "{protected_namespace}".'
-                        '\n\nYou may be able to resolve this warning by setting'
+                        "\n\nYou may be able to resolve this warning by setting"
                         f" `model_config['protected_namespaces'] = {valid_namespaces}`.",
                         UserWarning,
                     )
         if is_classvar(ann_type):
             class_vars.add(ann_name)
             continue
-        if _is_finalvar_with_default_val(ann_type, getattr(cls, ann_name, PydanticUndefined)):
+        if _is_finalvar_with_default_val(
+            ann_type, getattr(cls, ann_name, PydanticUndefined)
+        ):
             class_vars.add(ann_name)
             continue
         if not is_valid_field_name(ann_name):
             continue
-        if cls.__pydantic_root_model__ and ann_name != 'root':
+        if cls.__pydantic_root_model__ and ann_name != "root":
             raise NameError(
                 f"Unexpected field with name {ann_name!r}; only 'root' is allowed as a field of a `RootModel`"
             )
 
         # when building a generic model with `MyModel[int]`, the generic_origin check makes sure we don't get
         # "... shadows an attribute" errors
-        generic_origin = getattr(cls, '__pydantic_generic_metadata__', {}).get('origin')
+        generic_origin = getattr(cls, "__pydantic_generic_metadata__", {}).get("origin")
         is_inheritance = False
         for base in bases:
             if hasattr(base, ann_name):
@@ -317,7 +368,7 @@ def collect_model_fields(  # noqa: C901
                 # defined in a base class and we can take it from there
                 model_fields_lookup: dict[str, FieldInfo] = {}
                 for x in cls.__bases__[::-1]:
-                    model_fields_lookup.update(getattr(x, 'model_fields', {}))
+                    model_fields_lookup.update(getattr(x, "model_fields", {}))
                 if ann_name in model_fields_lookup:
                     # The field was present on one of the (possibly multiple) base classes
                     # copy the field to make sure typevar substitutions don't cause issues with the base classes
