@@ -1,0 +1,25 @@
+name: Test - Pytest
+
+on:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test-pytest:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.x'
+
+    - name: Install dependencies
+      run: |
+        python3 -m pytest pytest_asyncio motor fastapi httpx pydantic "pydantic[email]"
+    
+    - name: Run pytest
+      run: |
+        pytest
