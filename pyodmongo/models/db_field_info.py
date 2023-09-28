@@ -10,4 +10,4 @@ class DbField(BaseModel):
     by_reference: bool = None
     is_list: bool = None
     has_model_fields: bool = None
-    model_config = ConfigDict(extra='allow')
+    model_config = ConfigDict(extra="allow")

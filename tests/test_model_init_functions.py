@@ -7,7 +7,7 @@ from pyodmongo.services.model_init import field_annotation_infos
 def test_field_with_list_of_unions():
     class MyFirstClass(BaseModel):
         attr_first: str = None
-        _collection: ClassVar = 'my_first_class'
+        _collection: ClassVar = "my_first_class"
 
     class MyClass(BaseModel):
         email: str = None
