@@ -1,0 +1,40 @@
+name: Code formatter - Black
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!master'
+
+jobs:
+  code-formatter-black:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.11.x'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade black
+    
+    - name: Run black
+      run: |
+        black pyodmongo tests
+
+    - name: Commit and push changes
+      run: |
+        git config --global user.email "eng.mauroandre@gmail.com"
+        git config --global user.name "Mauro André"
+        git add .
+        if [[ -n $(git diff --staged) ]]; then
+          git commit -m "Apply Black code formatting"
+          echo 'https://mauro-andre:${{ secrets.GH_TOKEN }}@github.com' > ~/.git-credentials
+          git config --global credential.helper store
+          git push origin ${{ github.ref }}
+        else
+          echo "No changes to commit."
+        fi
