@@ -212,3 +212,72 @@ async def test_fields_alias_generator():
     obj_found = await db.find_one(Model=MyClass)
     assert obj == obj_found
     await db._db[MyClass._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_find_many_with_zero_results(drop_collection):
+    await db.save(obj=drop_collection)
+    result = await db.find_many(
+        Model=MyClass, query=eq(MyClass.attr1, "value_that_not_exists"), paginate=True
+    )
+
+    assert result.page_quantity == 0
+    assert result.docs_quantity == 0
+    assert result.docs == []
+
+
+@pytest.mark.asyncio
+async def test_find_one_with_zero_results(drop_collection):
+    await db.save(obj=drop_collection)
+    result = await db.find_one(
+        Model=MyClass, query=eq(MyClass.attr1, "value_that_not_exists")
+    )
+
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator():
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await db.delete_one(Model=MyClass, query="string")
+
+
+@pytest.mark.asyncio
+async def test_delete_type_error_when_query_is_not_comparison_or_logical_operator():
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await db.delete(Model=MyClass, query="string")
+
+
+@pytest.mark.asyncio
+async def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
+    drop_collection,
+):
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await db.save(obj=drop_collection, query="string")
+
+
+@pytest.mark.asyncio
+async def test_find_one_type_error_when_query_is_not_comparison_or_logical_operator():
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await db.find_one(Model=MyClass, query="string")
+
+
+@pytest.mark.asyncio
+async def test_find_many_type_error_when_query_is_not_comparison_or_logical_operator():
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await db.find_many(Model=MyClass, query="string")
