@@ -37,6 +37,7 @@ nav:
     - find.md
     - delete.md
   - query.md
+  - fastapi.md
   - indexes.md
   - aggregation.md
   - contributing.md
