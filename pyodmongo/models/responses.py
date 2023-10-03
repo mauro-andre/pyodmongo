@@ -7,10 +7,8 @@ class SaveResponse(BaseModel):
     matched_count: int
     modified_count: int
     upserted_id: Id
-    raw_result: dict
 
 
 class DeleteResponse(BaseModel):
     acknowledged: bool
     deleted_count: int
-    raw_result: dict
