@@ -243,3 +243,47 @@ def test_list_of_ids_with_none():
 
     obj = DbMyType()
     assert consolidate_dict(obj=obj, dct={}) == dct_expected
+
+
+def test_fields_with_reference():
+    class Model1(DbModel):
+        attr_1: str = None
+        ref_id: Id
+        list_ref_id: list[Id]
+        _collection: ClassVar = "model1"
+
+    class Model2(DbModel):
+        attr_2: str = None
+        ref_id: Model1 | Id
+        list_ref_id: list[Model1 | Id]
+        _collection: ClassVar = "model2"
+
+    id_1 = str(ObjectId())
+    id_2 = str(ObjectId())
+    id_3 = str(ObjectId())
+    obj_1 = Model1(ref_id=id_1, list_ref_id=[id_2, id_3])
+
+    id_4 = str(ObjectId())
+    id_5 = str(ObjectId())
+    id_6 = str(ObjectId())
+    obj_2 = Model2(ref_id=id_4, list_ref_id=[id_5, id_6])
+
+    dct_expected_1 = {
+        "_id": None,
+        "created_at": None,
+        "updated_at": None,
+        "attr_1": None,
+        "ref_id": ObjectId(id_1),
+        "list_ref_id": [ObjectId(id_2), ObjectId(id_3)],
+    }
+
+    dct_expected_2 = {
+        "_id": None,
+        "created_at": None,
+        "updated_at": None,
+        "attr_2": None,
+        "ref_id": ObjectId(id_4),
+        "list_ref_id": [ObjectId(id_5), ObjectId(id_6)],
+    }
+    assert consolidate_dict(obj=obj_1, dct={}) == dct_expected_1
+    assert consolidate_dict(obj=obj_2, dct={}) == dct_expected_2
