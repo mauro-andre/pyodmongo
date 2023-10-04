@@ -38,8 +38,6 @@ def consolidate_dict(obj: BaseModel, dct: dict):
                         consolidate_dict(obj=v, dct=obj_lst_elem)
                         dct[alias].append(obj_lst_elem)
         else:
-            if alias == "id":
-                alias = "_id"
             if db_field_info.field_type == Id and value is not None:
                 if is_list:
                     dct[alias] = [ObjectId(o) for o in value if ObjectId.is_valid(o)]
