@@ -1,6 +1,7 @@
 from pyodmongo import (
     DbEngine,
     DbModel,
+    Id,
     SaveResponse,
     DeleteResponse,
     ResponsePaginate,
@@ -263,3 +264,51 @@ def test_find_many_type_error_when_query_is_not_comparison_or_logical_operator()
         match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         db.find_many(Model=MyClass, query="string")
+
+
+def test_find_with_populate():
+    class MyModel1(DbModel):
+        attr1: str
+        _collection: ClassVar = "model1"
+
+    class MyModel2(DbModel):
+        attr2: str
+        my_model_1: MyModel1 | Id
+        _collection: ClassVar = "model2"
+
+    db._db[MyModel1._collection].drop()
+    db._db[MyModel2._collection].drop()
+
+    obj_1 = MyModel1(attr1="attr_1")
+    db.save(obj_1)
+    obj_2 = MyModel2(attr2="attr_2", my_model_1=obj_1)
+    db.save(obj_2)
+
+    obj_found = db.find_one(Model=MyModel2, populate=True)
+    assert obj_found == obj_2
+
+    db._db[MyModel2._collection].drop()
+
+
+def test_find_without_populate():
+    class MyModel1(DbModel):
+        attr1: str
+        _collection: ClassVar = "model1"
+
+    class MyModel2(DbModel):
+        attr2: str
+        my_model_1: MyModel1 | Id
+        _collection: ClassVar = "model2"
+
+    db._db[MyModel1._collection].drop()
+    db._db[MyModel2._collection].drop()
+
+    obj_1 = MyModel1(attr1="attr_1")
+    db.save(obj_1)
+    obj_2 = MyModel2(attr2="attr_2", my_model_1=obj_1.id)
+    db.save(obj_2)
+
+    obj_found = db.find_one(Model=MyModel2)
+    assert obj_found == obj_2
+
+    db._db[MyModel2._collection].drop()
