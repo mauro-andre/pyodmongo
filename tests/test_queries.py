@@ -73,6 +73,15 @@ def test_comparison_operators():
     assert query_dict(query_operator=text("Text to find"), dct={}) == {
         "$text": {"$search": '"Text to find"'}
     }
+    assert query_dict(query_operator=lt(Model2.d, "value_d"), dct={}) == {
+        "d": {"$lt": "value_d"}
+    }
+    assert query_dict(query_operator=lte(Model2.c, "value_c"), dct={}) == {
+        "cAlias": {"$lte": "value_c"}
+    }
+    assert query_dict(query_operator=ne(Model3.g.e.a, "value_a"), dct={}) == {
+        "g.eAlias.aAlias": {"$ne": "value_a"}
+    }
 
 
 def test_logical_operators():
