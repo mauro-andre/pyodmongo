@@ -161,6 +161,8 @@ def test_mount_query_filter_inheritance():
         "attr_2_eq": "Value2",
         "attr_3_eq": "Value3",
         "attr_4_eq": "Value4",
+        "attr_4_in": "",
+        "attr_4_er": "Value_error",
     }
     query = mount_query_filter(
         Model=FourthModel, items=input_dict, initial_comparison_operators=[]
@@ -175,6 +177,44 @@ def test_mount_query_filter_inheritance():
     }
 
     assert query_dict(query_operator=query, dct={}) == expected_query_dict
+
+
+def test_mount_query_filter_is_not_inheritance():
+    class MainModel(BaseModel):
+        attr_1: str = None
+        _collection: ClassVar = "main_model"
+
+    class SecondModel(MainModel):
+        attr_2: str = None
+
+    class ThirdModel(SecondModel):
+        attr_3: str = None
+
+    class FourthModel(ThirdModel, SecondModel):
+        attr_4: str = None
+
+    input_dict = {
+        "attr_1_eq": "Value1",
+        "attr_2_eq": "Value2",
+        "attr_3_eq": "Value3",
+        "attr_4_eq": "Value4",
+    }
+    with pytest.raises(TypeError, match="Model must be a DbModel"):
+        query = mount_query_filter(
+            Model=FourthModel, items=input_dict, initial_comparison_operators=[]
+        )
+
+
+def test_mount_query_filter_with_none_value():
+    class MainModel(DbModel):
+        attr_1: str = None
+        _collection: ClassVar = "main_model"
+
+    input_dict = {}
+    query = mount_query_filter(
+        Model=MainModel, items=input_dict, initial_comparison_operators=[]
+    )
+    assert query is None
 
 
 def test_logical_operator_inside_another():
