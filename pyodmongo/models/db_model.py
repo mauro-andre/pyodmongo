@@ -18,6 +18,9 @@ class DbModel(BaseModel, metaclass=PyODMongoMeta):
     _pipeline: ClassVar = []
 
     def __init__(self, **attrs):
+        for key, value in attrs.items():
+            if value == {}:
+                attrs[key] = None
         if attrs.get("_id") is not None:
             attrs["id"] = attrs.pop("_id")
         super().__init__(**attrs)
