@@ -13,5 +13,5 @@ info = {
     "Python version": sys.version,
     "Platform": platform.platform(),
 }
-
-print("\n".join([f"{key}: {value}" for key, value in info.items()]))
+response = "\n".join([f"{key}: {value}" for key, value in info.items()])
+print(response)
