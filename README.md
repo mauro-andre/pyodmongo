@@ -12,6 +12,9 @@
     <a href="https://pypi.org/project/pyodmongo/" target="_blank">
       <img src="https://img.shields.io/badge/Python-3.11-green" alt="pre-commit">
     </a>
+    <a href="/coverage" target="_blank">
+      <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fs3.amazonaws.com%2Fpyodmongo.dev%2Fcoverage%2Fcoverage_badge.json&logo=pytest" alt="pre-commit">
+    </a>
     <a href="https://pepy.tech/project/pyodmongo" target="_blank">
       <img src="https://static.pepy.tech/badge/pyodmongo/month">
     </a>
