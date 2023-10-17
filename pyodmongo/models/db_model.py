@@ -11,9 +11,9 @@ from ..services.model_init import (
 
 
 class DbModel(BaseModel, metaclass=PyODMongoMeta):
-    id: Id = None
-    created_at: datetime = None
-    updated_at: datetime = None
+    id: Id | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
     model_config = ConfigDict(populate_by_name=True)
     _pipeline: ClassVar = []
 

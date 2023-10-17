@@ -1,7 +1,7 @@
 from pyodmongo import DbModel, Id
 from pydantic import EmailStr, ValidationError
 from datetime import datetime
-from typing import ClassVar
+from typing import ClassVar, Union
 import pytest
 
 
@@ -25,9 +25,9 @@ def test_dbmodel_class_variables_type_annotation():
     class MyClass(DbModel):
         _collection: ClassVar = "myclass"
 
-    assert MyClass.model_fields["id"].annotation is Id
-    assert MyClass.model_fields["created_at"].annotation is datetime
-    assert MyClass.model_fields["updated_at"].annotation is datetime
+    assert MyClass.model_fields["id"].annotation == Union[Id, None]
+    assert MyClass.model_fields["created_at"].annotation == Union[datetime, None]
+    assert MyClass.model_fields["updated_at"].annotation == Union[datetime, None]
 
 
 def test_class_inheritance():
