@@ -79,7 +79,9 @@ def field_annotation_infos(field, field_info) -> DbField:
         else:
             field_type = args
     elif _is_union(field_annotation):
-        field_type, by_reference = _union_collector_info(field=field, args=field_annotation)
+        field_type, by_reference = _union_collector_info(
+            field=field, args=field_annotation
+        )
     has_model_fields = hasattr(field_type, "model_fields")
     field_name = field
     field_alias = field_info.alias or field
