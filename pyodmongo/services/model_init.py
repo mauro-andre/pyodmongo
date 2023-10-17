@@ -47,9 +47,9 @@ def _has_a_list_in_union(field_type: Any):
     # return list in get_args(field_type)
 
 
-def _union_collector_info(args):
+def _union_collector_info(field, args):
     args = get_args(args)
-    by_reference = Id in args
+    by_reference = (Id in args) and (field != "id")
     if by_reference:
         field_type_index = 0
         for arg in args:
@@ -75,11 +75,13 @@ def field_annotation_infos(field, field_info) -> DbField:
         args = get_args(field_annotation)[0]
         is_union = _is_union(args)
         if is_union:
-            field_type, by_reference = _union_collector_info(args=args)
+            field_type, by_reference = _union_collector_info(field=field, args=args)
         else:
             field_type = args
     elif _is_union(field_annotation):
-        field_type, by_reference = _union_collector_info(args=field_annotation)
+        field_type, by_reference = _union_collector_info(
+            field=field, args=field_annotation
+        )
     has_model_fields = hasattr(field_type, "model_fields")
     field_name = field
     field_alias = field_info.alias or field
