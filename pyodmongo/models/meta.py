@@ -8,11 +8,13 @@ from pydantic._internal._model_construction import (
     complete_model_class,
     unpack_lenient_weakvaluedict,
     build_lenient_weakvaluedict,
+    get_model_post_init,
 )
 
 
 import typing
 import warnings
+import dataclasses
 from abc import ABCMeta
 from types import FunctionType
 from typing import Any, Generic
@@ -21,10 +23,9 @@ from pydantic_core import PydanticUndefined
 from typing_extensions import dataclass_transform
 
 from pydantic.fields import Field, FieldInfo
-from pydantic.warnings import PydanticDeprecatedSince20
+from pydantic.warnings import PydanticDeprecatedSince20, GenericBeforeBaseModelWarning
 from pydantic._internal._config import ConfigWrapper
 from pydantic._internal._decorators import (
-    ComputedFieldInfo,
     DecoratorInfos,
     PydanticDescriptorProxy,
 )
@@ -57,7 +58,6 @@ IGNORED_TYPES: tuple[Any, ...] = (
     classmethod,
     staticmethod,
     PydanticDescriptorProxy,
-    ComputedFieldInfo,
     ValidateCallWrapper,
 )
 
@@ -73,6 +73,7 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
         namespace: dict[str, Any],
         __pydantic_generic_metadata__: PydanticGenericMetadata | None = None,
         __pydantic_reset_parent_namespace__: bool = True,
+        _create_model_module: str | None = None,
         **kwargs: Any,
     ) -> type:
         """Metaclass for creating Pydantic models.
@@ -104,9 +105,9 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
                 namespace, config_wrapper.ignored_types, class_vars, base_field_names
             )
             if private_attributes:
-                if "model_post_init" in namespace:
+                original_model_post_init = get_model_post_init(namespace, bases)
+                if original_model_post_init is not None:
                     # if there are private_attributes and a model_post_init function, we handle both
-                    original_model_post_init = namespace["model_post_init"]
 
                     def wrapped_model_post_init(
                         self: BaseModel, __context: Any
@@ -129,9 +130,20 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
 
             if config_wrapper.frozen:
                 set_default_hash_func(namespace, bases)
+
             cls: type[DbModel] = ABCMeta.__new__(mcs, cls_name, bases, namespace, **kwargs)  # type: ignore
 
             from .main import BaseModel
+
+            mro = cls.__mro__
+            if Generic in mro and mro.index(Generic) < mro.index(BaseModel):
+                warnings.warn(
+                    GenericBeforeBaseModelWarning(
+                        "Classes should inherit from `BaseModel` before generic classes (e.g. `typing.Generic[T]`) "
+                        "for pydantic generics to work properly."
+                    ),
+                    stacklevel=2,
+                )
 
             cls.__pydantic_custom_init__ = not getattr(
                 cls.__init__, "__pydantic_base_init__", False
@@ -208,6 +220,7 @@ class PyODMongoMeta(ModelMetaclass, ABCMeta):
                 config_wrapper,
                 raise_errors=False,
                 types_namespace=types_namespace,
+                create_model_module=_create_model_module,
             )
             # using super(cls, cls) on the next line ensures we only call the parent class's __pydantic_init_subclass__
             # I believe the `type: ignore` is only necessary because mypy doesn't realize that this code branch is
@@ -239,8 +252,10 @@ def set_model_fields(
     fields, class_vars = collect_model_fields(
         cls, bases, config_wrapper, types_namespace, typevars_map=typevars_map
     )
+
     cls.model_fields = fields
     cls.__class_vars__.update(class_vars)
+
     for k in class_vars:
         # Class vars should not be private attributes
         #     We remove them _here_ and not earlier because we rely on inspecting the class to determine its classvars,
@@ -292,6 +307,7 @@ def collect_model_fields(  # noqa: C901
     # annotations is only used for finding fields in parent classes
     annotations = cls.__dict__.get("__annotations__", {})
     fields: dict[str, FieldInfo] = {}
+
     class_vars: set[str] = set()
     for ann_name, ann_type in type_hints.items():
         if ann_name == "model_config":
@@ -344,10 +360,22 @@ def collect_model_fields(  # noqa: C901
         generic_origin = getattr(cls, "__pydantic_generic_metadata__", {}).get("origin")
         is_inheritance = False
         for base in bases:
+            dataclass_fields = {
+                field.name
+                for field in (
+                    dataclasses.fields(base) if dataclasses.is_dataclass(base) else ()
+                )
+            }
             if hasattr(base, ann_name):
                 if base is generic_origin:
                     # Don't error when "shadowing" of attributes in parametrized generics
                     continue
+
+                if ann_name in dataclass_fields:
+                    # Don't error when inheriting stdlib dataclasses whose fields are "shadowed" by defaults being set
+                    # on the class instance.
+                    continue
+
                 # warnings.warn(
                 #     f'Field name "{ann_name}" shadows an attribute in parent "{base.__qualname__}"; ',
                 #     UserWarning,
@@ -387,6 +415,12 @@ def collect_model_fields(  # noqa: C901
                 delattr(cls, ann_name)
             except AttributeError:
                 pass  # indicates the attribute was on a parent class
+
+        # Use cls.__dict__['__pydantic_decorators__'] instead of cls.__pydantic_decorators__
+        # to make sure the decorators have already been built for this exact class
+        decorators: DecoratorInfos = cls.__dict__["__pydantic_decorators__"]
+        if ann_name in decorators.computed_fields:
+            raise ValueError("you can't override a field with a computed field")
         fields[ann_name] = field_info
 
     if typevars_map:

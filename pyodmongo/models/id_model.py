@@ -6,11 +6,6 @@ from pydantic_core import core_schema, CoreSchema
 from pydantic_core.core_schema import ValidationInfo, str_schema
 from packaging import version
 
-if version.parse(pydantic_core.__version__) < version.parse("2.10.0"):
-    plain_validator_function = core_schema.general_plain_validator_function
-else:
-    plain_validator_function = core_schema.with_info_plain_validator_function
-
 
 class Id(str):
     @classmethod
@@ -32,7 +27,7 @@ class Id(str):
         cls, source_type: Any, handler: GetCoreSchemaHandler
     ) -> CoreSchema:  # type: ignore
         return core_schema.json_or_python_schema(
-            python_schema=plain_validator_function(cls.validate),
+            python_schema=core_schema.with_info_plain_validator_function(cls.validate),
             json_schema=str_schema(),
             serialization=core_schema.plain_serializer_function_ser_schema(
                 lambda v: str(v) if ObjectId.is_valid(v) else v
