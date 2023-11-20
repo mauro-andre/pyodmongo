@@ -25,7 +25,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3 -m pip install --upgrade pip requests build twine pytest pytest-cov pytest_asyncio motor fastapi httpx pydantic "pydantic[email]"
+        python3 -m pip install --upgrade pip requests build twine pytest pytest-cov pytest_asyncio motor fastapi httpx pydantic-dbmodel-core "pydantic[email]"
 
     - name: Run pytest
       run: |
