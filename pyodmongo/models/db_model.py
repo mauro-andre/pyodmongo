@@ -1,5 +1,5 @@
-from .meta import PyODMongoMeta
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
+from pydantic_dbmodel_core import DbModelCore
 from .id_model import Id
 from datetime import datetime
 from typing import ClassVar
@@ -10,7 +10,7 @@ from ..services.model_init import (
 )
 
 
-class DbModel(BaseModel, metaclass=PyODMongoMeta):
+class DbModel(DbModelCore):
     id: Id | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
