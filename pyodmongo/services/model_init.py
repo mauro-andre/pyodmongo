@@ -146,3 +146,15 @@ def resolve_class_fields_db_info(cls: BaseModel):
             db_field_info=db_field_info, path=[path]
         )
         setattr(cls, field, field_to_set)
+
+
+def resolve_project_pipeline(cls: BaseModel):
+    project_dict = {"_id": True}
+    for field, field_info in cls.model_fields.items():
+        field_alias = field_info.alias or field
+        project_dict[field_alias] = True
+    try:
+        project_dict.pop("id")
+    except KeyError:
+        pass
+    return [{"$project": project_dict}]
