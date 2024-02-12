@@ -6,7 +6,7 @@ from pyodmongo import (
     ResponsePaginate,
     Field,
 )
-from pyodmongo.queries import eq, gte, gt
+from pyodmongo.queries import eq, gte, gt, mount_query_filter
 from pyodmongo.engine.utils import consolidate_dict
 from pydantic import ConfigDict
 from typing import ClassVar
@@ -281,3 +281,34 @@ async def test_find_many_type_error_when_query_is_not_comparison_or_logical_oper
         match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         await db.find_many(Model=MyClass, query="string")
+
+
+class MyModelRegex(DbModel):
+    attr_1: str
+    attr_2: str = "Default value"
+    _collection: ClassVar = "my_model_regex"
+
+
+@pytest_asyncio.fixture
+async def create_regex_collection():
+
+    await db._db[MyModelRegex._collection].drop()
+    obj_list = [
+        MyModelRegex(attr_1="Agroindústria"),
+        MyModelRegex(attr_1="Agro-indústria"),
+        MyModelRegex(attr_1="indústria agro"),
+        MyModelRegex(attr_1="indústriaagro"),
+    ]
+    await db.save_all(obj_list=obj_list)
+    yield
+    await db._db[MyModelRegex._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_find_regex(create_regex_collection):
+    input_dict = {"attr_1_in": "['/^ind[uúû]stria/i']"}
+    query = mount_query_filter(
+        Model=MyModelRegex, items=input_dict, initial_comparison_operators=[]
+    )
+    results = await db.find_many(Model=MyModelRegex, query=query)
+    assert len(results) == 2

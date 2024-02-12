@@ -14,7 +14,6 @@ from typing import ClassVar
 from bson import ObjectId
 from datetime import datetime
 import pytest
-from pprint import pprint
 
 mongo_uri = "mongodb://localhost:27017"
 db_name = "pyodmongo_pytest"
