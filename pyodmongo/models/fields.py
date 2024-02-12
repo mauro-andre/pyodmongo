@@ -27,9 +27,9 @@ def Field(  # noqa: C901
     examples: list[Any] | None = _Unset,
     exclude: bool | None = _Unset,
     discriminator: str | None = _Unset,
-    json_schema_extra: dict[str, Any]
-    | typing.Callable[[dict[str, Any]], None]
-    | None = _Unset,
+    json_schema_extra: (
+        dict[str, Any] | typing.Callable[[dict[str, Any]], None] | None
+    ) = _Unset,
     frozen: bool | None = _Unset,
     validate_default: bool | None = _Unset,
     repr: bool = _Unset,

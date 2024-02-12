@@ -19,7 +19,6 @@ from pyodmongo.queries import (
 )
 from pyodmongo.services.query_operators import query_dict
 import pytest
-from pprint import pprint
 
 
 class Model1(DbModel):
@@ -215,6 +214,27 @@ def test_mount_query_filter_with_none_value():
         Model=MainModel, items=input_dict, initial_comparison_operators=[]
     )
     assert query is None
+
+
+def test_mount_query_filter_with_regex():
+    import re
+
+    class MyModel(DbModel):
+        attr1: str
+        attr2: str
+
+    input_dict = {"attr1_in": "['/^agr[oóôõ]s/i', 123, 'abc']", "attr2_eq": "123"}
+
+    query = mount_query_filter(
+        Model=MyModel, items=input_dict, initial_comparison_operators=[]
+    )
+    query_dct = query_dict(query_operator=query, dct={})
+    assert query_dct == {
+        "$and": [
+            {"attr1": {"$in": [re.compile("^agr[oóôõ]s", re.IGNORECASE), 123, "abc"]}},
+            {"attr2": {"$eq": 123}},
+        ]
+    }
 
 
 def test_logical_operator_inside_another():
