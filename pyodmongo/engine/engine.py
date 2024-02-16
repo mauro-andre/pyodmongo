@@ -212,7 +212,9 @@ class DbEngine:
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 
-        result = self.__aggregate(Model=Model, pipeline=result_pipeline, as_dict=as_dict)
+        result = self.__aggregate(
+            Model=Model, pipeline=result_pipeline, as_dict=as_dict
+        )
         count = self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline)
 
         page_quantity = ceil(count / docs_per_page)
