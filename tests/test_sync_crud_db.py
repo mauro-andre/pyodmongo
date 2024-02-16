@@ -43,7 +43,7 @@ def create_100_docs_in_db():
 
 
 @pytest.fixture()
-def new_obj() -> type[MyClass]:
+def new_obj():
     yield MyClass(attr1="attr_1", attr2="attr_2")
 
 
@@ -311,3 +311,43 @@ def test_find_without_populate():
     assert obj_found == obj_2
 
     db._db[MyModel2._collection].drop()
+
+
+class AsDict1(DbModel):
+    attr_1: str
+    _collection: ClassVar = "as_dict_1"
+
+
+class AsDict2(DbModel):
+    attr_2: str
+    as_dict_1: list[AsDict1 | Id]
+    _collection: ClassVar = "as_dict_2"
+
+
+@pytest.fixture
+def create_find_dict_collection():
+    db._db[AsDict1._collection].drop()
+    db._db[AsDict2._collection].drop()
+
+    obj1 = AsDict1(attr_1="Obj 1")
+    obj2 = AsDict1(attr_1="Obj 2")
+    db.save_all([obj1, obj2])
+    obj3 = AsDict2(attr_2="Obj 3", as_dict_1=[obj1, obj2])
+    obj4 = AsDict2(attr_2="Obj 4", as_dict_1=[obj2, obj1])
+    obj5 = AsDict2(attr_2="Obj 4", as_dict_1=[obj2, obj1])
+    obj6 = AsDict2(attr_2="Obj 4", as_dict_1=[obj2, obj1])
+    db.save_all([obj3, obj4, obj5, obj6])
+
+    yield
+    db._db[AsDict1._collection].drop()
+    db._db[AsDict2._collection].drop()
+
+
+def test_find_as_dict(create_find_dict_collection):
+    obj_list = db.find_many(Model=AsDict2, as_dict=True, populate=True)
+    assert len(obj_list) == 4
+    assert type(obj_list) is list
+    for dct in obj_list:
+        assert type(dct) == dict
+    obj_dict = db.find_one(Model=AsDict2, as_dict=True, populate=True)
+    assert type(obj_dict) == dict

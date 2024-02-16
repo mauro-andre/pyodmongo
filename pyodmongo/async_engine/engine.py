@@ -48,8 +48,12 @@ class AsyncDbEngine:
             raw_result=result.raw_result,
         )
 
-    async def __aggregate(self, Model: type[Model], pipeline) -> list[type[Model]]:
+    async def __aggregate(
+        self, Model: type[Model], pipeline, as_dict: bool
+    ) -> list[type[Model]]:
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
+        if as_dict:
+            return await docs_cursor.to_list(length=None)
         return [Model(**doc) async for doc in docs_cursor]
 
     async def __resolve_count_pipeline(self, Model, pipeline):
@@ -147,6 +151,7 @@ class AsyncDbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
         populate: bool = False,
+        as_dict: bool = False,
     ) -> type[Model]:
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
@@ -162,7 +167,9 @@ class AsyncDbEngine:
         )
         pipeline += [{"$limit": 1}]
         try:
-            result = await self.__aggregate(Model=Model, pipeline=pipeline)
+            result = await self.__aggregate(
+                Model=Model, pipeline=pipeline, as_dict=as_dict
+            )
             return result[0]
         except IndexError:
             return None
@@ -173,6 +180,7 @@ class AsyncDbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
         populate: bool = False,
+        as_dict: bool = False,
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
@@ -190,7 +198,9 @@ class AsyncDbEngine:
             populate=populate,
         )
         if not paginate:
-            return await self.__aggregate(Model=Model, pipeline=pipeline)
+            return await self.__aggregate(
+                Model=Model, pipeline=pipeline, as_dict=as_dict
+            )
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
         docs_per_page = (
@@ -206,7 +216,7 @@ class AsyncDbEngine:
         result_pipeline = pipeline + skip_stage + limit_stage
 
         result, count = await gather(
-            self.__aggregate(Model=Model, pipeline=result_pipeline),
+            self.__aggregate(Model=Model, pipeline=result_pipeline, as_dict=as_dict),
             self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline),
         )
 

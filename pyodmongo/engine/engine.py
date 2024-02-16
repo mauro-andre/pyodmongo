@@ -47,8 +47,12 @@ class DbEngine:
             raw_result=result.raw_result,
         )
 
-    def __aggregate(self, Model: type[Model], pipeline) -> list[type[Model]]:
+    def __aggregate(
+        self, Model: type[Model], pipeline, as_dict: bool
+    ) -> list[type[Model]]:
         docs_cursor = self._db[Model._collection].aggregate(pipeline)
+        if as_dict:
+            return list(docs_cursor)
         return [Model(**doc) for doc in docs_cursor]
 
     def __resolve_count_pipeline(self, Model, pipeline):
@@ -148,6 +152,7 @@ class DbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
         populate: bool = False,
+        as_dict: bool = False,
     ) -> type[Model]:
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
@@ -163,7 +168,7 @@ class DbEngine:
         )
         pipeline += [{"$limit": 1}]
         try:
-            result = self.__aggregate(Model=Model, pipeline=pipeline)
+            result = self.__aggregate(Model=Model, pipeline=pipeline, as_dict=as_dict)
             return result[0]
         except IndexError:
             return None
@@ -174,6 +179,7 @@ class DbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
         populate: bool = False,
+        as_dict: bool = False,
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
@@ -191,7 +197,7 @@ class DbEngine:
             populate=populate,
         )
         if not paginate:
-            return self.__aggregate(Model=Model, pipeline=pipeline)
+            return self.__aggregate(Model=Model, pipeline=pipeline, as_dict=as_dict)
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page
         docs_per_page = (
@@ -206,7 +212,7 @@ class DbEngine:
         count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 
-        result = self.__aggregate(Model=Model, pipeline=result_pipeline)
+        result = self.__aggregate(Model=Model, pipeline=result_pipeline, as_dict=as_dict)
         count = self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline)
 
         page_quantity = ceil(count / docs_per_page)
