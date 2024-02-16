@@ -61,6 +61,7 @@ result: Product = engine.find_one(Model=Product, query=query)
 - `query: ComparisonOperator | LogicalOperator`: A consulta usada para filtrar os objetos no banco de dados.
 - `raw_query: dict`: Uma consulta opcional no formato de dicionário compatível com MongoDB.
 - `populate: bool`: Flag booleana que determina se o objeto retornado terá seus campos de relacionamento preenchidos com outros objetos ou conterá apenas o `id`.
+- `as_dict: bool`: Um indicador booleano que, quando definido como `True`, retorna a resposta como um dicionário ao invés de objetos instanciados. Isso é particularmente útil quando um formato leve e serializável é necessário, como para respostas JSON em aplicações web, ou quando o consumidor prefere trabalhar com estruturas de dados básicas ao invés de modelos de objetos complexos.
 
 !!! warning
     Se `raw_query` for passado, `query` não será considerado.
@@ -113,6 +114,7 @@ Além disso, inclui três argumentos extras para controle de paginação:
 - `query: ComparisonOperator | LogicalOperator`: A consulta usada para filtrar os objetos no banco de dados.
 - `raw_query: dict`: Uma consulta opcional no formato de dicionário compatível com MongoDB.
 - `populate: bool`: Flag booleana que determina se o objeto retornado terá seus campos de relacionamento preenchidos com outros objetos ou conterá apenas o `id`.
+- `as_dict: bool`: Um indicador booleano que, quando definido como `True`, retorna a resposta como um dicionário ao invés de objetos instanciados. Isso é particularmente útil quando um formato leve e serializável é necessário, como para respostas JSON em aplicações web, ou quando o consumidor prefere trabalhar com estruturas de dados básicas ao invés de modelos de objetos complexos.
 - `paginate: bool`: Flag booleana que especifica se a resposta deve ser paginada ou uma lista regular.
 - `current_page: int`: Se `paginate=True`, este argumento determina a página de resultados a ser recuperada.
 - `docs_per_page: int`: Se `paginate=True`, este argumento determina o número máximo de objetos por página nos resultados da consulta.

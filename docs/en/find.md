@@ -61,6 +61,7 @@ result: Product = engine.find_one(Model=Product, query=query)
 - `query: ComparisonOperator | LogicalOperator`: The query used to filter the objects in the database.
 - `raw_query: dict`: An optional query in the dictionary format compatible with MongoDB.
 - `populate: bool`: A boolean flag that determines whether the returned object will have its relationship fields populated with other objects or will only contain the `id` field.
+- `as_dict: bool`:  A boolean flag that, when set to `True`, returns the response as a dictionary instead of instantiated objects. This is particularly useful when a lightweight, serializable format is required, such as for JSON responses in web applications, or when the consumer prefers to work with basic data structures rather than complex object models.
 
 !!! warning
     If `raw_query` is passed, `query` will not be considered.
@@ -114,6 +115,7 @@ Additionally, it includes three extra arguments for pagination control:
 - `raw_query: dict`: An optional query in the dictionary format compatible with MongoDB.
 - `populate: bool`: A boolean flag that determines whether the returned object will have its relationship fields populated with other objects or will only contain the id field.
 - `paginate: bool`: A boolean flag that specifies whether the response should be paginated or a regular list.
+- `as_dict: bool`:  A boolean flag that, when set to `True`, returns the response as a dictionary instead of instantiated objects. This is particularly useful when a lightweight, serializable format is required, such as for JSON responses in web applications, or when the consumer prefers to work with basic data structures rather than complex object models.
 - `current_page: int`: If `paginate=True`, this argument determines the page of results to be retrieved.
 - `docs_per_page: int`: If `paginate=True`, this argument determines the maximum number of objects per page in the query results.
 
