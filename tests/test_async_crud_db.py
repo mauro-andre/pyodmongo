@@ -317,12 +317,26 @@ async def test_find_regex(create_regex_collection):
 
 class AsDict1(DbModel):
     attr_1: str
+    attr_2: str
+    attr_3: str
+    _collection: ClassVar = "as_dict_1"
+
+
+class AsDict11(DbModel):
+    attr_2: str
+    attr_3: str
     _collection: ClassVar = "as_dict_1"
 
 
 class AsDict2(DbModel):
-    attr_2: str
+    attr_4: str
     as_dict_1: list[AsDict1 | Id]
+    _collection: ClassVar = "as_dict_2"
+
+
+class AsDict22(DbModel):
+    attr_4: str
+    as_dict_1: list[AsDict11 | Id]
     _collection: ClassVar = "as_dict_2"
 
 
@@ -331,14 +345,20 @@ async def create_find_dict_collection():
     await db._db[AsDict1._collection].drop()
     await db._db[AsDict2._collection].drop()
 
-    obj1 = AsDict1(attr_1="Obj 1")
-    obj2 = AsDict1(attr_1="Obj 2")
-    await db.save_all([obj1, obj2])
-    obj3 = AsDict2(attr_2="Obj 3", as_dict_1=[obj1, obj2])
-    obj4 = AsDict2(attr_2="Obj 4", as_dict_1=[obj2, obj1])
-    obj5 = AsDict2(attr_2="Obj 4", as_dict_1=[obj2, obj1])
-    obj6 = AsDict2(attr_2="Obj 4", as_dict_1=[obj2, obj1])
-    await db.save_all([obj3, obj4, obj5, obj6])
+    obj1 = AsDict1(attr_1="Obj 1", attr_2="Obj 1", attr_3="Obj 1")
+    obj2 = AsDict1(attr_1="Obj 2", attr_2="Obj 2", attr_3="Obj 2")
+    obj3 = AsDict1(attr_1="Obj 3", attr_2="Obj 3", attr_3="Obj 3")
+    obj4 = AsDict1(attr_1="Obj 4", attr_2="Obj 4", attr_3="Obj 4")
+    obj5 = AsDict1(attr_1="Obj 5", attr_2="Obj 5", attr_3="Obj 5")
+    obj6 = AsDict1(attr_1="Obj 6", attr_2="Obj 6", attr_3="Obj 6")
+    obj7 = AsDict1(attr_1="Obj 7", attr_2="Obj 7", attr_3="Obj 7")
+    obj8 = AsDict1(attr_1="Obj 8", attr_2="Obj 8", attr_3="Obj 8")
+    await db.save_all([obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8])
+    obj9 = AsDict2(attr_4="Obj 9", as_dict_1=[obj1, obj2])
+    obj10 = AsDict2(attr_4="Obj 10", as_dict_1=[obj3, obj4])
+    obj11 = AsDict2(attr_4="Obj 11", as_dict_1=[obj5, obj6])
+    obj12 = AsDict2(attr_4="Obj 12", as_dict_1=[obj7, obj8])
+    await db.save_all([obj9, obj10, obj11, obj12])
 
     yield
     await db._db[AsDict1._collection].drop()
@@ -347,7 +367,7 @@ async def create_find_dict_collection():
 
 @pytest.mark.asyncio
 async def test_find_as_dict(create_find_dict_collection):
-    obj_list = await db.find_many(Model=AsDict2, as_dict=True, populate=True)
+    obj_list = await db.find_many(Model=AsDict22, as_dict=True, populate=True)
     assert len(obj_list) == 4
     assert type(obj_list) is list
     for dct in obj_list:

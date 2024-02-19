@@ -1,5 +1,10 @@
 def lookup_and_set(
-    from_: str, local_field: str, foreign_field: str, as_: str, is_reference_list: bool
+    from_: str,
+    local_field: str,
+    foreign_field: str,
+    as_: str,
+    pipeline: list,
+    is_reference_list: bool,
 ):
     lookup_stage = [
         {
@@ -8,6 +13,7 @@ def lookup_and_set(
                 "localField": local_field,
                 "foreignField": foreign_field,
                 "as": as_,
+                "pipeline": pipeline,
             }
         }
     ]

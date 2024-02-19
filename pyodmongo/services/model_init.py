@@ -97,6 +97,18 @@ def field_annotation_infos(field, field_info) -> DbField:
     )
 
 
+def resolve_project_pipeline(cls: BaseModel):
+    project_dict = {"_id": True}
+    for field, field_info in cls.model_fields.items():
+        field_alias = field_info.alias or field
+        project_dict[field_alias] = True
+    try:
+        project_dict.pop("id")
+    except KeyError:
+        pass
+    return [{"$project": project_dict}]
+
+
 def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     for field, field_info in cls.model_fields.items():
         db_field_info = field_annotation_infos(field=field, field_info=field_info)
@@ -105,11 +117,13 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
             path_str = ".".join(path)
             if db_field_info.by_reference:
                 collection = db_field_info.field_type._collection
+                lookup_pipeline = resolve_project_pipeline(cls=db_field_info.field_type)
                 pipeline += lookup_and_set(
                     from_=collection,
                     local_field=path_str,
                     foreign_field="_id",
                     as_=path_str,
+                    pipeline=lookup_pipeline,
                     is_reference_list=db_field_info.is_list,
                 )
             if not db_field_info.is_list:
@@ -146,15 +160,3 @@ def resolve_class_fields_db_info(cls: BaseModel):
             db_field_info=db_field_info, path=[path]
         )
         setattr(cls, field, field_to_set)
-
-
-def resolve_project_pipeline(cls: BaseModel):
-    project_dict = {"_id": True}
-    for field, field_info in cls.model_fields.items():
-        field_alias = field_info.alias or field
-        project_dict[field_alias] = True
-    try:
-        project_dict.pop("id")
-    except KeyError:
-        pass
-    return [{"$project": project_dict}]

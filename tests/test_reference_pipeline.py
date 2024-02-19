@@ -35,6 +35,18 @@ def test_if_reference_pipeline_is_correct():
                 "foreignField": "_id",
                 "from": "lv2",
                 "localField": "lv2",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attrLv2One": True,
+                            "attr_lv2_two": True,
+                            "lv3Alias": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"lv2": {"$arrayElemAt": ["$lv2", 0]}}},
@@ -44,6 +56,17 @@ def test_if_reference_pipeline_is_correct():
                 "foreignField": "_id",
                 "from": "lv3",
                 "localField": "lv2.lv3Alias",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attrLv3One": True,
+                            "attr_lv3_two": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"lv2.lv3Alias": {"$arrayElemAt": ["$lv2.lv3Alias", 0]}}},
@@ -53,6 +76,18 @@ def test_if_reference_pipeline_is_correct():
                 "foreignField": "_id",
                 "from": "lv2",
                 "localField": "lv3_list_multi",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attrLv2One": True,
+                            "attr_lv2_two": True,
+                            "lv3Alias": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {
@@ -61,6 +96,17 @@ def test_if_reference_pipeline_is_correct():
                 "foreignField": "_id",
                 "from": "lv3",
                 "localField": "lv2Ref",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attrLv3One": True,
+                            "attr_lv3_two": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"lv2Ref": {"$arrayElemAt": ["$lv2Ref", 0]}}},
@@ -70,6 +116,17 @@ def test_if_reference_pipeline_is_correct():
                 "foreignField": "_id",
                 "from": "lv3",
                 "localField": "lv3_list_ref",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attrLv3One": True,
+                            "attr_lv3_two": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
     ]
@@ -102,6 +159,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc1",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"mfc1": {"$arrayElemAt": ["$mfc1", 0]}}},
@@ -111,6 +178,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc2",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"mfc2": {"$arrayElemAt": ["$mfc2", 0]}}},
@@ -120,6 +197,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc3",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"mfc3": {"$arrayElemAt": ["$mfc3", 0]}}},
@@ -129,6 +216,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc4",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"mfc4": {"$arrayElemAt": ["$mfc4", 0]}}},
@@ -138,6 +235,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc5",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"mfc5": {"$arrayElemAt": ["$mfc5", 0]}}},
@@ -147,6 +254,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc6",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"mfc6": {"$arrayElemAt": ["$mfc6", 0]}}},
@@ -156,6 +273,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc7",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {
@@ -164,6 +291,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc8",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {
@@ -172,6 +309,16 @@ def test_field_with_union_more_than_two():
                 "foreignField": "_id",
                 "from": "my_first_class",
                 "localField": "mfc9",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_first": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
     ]
@@ -204,6 +351,16 @@ def test_multiples_nested_references():
                 "foreignField": "_id",
                 "from": "my_type_4",
                 "localField": "my_type_4",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_type_4": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
             }
         },
         {"$set": {"my_type_4": {"$arrayElemAt": ["$my_type_4", 0]}}},
