@@ -7,7 +7,6 @@ from ..services.model_init import (
     resolve_indexes,
     resolve_ref_pipeline,
     resolve_class_fields_db_info,
-    resolve_project_pipeline,
 )
 
 
@@ -33,5 +32,3 @@ class DbModel(DbModelCore):
         setattr(cls, "_reference_pipeline", ref_pipeline)
         indexes = resolve_indexes(cls=cls)
         setattr(cls, "_init_indexes", indexes)
-        project_pipeline = resolve_project_pipeline(cls=cls)
-        setattr(cls, "_project_pipeline", project_pipeline)

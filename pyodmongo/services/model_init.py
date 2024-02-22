@@ -44,7 +44,6 @@ def _has_a_list_in_union(field_type: Any):
     for ft in get_args(field_type):
         if get_origin(ft) is list:
             return ft
-    # return list in get_args(field_type)
 
 
 def _union_collector_info(field, args):
@@ -113,24 +112,19 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     for field, field_info in cls.model_fields.items():
         db_field_info = field_annotation_infos(field=field, field_info=field_info)
         if db_field_info.has_model_fields:
-            path.append(db_field_info.field_alias)
-            path_str = ".".join(path)
             if db_field_info.by_reference:
                 collection = db_field_info.field_type._collection
-                lookup_pipeline = resolve_project_pipeline(cls=db_field_info.field_type)
                 pipeline += lookup_and_set(
                     from_=collection,
-                    local_field=path_str,
+                    local_field=db_field_info.field_alias,
                     foreign_field="_id",
-                    as_=path_str,
-                    pipeline=lookup_pipeline,
+                    as_=db_field_info.field_alias,
+                    pipeline=resolve_ref_pipeline(
+                        cls=db_field_info.field_type, pipeline=[], path=[]
+                    ),
                     is_reference_list=db_field_info.is_list,
                 )
-            if not db_field_info.is_list:
-                resolve_ref_pipeline(
-                    cls=db_field_info.field_type, pipeline=pipeline, path=path
-                )
-            path.pop(-1)
+    pipeline += resolve_project_pipeline(cls=cls)
     return pipeline
 
 
