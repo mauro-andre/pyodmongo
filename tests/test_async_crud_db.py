@@ -341,10 +341,16 @@ class AsDict22(DbModel):
 
 
 @pytest_asyncio.fixture
-async def create_find_dict_collection():
+async def create_as_dict_find_dict_collection():
+    await db._db[AsDict1._collection].drop()
+    await db._db[AsDict2._collection].drop()
+    yield
     await db._db[AsDict1._collection].drop()
     await db._db[AsDict2._collection].drop()
 
+
+@pytest.mark.asyncio
+async def test_find_as_dict(create_as_dict_find_dict_collection):
     obj1 = AsDict1(attr_1="Obj 1", attr_2="Obj 1", attr_3="Obj 1")
     obj2 = AsDict1(attr_1="Obj 2", attr_2="Obj 2", attr_3="Obj 2")
     obj3 = AsDict1(attr_1="Obj 3", attr_2="Obj 3", attr_3="Obj 3")
@@ -360,13 +366,6 @@ async def create_find_dict_collection():
     obj12 = AsDict2(attr_4="Obj 12", as_dict_1=[obj7, obj8])
     await db.save_all([obj9, obj10, obj11, obj12])
 
-    yield
-    await db._db[AsDict1._collection].drop()
-    await db._db[AsDict2._collection].drop()
-
-
-@pytest.mark.asyncio
-async def test_find_as_dict(create_find_dict_collection):
     obj_list = await db.find_many(Model=AsDict22, as_dict=True, populate=True)
     assert len(obj_list) == 4
     assert type(obj_list) is list
@@ -374,3 +373,63 @@ async def test_find_as_dict(create_find_dict_collection):
         assert type(dct) == dict
     obj_dict = await db.find_one(Model=AsDict2, as_dict=True, populate=True)
     assert type(obj_dict) == dict
+
+
+class A(DbModel):
+    a1: str = "A"
+    _collection: ClassVar = "a"
+
+
+class B(DbModel):
+    b1: A | Id
+    _collection: ClassVar = "b"
+
+
+class C(DbModel):
+    b1: A | Id
+    b2: list[B | Id]
+    _collection: ClassVar = "c"
+
+
+class D(DbModel):
+    d1: list[C | Id]
+    _collection: ClassVar = "d"
+
+
+@pytest_asyncio.fixture
+async def create_find_dict_collection():
+    await db._db[A._collection].drop()
+    await db._db[B._collection].drop()
+    await db._db[C._collection].drop()
+    await db._db[D._collection].drop()
+    yield
+    await db._db[A._collection].drop()
+    await db._db[B._collection].drop()
+    await db._db[C._collection].drop()
+    await db._db[D._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_recursive_reference_pipeline(create_find_dict_collection):
+
+    a1 = A()
+    a2 = A()
+    a3 = A()
+    a4 = A()
+    a5 = A()
+    a6 = A()
+    await db.save_all([a1, a2, a3, a4, a5, a6])
+    b1 = B(b1=a3)
+    b2 = B(b1=a4)
+    b3 = B(b1=a5)
+    b4 = B(b1=a6)
+    await db.save_all([b1, b2, b3, b4])
+    c1 = C(b1=a1, b2=[b1, b2])
+    c2 = C(b1=a2, b2=[b3, b4])
+    await db.save_all([c1, c2])
+    d1 = D(d1=[c1, c2])
+    await db.save(d1)
+
+    d: D = await db.find_one(Model=D, populate=True)
+
+    assert d.d1[0].b2[0].b1.a1 == "A"

@@ -1,370 +1,116 @@
 from pyodmongo import DbModel, Id, Field
 from pydantic import BaseModel
 from typing import ClassVar
+from pprint import pprint
 
 
-def test_if_reference_pipeline_is_correct():
-    class Lv3(DbModel):
-        attr_lv3_one: str = Field(alias="attrLv3One")
-        attr_lv3_two: str
-        _collection: ClassVar = "lv3"
+def test_single_class_project_pipeline():
+    class A(DbModel):
+        a1: str
+        a2: str
+        _collection: ClassVar = "a"
 
-    class Lv2(DbModel):
-        attr_lv2_one: str = Field(alias="attrLv2One")
-        attr_lv2_two: str
-        lv3: Lv3 | Id = Field(alias="lv3Alias")
-        _collection: ClassVar = "lv2"
+    expected = [
+        {
+            "$project": {
+                "_id": True,
+                "a1": True,
+                "a2": True,
+                "created_at": True,
+                "updated_at": True,
+            }
+        },
+    ]
 
-    class Lv1(DbModel):
-        attr_lv1_one: str = Field(alias="attrLv1One")
-        attr_lv1_two: str
-        lv2: Lv2 | Id
-        lv2_list: list[Lv2]
-        lv3_list_multi: list[Id | Lv2]
-        lv2_ref: Id | Lv3 = Field(alias="lv2Ref")
-        lv3_list_ref: list[Lv3 | Id]
-        _collection: ClassVar = "lv1"
+    assert A._reference_pipeline == expected
 
-    class Lv1Filho(Lv1):
-        lv1_filho_attr: str
+
+def test_simple_if_reference_pipeline_is_correct():
+    class A0(DbModel):
+        a01: str
+        _collection: ClassVar = "a0"
+
+    class A(DbModel):
+        a1: str
+        _collection: ClassVar = "a"
+
+    class B(DbModel):
+        b1: A | Id
+        b2: A0 | Id
+        _collection: ClassVar = "b"
+
+    class C(DbModel):
+        c1: list[B | Id]
+        _collection: ClassVar = "c"
 
     expected = [
         {
             "$lookup": {
-                "as": "lv2",
+                "as": "c1",
                 "foreignField": "_id",
-                "from": "lv2",
-                "localField": "lv2",
+                "from": "b",
+                "localField": "c1",
                 "pipeline": [
+                    {
+                        "$lookup": {
+                            "as": "b1",
+                            "foreignField": "_id",
+                            "from": "a",
+                            "localField": "b1",
+                            "pipeline": [
+                                {
+                                    "$project": {
+                                        "_id": True,
+                                        "a1": True,
+                                        "created_at": True,
+                                        "updated_at": True,
+                                    }
+                                }
+                            ],
+                        }
+                    },
+                    {"$set": {"b1": {"$arrayElemAt": ["$b1", 0]}}},
+                    {
+                        "$lookup": {
+                            "as": "b2",
+                            "foreignField": "_id",
+                            "from": "a0",
+                            "localField": "b2",
+                            "pipeline": [
+                                {
+                                    "$project": {
+                                        "_id": True,
+                                        "a01": True,
+                                        "created_at": True,
+                                        "updated_at": True,
+                                    }
+                                }
+                            ],
+                        }
+                    },
+                    {"$set": {"b2": {"$arrayElemAt": ["$b2", 0]}}},
                     {
                         "$project": {
                             "_id": True,
-                            "attrLv2One": True,
-                            "attr_lv2_two": True,
-                            "lv3Alias": True,
+                            "b1": True,
+                            "b2": True,
                             "created_at": True,
                             "updated_at": True,
                         }
-                    }
+                    },
                 ],
-            }
-        },
-        {"$set": {"lv2": {"$arrayElemAt": ["$lv2", 0]}}},
-        {
-            "$lookup": {
-                "as": "lv2.lv3Alias",
-                "foreignField": "_id",
-                "from": "lv3",
-                "localField": "lv2.lv3Alias",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attrLv3One": True,
-                            "attr_lv3_two": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"lv2.lv3Alias": {"$arrayElemAt": ["$lv2.lv3Alias", 0]}}},
-        {
-            "$lookup": {
-                "as": "lv3_list_multi",
-                "foreignField": "_id",
-                "from": "lv2",
-                "localField": "lv3_list_multi",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attrLv2One": True,
-                            "attr_lv2_two": True,
-                            "lv3Alias": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
+            },
         },
         {
-            "$lookup": {
-                "as": "lv2Ref",
-                "foreignField": "_id",
-                "from": "lv3",
-                "localField": "lv2Ref",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attrLv3One": True,
-                            "attr_lv3_two": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"lv2Ref": {"$arrayElemAt": ["$lv2Ref", 0]}}},
-        {
-            "$lookup": {
-                "as": "lv3_list_ref",
-                "foreignField": "_id",
-                "from": "lv3",
-                "localField": "lv3_list_ref",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attrLv3One": True,
-                            "attr_lv3_two": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
+            "$project": {
+                "_id": True,
+                "c1": True,
+                "created_at": True,
+                "updated_at": True,
             }
         },
     ]
-    assert Lv1Filho._reference_pipeline == expected
-
-
-def test_field_with_union_more_than_two():
-    class MyFirstClass(DbModel):
-        attr_first: str = None
-        _collection: ClassVar = "my_first_class"
-
-    class MyClass(DbModel):
-        email: str = None
-        mfc0: Id = None
-        mfc1: MyFirstClass | None | Id = None
-        mfc2: None | MyFirstClass | Id = None
-        mfc3: None | Id | MyFirstClass = None
-        mfc4: MyFirstClass | Id | None = None
-        mfc5: Id | MyFirstClass | None = None
-        mfc6: Id | None | MyFirstClass = None
-        mfc7: list[Id | None | MyFirstClass] = None
-        mfc8: list[Id | MyFirstClass | None] | None = None
-        mfc9: None | list[MyFirstClass | None | Id] = None
-        _collection: ClassVar = "my_class"
-
-    assert MyClass._reference_pipeline == [
-        {
-            "$lookup": {
-                "as": "mfc1",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc1",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"mfc1": {"$arrayElemAt": ["$mfc1", 0]}}},
-        {
-            "$lookup": {
-                "as": "mfc2",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc2",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"mfc2": {"$arrayElemAt": ["$mfc2", 0]}}},
-        {
-            "$lookup": {
-                "as": "mfc3",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc3",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"mfc3": {"$arrayElemAt": ["$mfc3", 0]}}},
-        {
-            "$lookup": {
-                "as": "mfc4",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc4",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"mfc4": {"$arrayElemAt": ["$mfc4", 0]}}},
-        {
-            "$lookup": {
-                "as": "mfc5",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc5",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"mfc5": {"$arrayElemAt": ["$mfc5", 0]}}},
-        {
-            "$lookup": {
-                "as": "mfc6",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc6",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"mfc6": {"$arrayElemAt": ["$mfc6", 0]}}},
-        {
-            "$lookup": {
-                "as": "mfc7",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc7",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {
-            "$lookup": {
-                "as": "mfc8",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc8",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {
-            "$lookup": {
-                "as": "mfc9",
-                "foreignField": "_id",
-                "from": "my_first_class",
-                "localField": "mfc9",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_first": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-    ]
-
-
-def test_multiples_nested_references():
-    class MyType1(BaseModel):
-        attr_type_1: str = None
-
-    class MyType2(BaseModel):
-        attr_type_2: str = None
-
-    class MyType3(BaseModel):
-        attr_type_3: str = None
-
-    class MyType4(DbModel):
-        attr_type_4: str = None
-        _collection: ClassVar = "my_type_4"
-
-    class DbMyType(DbModel):
-        attr_db: str = None
-        my_type: MyType1 | MyType2 | MyType3 | None = None
-        my_type_4: MyType4 | Id = None
-        _collection: ClassVar = "db_my_type"
-
-    assert DbMyType._reference_pipeline == [
-        {
-            "$lookup": {
-                "as": "my_type_4",
-                "foreignField": "_id",
-                "from": "my_type_4",
-                "localField": "my_type_4",
-                "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_type_4": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
-                ],
-            }
-        },
-        {"$set": {"my_type_4": {"$arrayElemAt": ["$my_type_4", 0]}}},
-    ]
+    assert C._reference_pipeline == expected
 
 
 def test_manual_pipeline():
