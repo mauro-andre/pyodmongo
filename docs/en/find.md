@@ -163,9 +163,9 @@ result: ResponsePaginate = engine.find_many(Model=Product, query=query, paginate
 
 The populate feature in the **PyODMongo** library is a powerful mechanism for automatically populating all references within an object, including nested references. This feature simplifies working with related data in MongoDB and allows you to access linked documents without having to manually retrieve them one by one. The populate functionality has the following behavior:
 
-- When you enable `populate=True` in `find_one` o `find_many `, **PyODMongo** will populate all references within that object.
-- If the references themselves have additional references, **PyODMongo** will recursively populate those as well, traversing through all levels of reference until it encounters a reference that is a list.
-- Reference lists are also populated, but if the objects within the list have their own references, they will not be populated.
+- When you enable `populate=True` in `find_one` o `find_many`, **PyODMongo** will populate all references within that object.
+- If the references themselves have additional references, **PyODMongo** will recursively populate those as well, traversing through all levels of reference.
+- Reference lists are also populated.
 
 !!! note
     To ensure excellent performance, **PyODMongo** leverages the power of MongoDB's Aggregation framework under the hood. The Aggregation framework is a powerful and efficient tool for processing and transforming data within MongoDB. 

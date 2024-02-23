@@ -163,9 +163,9 @@ result: ResponsePaginate = engine.find_many(Model=Product, query=query, paginate
 
 O recurso populate da biblioteca **PyODMongo** é um mecanismo poderoso para preencher automaticamente todas as referências dentro de um objeto, incluindo referências aninhadas. Este recurso simplifica o trabalho com dados relacionados no MongoDB e permite acessar documentos vinculados sem precisar recuperá-los manualmente, um por um. A funcionalidade populate tem o seguinte comportamento:
 
-- Quando você habilita `populate=True` em `find_one` ou `find_many `, o **PyODMongo** preencherá todas as referências dentro desse objeto.
-- Se as próprias referências tiverem referências adicionais, o **PyODMongo** também as preencherá recursivamente, percorrendo todos os níveis de referência até encontrar uma referência que seja uma lista.
-- Listas de referências também são populadas, mas se os objetos dentro da lista tiverem referências próprias, elas não serão preenchidas.
+- Quando você habilita `populate=True` em `find_one` ou `find_many`, o **PyODMongo** preencherá todas as referências dentro desse objeto.
+- Se as próprias referências tiverem referências adicionais, o **PyODMongo** também as preencherá recursivamente, percorrendo todos os níveis de referência.
+- Listas de referências também são populadas.
 
 !!! note
     Para garantir um excelente desempenho, o **PyODMongo** aproveita o poder da estrutura de agregação do MongoDB. Trata-se de uma ferramenta poderosa e eficiente para processar e transformar dados no MongoDB.
