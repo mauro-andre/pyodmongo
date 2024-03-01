@@ -4,6 +4,7 @@ from ..models.query_operators import LogicalOperator, ComparisonOperator
 from .comparison_operators import comparison_operator
 from .logical_operators import and_
 from typing import Type
+from datetime import datetime
 import re
 
 
@@ -54,9 +55,12 @@ def mount_query_filter(
         if operator not in ["$eq", "$gt", "$gte", "$in", "$lt", "$lte", "$ne", "$nin"]:
             continue
         try:
-            value = eval(value)
-        except (SyntaxError, NameError):
-            value = value
+            value = datetime.fromisoformat(value)
+        except (TypeError, ValueError):
+            try:
+                value = eval(value)
+            except (NameError, SyntaxError):
+                value = value
         field_name = split_result[0]
         if type(value) is list:
             for index, item in enumerate(value):
