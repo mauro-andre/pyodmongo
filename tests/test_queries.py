@@ -2,6 +2,7 @@ from pyodmongo import DbModel, Field, Id
 from pydantic import BaseModel
 from typing import ClassVar
 from bson import ObjectId
+from datetime import datetime
 from pyodmongo.queries import (
     eq,
     gt,
@@ -235,6 +236,37 @@ def test_mount_query_filter_with_regex():
             {"attr2": {"$eq": 123}},
         ]
     }
+
+
+def test_mount_query_filter_with_data_types():
+    class MyClass(DbModel):
+        string_value: str
+        int_value: int
+        float_value: float
+        bool_value: bool
+        date_value: datetime
+        _collection: ClassVar = "my_class"
+
+    input_dct = {
+        "string_value_eq": "AString",
+        "int_value_gt": "10",
+        "float_value_lte": "50.6",
+        "bool_value_eq": "True",
+        "date_value_lte": "2024-06-01",
+    }
+    query_dct = mount_query_filter(
+        Model=MyClass, items=input_dct, initial_comparison_operators=[]
+    )
+    assert query_dct.operators[0].value == "AString"
+    assert type(query_dct.operators[0].value) is str
+    assert query_dct.operators[1].value == 10
+    assert type(query_dct.operators[1].value) is int
+    assert query_dct.operators[2].value == 50.6
+    assert type(query_dct.operators[2].value) is float
+    assert query_dct.operators[3].value == True
+    assert type(query_dct.operators[3].value) is bool
+    assert query_dct.operators[4].value == datetime(2024, 6, 1)
+    assert type(query_dct.operators[4].value) is datetime
 
 
 def test_logical_operator_inside_another():
