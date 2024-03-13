@@ -433,3 +433,49 @@ async def test_recursive_reference_pipeline(create_find_dict_collection):
     d: D = await db.find_one(Model=D, populate=True)
 
     assert d.d1[0].b2[0].b1.a1 == "A"
+
+
+class ClassA(DbModel):
+    attr_1: str = "A String 1"
+    attr_2: str = "A String 2"
+    _collection: ClassVar = "col_a"
+
+
+class ClassB(DbModel):
+    attr_3: str = "A String 3"
+    a: ClassA | Id
+    _collection: ClassVar = "col_b"
+
+
+@pytest_asyncio.fixture()
+async def drop_collections():
+    await db._db[ClassA._collection].drop()
+    await db._db[ClassB._collection].drop()
+    yield
+    await db._db[ClassA._collection].drop()
+    await db._db[ClassB._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_find_nested_field_query(drop_collections):
+    obj_a = ClassA()
+    await db.save(obj=obj_a)
+    obj_b = ClassB(a=obj_a)
+    await db.save(obj=obj_b)
+    query = eq(ClassB.a.attr_2, "A String 2")
+    result = await db.find_many(Model=ClassB, query=query, populate=True)
+    assert result == [obj_b]
+
+
+@pytest.mark.asyncio
+async def test_find_nested_field_mount_query(drop_collections):
+    obj_a = ClassA()
+    await db.save(obj=obj_a)
+    obj_b = ClassB(a=obj_a)
+    await db.save(obj=obj_b)
+    input_dict = {"a.attr_2_eq": "A String 2"}
+    query = mount_query_filter(
+        Model=ClassB, items=input_dict, initial_comparison_operators=[]
+    )
+    result = await db.find_many(Model=ClassB, query=query, populate=True)
+    assert result == [obj_b]

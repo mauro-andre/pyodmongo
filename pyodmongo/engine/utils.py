@@ -53,6 +53,7 @@ def mount_base_pipeline(Model, query, populate: bool = False):
     model_stage = Model._pipeline
     reference_stage = Model._reference_pipeline
     if populate:
-        return match_stage + model_stage + reference_stage
+        return reference_stage + match_stage + model_stage
+        # return match_stage + model_stage + reference_stage
     else:
         return match_stage + model_stage
