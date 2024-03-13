@@ -66,7 +66,8 @@ def mount_query_filter(
             for index, item in enumerate(value):
                 value[index] = js_regex_to_python(item)
         try:
-            db_field_info: DbField = getattr(Model, field_name)
+            # db_field_info: DbField = getattr(Model, field_name)
+            db_field_info: DbField = eval("Model." + field_name)
         except AttributeError:
             raise AttributeError(f"There's no field '{field_name}' in {Model.__name__}")
         initial_comparison_operators.append(
