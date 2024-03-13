@@ -124,6 +124,8 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
                     ),
                     is_reference_list=db_field_info.is_list,
                 )
+            else:
+                resolve_ref_pipeline(cls=db_field_info.field_type, pipeline=pipeline)
     pipeline += resolve_project_pipeline(cls=cls)
     return pipeline
 

@@ -126,3 +126,56 @@ def test_manual_pipeline():
 
     assert MyModel1._pipeline == []
     assert MyModel2._pipeline == ["manual pipeline here"]
+
+
+def test_recursive_reference_pipeline():
+    from pprint import pprint
+
+    class A(DbModel):
+        attr_1: str = "One"
+        _collection: ClassVar = "a"
+
+    class B(BaseModel):
+        attr_2: str = "Two"
+        a: A | Id = A()
+
+    class C(DbModel):
+        attr_3: str = "Three"
+        b: B = B()
+        a: A | Id = A()
+        _collection: ClassVar = "c"
+
+    expected = [
+        {
+            "$lookup": {
+                "as": "a",
+                "foreignField": "_id",
+                "from": "a",
+                "localField": "a",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_1": True,
+                            "created_at": True,
+                            "updated_at": True,
+                        }
+                    }
+                ],
+            }
+        },
+        {"$set": {"a": {"$arrayElemAt": ["$a", 0]}}},
+        {
+            "$project": {
+                "_id": True,
+                "a": True,
+                "attr_3": True,
+                "b": True,
+                "created_at": True,
+                "updated_at": True,
+            }
+        },
+    ]
+
+    print()
+    pprint(C._reference_pipeline)
