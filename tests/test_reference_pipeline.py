@@ -131,32 +131,125 @@ def test_manual_pipeline():
 def test_recursive_reference_pipeline():
     from pprint import pprint
 
+    class Zero(DbModel):
+        attr_0: str = "Zero"
+        _collection: ClassVar = "col_0"
+
     class A(DbModel):
         attr_1: str = "One"
-        _collection: ClassVar = "a"
+        zero_1: Zero | Id = Zero()
+        zero_2: Zero = Zero()
+        _collection: ClassVar = "col_a"
 
     class B(BaseModel):
         attr_2: str = "Two"
-        a: A | Id = A()
+        a1: A | Id = A()
+        a2: A = A()
 
     class C(DbModel):
         attr_3: str = "Three"
-        b: B = B()
         a: A | Id = A()
-        _collection: ClassVar = "c"
+        b: B = B()
+        _collection: ClassVar = "col_c"
 
-    expected = [
+    assert C._reference_pipeline == [
         {
             "$lookup": {
                 "as": "a",
                 "foreignField": "_id",
-                "from": "a",
+                "from": "col_a",
                 "localField": "a",
                 "pipeline": [
+                    {
+                        "$lookup": {
+                            "as": "zero_1",
+                            "foreignField": "_id",
+                            "from": "col_0",
+                            "localField": "zero_1",
+                            "pipeline": [
+                                {
+                                    "$project": {
+                                        "_id": True,
+                                        "attr_0": True,
+                                        "created_at": True,
+                                        "updated_at": True,
+                                    }
+                                }
+                            ],
+                        }
+                    },
+                    {"$set": {"zero_1": {"$arrayElemAt": ["$zero_1", 0]}}},
                     {
                         "$project": {
                             "_id": True,
                             "attr_1": True,
+                            "created_at": True,
+                            "updated_at": True,
+                            "zero_1": True,
+                            "zero_2._id": True,
+                            "zero_2.attr_0": True,
+                            "zero_2.created_at": True,
+                            "zero_2.updated_at": True,
+                        }
+                    },
+                ],
+            }
+        },
+        {"$set": {"a": {"$arrayElemAt": ["$a", 0]}}},
+        {
+            "$lookup": {
+                "as": "b.a1",
+                "foreignField": "_id",
+                "from": "col_a",
+                "localField": "b.a1",
+                "pipeline": [
+                    {
+                        "$lookup": {
+                            "as": "zero_1",
+                            "foreignField": "_id",
+                            "from": "col_0",
+                            "localField": "zero_1",
+                            "pipeline": [
+                                {
+                                    "$project": {
+                                        "_id": True,
+                                        "attr_0": True,
+                                        "created_at": True,
+                                        "updated_at": True,
+                                    }
+                                }
+                            ],
+                        }
+                    },
+                    {"$set": {"zero_1": {"$arrayElemAt": ["$zero_1", 0]}}},
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_1": True,
+                            "created_at": True,
+                            "updated_at": True,
+                            "zero_1": True,
+                            "zero_2._id": True,
+                            "zero_2.attr_0": True,
+                            "zero_2.created_at": True,
+                            "zero_2.updated_at": True,
+                        }
+                    },
+                ],
+            }
+        },
+        {"$set": {"b.a1": {"$arrayElemAt": ["$b.a1", 0]}}},
+        {
+            "$lookup": {
+                "as": "b.a2.zero_1",
+                "foreignField": "_id",
+                "from": "col_0",
+                "localField": "b.a2.zero_1",
+                "pipeline": [
+                    {
+                        "$project": {
+                            "_id": True,
+                            "attr_0": True,
                             "created_at": True,
                             "updated_at": True,
                         }
@@ -164,18 +257,25 @@ def test_recursive_reference_pipeline():
                 ],
             }
         },
-        {"$set": {"a": {"$arrayElemAt": ["$a", 0]}}},
+        {"$set": {"b.a2.zero_1": {"$arrayElemAt": ["$b.a2.zero_1", 0]}}},
         {
             "$project": {
                 "_id": True,
                 "a": True,
                 "attr_3": True,
-                "b": True,
+                "b.a1": True,
+                "b.a2._id": True,
+                "b.a2.attr_1": True,
+                "b.a2.created_at": True,
+                "b.a2.updated_at": True,
+                "b.a2.zero_1": True,
+                "b.a2.zero_2._id": True,
+                "b.a2.zero_2.attr_0": True,
+                "b.a2.zero_2.created_at": True,
+                "b.a2.zero_2.updated_at": True,
+                "b.attr_2": True,
                 "created_at": True,
                 "updated_at": True,
             }
         },
     ]
-
-    print()
-    pprint(C._reference_pipeline)
