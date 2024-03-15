@@ -96,35 +96,54 @@ def field_annotation_infos(field, field_info) -> DbField:
     )
 
 
-def resolve_project_pipeline(cls: BaseModel):
-    project_dict = {"_id": True}
+def resolve_project_pipeline(cls: BaseModel, path: list):
+    project = {}
     for field, field_info in cls.model_fields.items():
-        field_alias = field_info.alias or field
-        project_dict[field_alias] = True
-    try:
-        project_dict.pop("id")
-    except KeyError:
-        pass
-    return [{"$project": project_dict}]
+        db_field_info = field_annotation_infos(field=field, field_info=field_info)
+        path.append(db_field_info.field_alias)
+        path_str = ".".join(path)
+        project[path_str] = True
+        if db_field_info.has_model_fields:
+            if not db_field_info.by_reference:
+                project.pop(path_str)
+                project.update(
+                    resolve_project_pipeline(cls=db_field_info.field_type, path=path)
+                )
+        path.pop(-1)
+    return project
 
 
 def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     for field, field_info in cls.model_fields.items():
         db_field_info = field_annotation_infos(field=field, field_info=field_info)
+        path.append(db_field_info.field_alias)
+        path_str = ".".join(path)
         if db_field_info.has_model_fields:
             if db_field_info.by_reference:
                 collection = db_field_info.field_type._collection
                 pipeline += lookup_and_set(
                     from_=collection,
-                    local_field=db_field_info.field_alias,
+                    local_field=path_str,
                     foreign_field="_id",
-                    as_=db_field_info.field_alias,
+                    as_=path_str,
                     pipeline=resolve_ref_pipeline(
                         cls=db_field_info.field_type, pipeline=[], path=[]
                     ),
                     is_reference_list=db_field_info.is_list,
                 )
-    pipeline += resolve_project_pipeline(cls=cls)
+            else:
+                resolve_ref_pipeline(
+                    cls=db_field_info.field_type,
+                    pipeline=pipeline,
+                    path=path,
+                )
+        path.pop(-1)
+    project = resolve_project_pipeline(cls=cls, path=[])
+    try:
+        project_index = [list(dct.keys())[0] for dct in pipeline].index("$project")
+        pipeline[project_index] = {"$project": project}
+    except ValueError:
+        pipeline += [{"$project": project}]
     return pipeline
 
 
