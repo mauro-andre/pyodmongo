@@ -10,6 +10,7 @@ from datetime import datetime
 from typing import TypeVar
 from bson import ObjectId
 from math import ceil
+import threading
 
 
 Model = TypeVar("Model", bound=DbModel)
@@ -55,12 +56,8 @@ class DbEngine:
             return list(docs_cursor)
         return [Model(**doc) for doc in docs_cursor]
 
-    def __resolve_count_pipeline(self, Model, pipeline):
-        docs = list(self._db[Model._collection].aggregate(pipeline))
-        try:
-            return docs[0]["count"]
-        except IndexError:
-            return 0
+    def __resolve_count_pipeline(self, Model, filter_):
+        return self._db[Model._collection].count_documents(filter=filter_, hint="_id_")
 
     def delete_one(
         self,
@@ -191,9 +188,10 @@ class DbEngine:
                 'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
         raw_query = {} if not raw_query else raw_query
+        query = query_dict(query_operator=query, dct={}) if query else raw_query
         pipeline = mount_base_pipeline(
             Model=Model,
-            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+            query=query,
             populate=populate,
         )
         if not paginate:
@@ -204,18 +202,15 @@ class DbEngine:
             max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
         )
 
-        count_stage = [{"$count": "count"}]
         skip = (docs_per_page * current_page) - docs_per_page
         skip_stage = [{"$skip": skip}]
         limit_stage = [{"$limit": docs_per_page}]
 
-        count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
-
         result = self.__aggregate(
             Model=Model, pipeline=result_pipeline, as_dict=as_dict
         )
-        count = self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline)
+        count = self.__resolve_count_pipeline(Model=Model, filter_=query)
 
         page_quantity = ceil(count / docs_per_page)
         return ResponsePaginate(
