@@ -56,12 +56,10 @@ class AsyncDbEngine:
             return await docs_cursor.to_list(length=None)
         return [Model(**doc) async for doc in docs_cursor]
 
-    async def __resolve_count_pipeline(self, Model, pipeline):
-        docs = await self._db[Model._collection].aggregate(pipeline).to_list(1)
-        try:
-            return docs[0]["count"]
-        except IndexError:
-            return 0
+    async def __resolve_count_pipeline(self, Model, filter_):
+        return await self._db[Model._collection].count_documents(
+            filter=filter_, hint="_id_"
+        )
 
     async def delete_one(
         self,
@@ -192,9 +190,10 @@ class AsyncDbEngine:
                 'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
         raw_query = {} if not raw_query else raw_query
+        query = query_dict(query_operator=query, dct={}) if query else raw_query
         pipeline = mount_base_pipeline(
             Model=Model,
-            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+            query=query,
             populate=populate,
         )
         if not paginate:
@@ -207,17 +206,15 @@ class AsyncDbEngine:
             max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
         )
 
-        count_stage = [{"$count": "count"}]
         skip = (docs_per_page * current_page) - docs_per_page
         skip_stage = [{"$skip": skip}]
         limit_stage = [{"$limit": docs_per_page}]
 
-        count_pipeline = pipeline + count_stage
         result_pipeline = pipeline + skip_stage + limit_stage
 
         result, count = await gather(
             self.__aggregate(Model=Model, pipeline=result_pipeline, as_dict=as_dict),
-            self.__resolve_count_pipeline(Model=Model, pipeline=count_pipeline),
+            self.__resolve_count_pipeline(Model=Model, filter_=query),
         )
 
         page_quantity = ceil(count / docs_per_page)
