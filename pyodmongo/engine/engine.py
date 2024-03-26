@@ -10,7 +10,6 @@ from datetime import datetime
 from typing import TypeVar
 from bson import ObjectId
 from math import ceil
-import threading
 
 
 Model = TypeVar("Model", bound=DbModel)
@@ -57,7 +56,8 @@ class DbEngine:
         return [Model(**doc) for doc in docs_cursor]
 
     def __resolve_count_pipeline(self, Model, filter_):
-        return self._db[Model._collection].count_documents(filter=filter_, hint="_id_")
+        kwargs = {"hint": "_id_"} if not filter_ else {}
+        return self._db[Model._collection].count_documents(filter=filter_, **kwargs)
 
     def delete_one(
         self,
