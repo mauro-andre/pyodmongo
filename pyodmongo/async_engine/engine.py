@@ -57,8 +57,9 @@ class AsyncDbEngine:
         return [Model(**doc) async for doc in docs_cursor]
 
     async def __resolve_count_pipeline(self, Model, filter_):
+        kwargs = {"hint": "_id_"} if not filter_ else {}
         return await self._db[Model._collection].count_documents(
-            filter=filter_, hint="_id_"
+            filter=filter_, **kwargs
         )
 
     async def delete_one(
