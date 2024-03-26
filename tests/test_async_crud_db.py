@@ -462,7 +462,7 @@ async def test_find_nested_field_query(drop_collections):
     await db.save(obj=obj_a)
     obj_b = ClassB(a=obj_a)
     await db.save(obj=obj_b)
-    query = eq(ClassB.a.attr_2, "A String 2")
+    query = eq(ClassB.a, obj_a.id)
     result = await db.find_many(Model=ClassB, query=query, populate=True)
     assert result == [obj_b]
 
@@ -473,7 +473,7 @@ async def test_find_nested_field_mount_query(drop_collections):
     await db.save(obj=obj_a)
     obj_b = ClassB(a=obj_a)
     await db.save(obj=obj_b)
-    input_dict = {"a.attr_2_eq": "A String 2"}
+    input_dict = {"a": obj_a.id}
     query = mount_query_filter(
         Model=ClassB, items=input_dict, initial_comparison_operators=[]
     )
