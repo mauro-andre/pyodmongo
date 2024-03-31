@@ -138,12 +138,12 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
                     path=path,
                 )
         path.pop(-1)
-    project = resolve_project_pipeline(cls=cls, path=[])
-    try:
-        project_index = [list(dct.keys())[0] for dct in pipeline].index("$project")
-        pipeline[project_index] = {"$project": project}
-    except ValueError:
-        pipeline += [{"$project": project}]
+    # project = resolve_project_pipeline(cls=cls, path=[])
+    # try:
+    #     project_index = [list(dct.keys())[0] for dct in pipeline].index("$project")
+    #     pipeline[project_index] = {"$project": project}
+    # except ValueError:
+    #     pipeline += [{"$project": project}]
     return pipeline
 
 
