@@ -11,15 +11,15 @@ def test_single_class_project_pipeline():
         _collection: ClassVar = "a"
 
     expected = [
-        {
-            "$project": {
-                "_id": True,
-                "a1": True,
-                "a2": True,
-                "created_at": True,
-                "updated_at": True,
-            }
-        },
+        # {
+        #     "$project": {
+        #         "_id": True,
+        #         "a1": True,
+        #         "a2": True,
+        #         "created_at": True,
+        #         "updated_at": True,
+        #     }
+        # },
     ]
 
     assert A._reference_pipeline == expected
@@ -58,14 +58,14 @@ def test_simple_if_reference_pipeline_is_correct():
                             "from": "a",
                             "localField": "b1",
                             "pipeline": [
-                                {
-                                    "$project": {
-                                        "_id": True,
-                                        "a1": True,
-                                        "created_at": True,
-                                        "updated_at": True,
-                                    }
-                                }
+                                # {
+                                #     "$project": {
+                                #         "_id": True,
+                                #         "a1": True,
+                                #         "created_at": True,
+                                #         "updated_at": True,
+                                #     }
+                                # }
                             ],
                         }
                     },
@@ -77,38 +77,38 @@ def test_simple_if_reference_pipeline_is_correct():
                             "from": "a0",
                             "localField": "b2",
                             "pipeline": [
-                                {
-                                    "$project": {
-                                        "_id": True,
-                                        "a01": True,
-                                        "created_at": True,
-                                        "updated_at": True,
-                                    }
-                                }
+                                # {
+                                #     "$project": {
+                                #         "_id": True,
+                                #         "a01": True,
+                                #         "created_at": True,
+                                #         "updated_at": True,
+                                #     }
+                                # }
                             ],
                         }
                     },
                     {"$set": {"b2": {"$arrayElemAt": ["$b2", 0]}}},
-                    {
-                        "$project": {
-                            "_id": True,
-                            "b1": True,
-                            "b2": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    },
+                    # {
+                    #     "$project": {
+                    #         "_id": True,
+                    #         "b1": True,
+                    #         "b2": True,
+                    #         "created_at": True,
+                    #         "updated_at": True,
+                    #     }
+                    # },
                 ],
             },
         },
-        {
-            "$project": {
-                "_id": True,
-                "c1": True,
-                "created_at": True,
-                "updated_at": True,
-            }
-        },
+        # {
+        #     "$project": {
+        #         "_id": True,
+        #         "c1": True,
+        #         "created_at": True,
+        #         "updated_at": True,
+        #     }
+        # },
     ]
     assert C._reference_pipeline == expected
 
@@ -167,31 +167,31 @@ def test_recursive_reference_pipeline():
                             "from": "col_0",
                             "localField": "zero_1",
                             "pipeline": [
-                                {
-                                    "$project": {
-                                        "_id": True,
-                                        "attr_0": True,
-                                        "created_at": True,
-                                        "updated_at": True,
-                                    }
-                                }
+                                # {
+                                #     "$project": {
+                                #         "_id": True,
+                                #         "attr_0": True,
+                                #         "created_at": True,
+                                #         "updated_at": True,
+                                #     }
+                                # }
                             ],
                         }
                     },
                     {"$set": {"zero_1": {"$arrayElemAt": ["$zero_1", 0]}}},
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_1": True,
-                            "created_at": True,
-                            "updated_at": True,
-                            "zero_1": True,
-                            "zero_2._id": True,
-                            "zero_2.attr_0": True,
-                            "zero_2.created_at": True,
-                            "zero_2.updated_at": True,
-                        }
-                    },
+                    # {
+                    #     "$project": {
+                    #         "_id": True,
+                    #         "attr_1": True,
+                    #         "created_at": True,
+                    #         "updated_at": True,
+                    #         "zero_1": True,
+                    #         "zero_2._id": True,
+                    #         "zero_2.attr_0": True,
+                    #         "zero_2.created_at": True,
+                    #         "zero_2.updated_at": True,
+                    #     }
+                    # },
                 ],
             }
         },
@@ -210,31 +210,31 @@ def test_recursive_reference_pipeline():
                             "from": "col_0",
                             "localField": "zero_1",
                             "pipeline": [
-                                {
-                                    "$project": {
-                                        "_id": True,
-                                        "attr_0": True,
-                                        "created_at": True,
-                                        "updated_at": True,
-                                    }
-                                }
+                                # {
+                                #     "$project": {
+                                #         "_id": True,
+                                #         "attr_0": True,
+                                #         "created_at": True,
+                                #         "updated_at": True,
+                                #     }
+                                # }
                             ],
                         }
                     },
                     {"$set": {"zero_1": {"$arrayElemAt": ["$zero_1", 0]}}},
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_1": True,
-                            "created_at": True,
-                            "updated_at": True,
-                            "zero_1": True,
-                            "zero_2._id": True,
-                            "zero_2.attr_0": True,
-                            "zero_2.created_at": True,
-                            "zero_2.updated_at": True,
-                        }
-                    },
+                    # {
+                    #     "$project": {
+                    #         "_id": True,
+                    #         "attr_1": True,
+                    #         "created_at": True,
+                    #         "updated_at": True,
+                    #         "zero_1": True,
+                    #         "zero_2._id": True,
+                    #         "zero_2.attr_0": True,
+                    #         "zero_2.created_at": True,
+                    #         "zero_2.updated_at": True,
+                    #     }
+                    # },
                 ],
             }
         },
@@ -246,36 +246,36 @@ def test_recursive_reference_pipeline():
                 "from": "col_0",
                 "localField": "b.a2.zero_1",
                 "pipeline": [
-                    {
-                        "$project": {
-                            "_id": True,
-                            "attr_0": True,
-                            "created_at": True,
-                            "updated_at": True,
-                        }
-                    }
+                    # {
+                    #     "$project": {
+                    #         "_id": True,
+                    #         "attr_0": True,
+                    #         "created_at": True,
+                    #         "updated_at": True,
+                    #     }
+                    # }
                 ],
             }
         },
         {"$set": {"b.a2.zero_1": {"$arrayElemAt": ["$b.a2.zero_1", 0]}}},
-        {
-            "$project": {
-                "_id": True,
-                "a": True,
-                "attr_3": True,
-                "b.a1": True,
-                "b.a2._id": True,
-                "b.a2.attr_1": True,
-                "b.a2.created_at": True,
-                "b.a2.updated_at": True,
-                "b.a2.zero_1": True,
-                "b.a2.zero_2._id": True,
-                "b.a2.zero_2.attr_0": True,
-                "b.a2.zero_2.created_at": True,
-                "b.a2.zero_2.updated_at": True,
-                "b.attr_2": True,
-                "created_at": True,
-                "updated_at": True,
-            }
-        },
+        # {
+        #     "$project": {
+        #         "_id": True,
+        #         "a": True,
+        #         "attr_3": True,
+        #         "b.a1": True,
+        #         "b.a2._id": True,
+        #         "b.a2.attr_1": True,
+        #         "b.a2.created_at": True,
+        #         "b.a2.updated_at": True,
+        #         "b.a2.zero_1": True,
+        #         "b.a2.zero_2._id": True,
+        #         "b.a2.zero_2.attr_0": True,
+        #         "b.a2.zero_2.created_at": True,
+        #         "b.a2.zero_2.updated_at": True,
+        #         "b.attr_2": True,
+        #         "created_at": True,
+        #         "updated_at": True,
+        #     }
+        # },
     ]
