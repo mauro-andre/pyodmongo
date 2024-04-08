@@ -17,10 +17,26 @@ class DbModel(DbModelCore):
     model_config = ConfigDict(populate_by_name=True)
     _pipeline: ClassVar = []
 
+    def __remove_empty_dict(self, dct: dict):
+        for key, value in dct.items():
+            if value == {}:
+                dct[key] = None
+            elif type(value) == dict:
+                self.__remove_empty_dict(dct=value)
+                is_full_empty = all(
+                    v == None or v == {} or v == [] for v in value.values()
+                )
+                if is_full_empty:
+                    dct[key] = None
+        if dct == {}:
+            return None
+        else:
+            return dct
+
     def __init__(self, **attrs):
         for key, value in attrs.items():
-            if value == {}:
-                attrs[key] = None
+            if type(value) == dict:
+                attrs[key] = self.__remove_empty_dict(dct=value)
         if attrs.get("_id") is not None:
             attrs["id"] = attrs.pop("_id")
         super().__init__(**attrs)

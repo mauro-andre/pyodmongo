@@ -9,7 +9,7 @@ from pyodmongo import (
 )
 from pyodmongo.queries import eq, gte, gt, mount_query_filter
 from pyodmongo.engine.utils import consolidate_dict
-from pydantic import ConfigDict
+from pydantic import ConfigDict, BaseModel
 from typing import ClassVar
 from bson import ObjectId
 from datetime import datetime
@@ -448,7 +448,7 @@ class ClassB(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collections():
+async def drop_collections_a_b():
     await db._db[ClassA._collection].drop()
     await db._db[ClassB._collection].drop()
     yield
@@ -457,7 +457,7 @@ async def drop_collections():
 
 
 @pytest.mark.asyncio
-async def test_find_nested_field_query(drop_collections):
+async def test_find_nested_field_query(drop_collections_a_b):
     obj_a = ClassA()
     await db.save(obj=obj_a)
     obj_b = ClassB(a=obj_a)
@@ -468,7 +468,7 @@ async def test_find_nested_field_query(drop_collections):
 
 
 @pytest.mark.asyncio
-async def test_find_nested_field_mount_query(drop_collections):
+async def test_find_nested_field_mount_query(drop_collections_a_b):
     obj_a = ClassA()
     await db.save(obj=obj_a)
     obj_b = ClassB(a=obj_a)
@@ -479,3 +479,42 @@ async def test_find_nested_field_mount_query(drop_collections):
     )
     result = await db.find_many(Model=ClassB, query=query, populate=True)
     assert result == [obj_b]
+
+
+class ClassOne(DbModel):
+    attr_1: str = "attr 1"
+    _collection: ClassVar = "class_one"
+
+
+class ClassTwoA(BaseModel):
+    attr_2_a: str = "attr 2 A"
+    class_one: list[ClassOne | Id] | None = []
+
+
+class ClassTwoB(BaseModel):
+    attr_2_b: str
+    class_two_a: ClassTwoA | None
+
+
+class ClassThree(DbModel):
+    attr_3: str = "attr 3"
+    class_two: ClassTwoB | None = ClassTwoB(attr_2_b="attr 2 b", class_two_a=None)
+    _collection: ClassVar = "class_three"
+
+
+@pytest_asyncio.fixture()
+async def drop_collections_one_three():
+    await db._db[ClassOne._collection].drop()
+    await db._db[ClassThree._collection].drop()
+    yield
+    await db._db[ClassOne._collection].drop()
+    await db._db[ClassThree._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_nested_none_object(drop_collections_one_three):
+    obj = ClassThree()
+    await db.save(obj=ClassOne())
+    await db.save(obj=obj)
+    obj_found = await db.find_one(Model=ClassThree, populate=True)
+    assert obj_found == obj
