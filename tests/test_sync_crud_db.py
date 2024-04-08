@@ -285,7 +285,7 @@ def test_find_with_populate():
 
     obj_found = db.find_one(Model=MyModel2, populate=True)
     assert obj_found == obj_2
-
+    db._db[MyModel1._collection].drop()
     db._db[MyModel2._collection].drop()
 
 
@@ -310,6 +310,7 @@ def test_find_without_populate():
     obj_found = db.find_one(Model=MyModel2)
     assert obj_found == obj_2
 
+    db._db[MyModel1._collection].drop()
     db._db[MyModel2._collection].drop()
 
 
