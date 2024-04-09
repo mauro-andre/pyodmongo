@@ -4,7 +4,8 @@ from typing import Any, Union, get_origin, get_args
 from types import UnionType
 from ..models.id_model import Id
 from ..models.db_field_info import DbField
-from .aggregate_stages import lookup_and_set
+from .aggregate_stages import lookup_and_set, unwind
+import copy
 
 
 def resolve_indexes(cls: BaseModel):
@@ -145,6 +146,47 @@ def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
     # except ValueError:
     #     pipeline += [{"$project": project}]
     return pipeline
+
+
+def _paths_to_ref_ids(cls: BaseModel, paths: list, single_path: list):
+    for field, field_info in cls.model_fields.items():
+        db_field = field_annotation_infos(field=field, field_info=field_info)
+        single_path.append(db_field)
+        if db_field.by_reference:
+            paths.append(copy.deepcopy(single_path))
+        elif db_field.has_model_fields:
+            _paths_to_ref_ids(
+                cls=db_field.field_type, paths=paths, single_path=single_path
+            )
+        single_path.pop(-1)
+    return paths
+
+
+def _mount_pipeline(cls: BaseModel, pipeline: list):
+    paths = _paths_to_ref_ids(cls=cls, paths=[], single_path=[])
+    for path in paths:
+        path_str = ""
+        for index, db_filed in enumerate(path):
+            db_filed: DbField
+            path_str += (
+                "." + db_filed.field_alias if path_str != "" else db_filed.field_alias
+            )
+            if db_filed.is_list and not db_filed.by_reference:
+                pipeline += unwind(
+                    path=path_str, array_index=f"__unwind_{index}", preserve_empty=True
+                )
+
+    return pipeline
+
+
+def resolve_reference_pipeline(cls: BaseModel):
+    from pprint import pprint
+
+    print("*-" * 40)
+    print(f"-------------- {cls.__name__} --------------")
+    pipeline = _mount_pipeline(cls=cls, pipeline=[])
+    pprint(pipeline)
+    # print()
 
 
 def _recursice_db_fields_info(db_field_info: DbField, path: list) -> DbField:

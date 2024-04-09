@@ -7,6 +7,7 @@ from ..services.model_init import (
     resolve_indexes,
     resolve_ref_pipeline,
     resolve_class_fields_db_info,
+    resolve_reference_pipeline,
 )
 
 
@@ -45,6 +46,7 @@ class DbModel(DbModelCore):
     def __pydantic_init_subclass__(cls):
         resolve_class_fields_db_info(cls=cls)
         ref_pipeline = resolve_ref_pipeline(cls=cls, pipeline=[], path=[])
+        pipeline = resolve_reference_pipeline(cls=cls)
         setattr(cls, "_reference_pipeline", ref_pipeline)
         indexes = resolve_indexes(cls=cls)
         setattr(cls, "_init_indexes", indexes)
