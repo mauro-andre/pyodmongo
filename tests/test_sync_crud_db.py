@@ -391,7 +391,7 @@ def test_sort_query(drop_collection_for_test_sort):
     result_many = db.find_many(Model=MySortClass, sort=sort_oprator)
     assert result_many[0] == obj_list[4]
     assert result_many[1] == obj_list[1]
-    
+
     sort_oprator = sort((MySortClass.attr_3, 1))
     result_one = db.find_one(Model=MySortClass, sort=sort_oprator)
     assert result_one == obj_list[2]
