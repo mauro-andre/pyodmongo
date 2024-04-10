@@ -343,6 +343,4 @@ def test_mount_query_string_with_sort():
         in_(MyClass.attr_2, ["value_1", "value_2"]),
         gte(MyClass.attr_3, 10),
     )
-    assert sort_operator == sort(
-        (MyClass.attr_1, 1), (MyClass.attr_2, -1)
-    )
+    assert sort_operator == sort((MyClass.attr_1, 1), (MyClass.attr_2, -1))
