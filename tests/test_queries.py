@@ -16,9 +16,10 @@ from pyodmongo.queries import (
     and_,
     or_,
     nor,
+    sort,
     mount_query_filter,
 )
-from pyodmongo.services.query_operators import query_dict
+from pyodmongo.services.query_operators import query_dict, sort_dict
 import pytest
 
 
@@ -292,3 +293,29 @@ def test_logical_operator_inside_another():
     }
     query_dct = query_dict(query_operator=query, dct={})
     assert query_dct == expected_dct
+
+
+def test_sort_operator():
+    class MyNestedClass(BaseModel):
+        n: int
+
+    class MyClass(DbModel):
+        a: str
+        b: int
+        c: int
+        nested: MyNestedClass
+
+    sort_operator = sort(
+        (MyClass.nested.n, -1), (MyClass.b, 1), (MyClass.c, -1), (MyClass.a, 1)
+    )
+    assert sort_dict(sort_operators=sort_operator) == {
+        "nested.n": -1,
+        "b": 1,
+        "c": -1,
+        "a": 1,
+    }
+
+    with pytest.raises(
+        ValueError, match="Only values 1 ascending and -1 descending are valid"
+    ):
+        sort_dict(sort_operators=sort((MyClass.a, 2)))

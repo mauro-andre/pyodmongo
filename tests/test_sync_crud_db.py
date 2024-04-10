@@ -7,7 +7,7 @@ from pyodmongo import (
     ResponsePaginate,
     Field,
 )
-from pyodmongo.queries import eq, gte, gt
+from pyodmongo.queries import eq, gte, gt, sort
 from pyodmongo.engine.utils import consolidate_dict
 from pydantic import ConfigDict
 from typing import ClassVar
@@ -352,3 +352,46 @@ def test_find_as_dict(create_find_dict_collection):
         assert type(dct) == dict
     obj_dict = db.find_one(Model=AsDict2, as_dict=True, populate=True)
     assert type(obj_dict) == dict
+
+
+class MySortClass(DbModel):
+    attr_1: str
+    attr_2: int
+    attr_3: datetime
+    _collection: ClassVar = "my_class_to_sort"
+
+
+@pytest.fixture()
+def drop_collection_for_test_sort():
+    db._db[MySortClass._collection].drop()
+    yield
+    db._db[MySortClass._collection].drop()
+
+
+def test_sort_query(drop_collection_for_test_sort):
+    obj_list = [
+        MySortClass(
+            attr_1="Juliet", attr_2=100, attr_3=datetime(year=2023, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Albert", attr_2=50, attr_3=datetime(year=2025, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Zack", attr_2=30, attr_3=datetime(year=2020, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Charlie", attr_2=150, attr_3=datetime(year=2027, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Albert", attr_2=40, attr_3=datetime(year=2025, month=1, day=20)
+        ),
+    ]
+    db.save_all(obj_list=obj_list)
+    sort_oprator = sort((MySortClass.attr_1, 1), (MySortClass.attr_2, 1))
+    result_many = db.find_many(Model=MySortClass, sort=sort_oprator)
+    assert result_many[0] == obj_list[4]
+    assert result_many[1] == obj_list[1]
+    
+    sort_oprator = sort((MySortClass.attr_3, 1))
+    result_one = db.find_one(Model=MySortClass, sort=sort_oprator)
+    assert result_one == obj_list[2]

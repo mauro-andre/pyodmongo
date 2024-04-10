@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from .db_field_info import DbField
 from typing import Any
 
 
@@ -15,3 +16,7 @@ class _LogicalOperator(BaseModel):
 
 class LogicalOperator(_LogicalOperator):
     operators: tuple[ComparisonOperator | _LogicalOperator, ...]
+
+
+class SortOperator(BaseModel):
+    operators: tuple[tuple[DbField, int], ...]
