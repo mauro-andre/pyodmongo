@@ -1,7 +1,8 @@
 from ..models.db_model import DbModel
 from ..models.db_field_info import DbField
-from ..models.query_operators import LogicalOperator, ComparisonOperator
+from ..models.query_operators import LogicalOperator, ComparisonOperator, SortOperator
 from .comparison_operators import comparison_operator
+from .sort_operator import sort
 from .logical_operators import and_
 from typing import Type
 from datetime import datetime
@@ -46,6 +47,7 @@ def mount_query_filter(
     is_inheritance = is_inheritance_of_db_model(Model=Model)
     if not is_inheritance:
         raise TypeError("Model must be a DbModel")
+    sort_operators = None
     for key, value in items.items():
         value = value.strip()
         if value == "":
@@ -53,6 +55,11 @@ def mount_query_filter(
         split_result = key.strip().rsplit(sep="_", maxsplit=1)
         operator = f"${split_result[-1]}"
         if operator not in ["$eq", "$gt", "$gte", "$in", "$lt", "$lte", "$ne", "$nin"]:
+            if operator in ["$sort"]:
+                value = eval(value)
+                for v in value:
+                    v[0] = getattr(Model, v[0])
+                sort_operators = sort(*value)
             continue
         try:
             value = datetime.fromisoformat(value)
@@ -74,5 +81,5 @@ def mount_query_filter(
             comparison_operator(field=db_field_info, operator=operator, value=value)
         )
     if len(initial_comparison_operators) == 0:
-        return None
-    return and_(*initial_comparison_operators)
+        return None, sort_operators
+    return and_(*initial_comparison_operators), sort_operators

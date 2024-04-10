@@ -308,7 +308,7 @@ async def create_regex_collection():
 @pytest.mark.asyncio
 async def test_find_regex(create_regex_collection):
     input_dict = {"attr_1_in": "['/^ind[uúû]stria/i']"}
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=MyModelRegex, items=input_dict, initial_comparison_operators=[]
     )
     results = await db.find_many(Model=MyModelRegex, query=query)
@@ -474,7 +474,7 @@ async def test_find_nested_field_mount_query(drop_collections_a_b):
     obj_b = ClassB(a=obj_a)
     await db.save(obj=obj_b)
     input_dict = {"a": obj_a.id}
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=ClassB, items=input_dict, initial_comparison_operators=[]
     )
     result = await db.find_many(Model=ClassB, query=query, populate=True)
