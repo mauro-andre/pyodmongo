@@ -4,7 +4,14 @@ from typing import Any, Union, get_origin, get_args
 from types import UnionType
 from ..models.id_model import Id
 from ..models.db_field_info import DbField
-from .aggregate_stages import lookup_and_set
+from .aggregate_stages import (
+    unwind,
+    group_set_replace_root,
+    unset,
+    lookup,
+    set_,
+)
+import copy
 
 
 def resolve_indexes(cls: BaseModel):
@@ -96,54 +103,62 @@ def field_annotation_infos(field, field_info) -> DbField:
     )
 
 
-def resolve_project_pipeline(cls: BaseModel, path: list):
-    project = {}
+def _paths_to_ref_ids(cls: BaseModel, paths: list, db_field_path: list):
     for field, field_info in cls.model_fields.items():
-        db_field_info = field_annotation_infos(field=field, field_info=field_info)
-        path.append(db_field_info.field_alias)
-        path_str = ".".join(path)
-        project[path_str] = True
-        if db_field_info.has_model_fields:
-            if not db_field_info.by_reference:
-                project.pop(path_str)
-                project.update(
-                    resolve_project_pipeline(cls=db_field_info.field_type, path=path)
-                )
-        path.pop(-1)
-    return project
+        db_field = field_annotation_infos(field=field, field_info=field_info)
+        db_field_path.append(db_field)
+        if db_field.by_reference:
+            paths.append(copy.deepcopy(db_field_path))
+        elif db_field.has_model_fields:
+            _paths_to_ref_ids(
+                cls=db_field.field_type, paths=paths, db_field_path=db_field_path
+            )
+        db_field_path.pop(-1)
+    return paths
 
 
-def resolve_ref_pipeline(cls: BaseModel, pipeline: list, path: list):
-    for field, field_info in cls.model_fields.items():
-        db_field_info = field_annotation_infos(field=field, field_info=field_info)
-        path.append(db_field_info.field_alias)
-        path_str = ".".join(path)
-        if db_field_info.has_model_fields:
-            if db_field_info.by_reference:
-                collection = db_field_info.field_type._collection
-                pipeline += lookup_and_set(
-                    from_=collection,
-                    local_field=path_str,
-                    foreign_field="_id",
-                    as_=path_str,
-                    pipeline=resolve_ref_pipeline(
-                        cls=db_field_info.field_type, pipeline=[], path=[]
-                    ),
-                    is_reference_list=db_field_info.is_list,
+def resolve_reference_pipeline(cls: BaseModel, pipeline: list):
+    paths = _paths_to_ref_ids(cls=cls, paths=[], db_field_path=[])
+    for db_field_path in paths:
+        path_str = ""
+        unwind_index_list = []
+        paths_str_to_group = []
+        db_field: DbField = None
+        for index, db_field in enumerate(db_field_path):
+            db_field: DbField
+            path_str += (
+                "." + db_field.field_alias if path_str != "" else db_field.field_alias
+            )
+
+            if db_field.is_list and not db_field.by_reference:
+                unwind_index_list.append(f"__unwind_{index}")
+                paths_str_to_group.append(path_str)
+                pipeline += unwind(
+                    path=path_str,
+                    array_index=unwind_index_list[-1],
+                    preserve_empty=True,
                 )
-            else:
-                resolve_ref_pipeline(
-                    cls=db_field_info.field_type,
-                    pipeline=pipeline,
-                    path=path,
-                )
-        path.pop(-1)
-    # project = resolve_project_pipeline(cls=cls, path=[])
-    # try:
-    #     project_index = [list(dct.keys())[0] for dct in pipeline].index("$project")
-    #     pipeline[project_index] = {"$project": project}
-    # except ValueError:
-    #     pipeline += [{"$project": project}]
+
+        pipeline += lookup(
+            from_=db_field.field_type._collection,
+            local_field=path_str,
+            foreign_field="_id",
+            as_=path_str,
+            pipeline=resolve_reference_pipeline(cls=db_field.field_type, pipeline=[]),
+        )
+        if not db_field.is_list:
+            pipeline += set_(as_=path_str)
+
+        for index, path_str in enumerate(reversed(paths_str_to_group)):
+            reverse_index = len(paths_str_to_group) - index - 1
+            unwind_index = (
+                "_id" if reverse_index - 1 < 0 else unwind_index_list[reverse_index - 1]
+            )
+            pipeline += group_set_replace_root(
+                id_=unwind_index, field=path_str.split(".")[-1], path_str=path_str
+            )
+            pipeline += unset(fields=[unwind_index_list[reverse_index - 1]])
+
     return pipeline
 
 
