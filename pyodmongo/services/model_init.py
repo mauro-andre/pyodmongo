@@ -9,7 +9,7 @@ from .aggregate_stages import (
     group_set_replace_root,
     unset,
     lookup,
-    _set,
+    set_,
 )
 import copy
 
@@ -140,14 +140,14 @@ def resolve_reference_pipeline(cls: BaseModel, pipeline: list):
                 )
 
         pipeline += lookup(
-            _from=db_field.field_type._collection,
+            from_=db_field.field_type._collection,
             local_field=path_str,
             foreign_field="_id",
-            _as=path_str,
+            as_=path_str,
             pipeline=resolve_reference_pipeline(cls=db_field.field_type, pipeline=[]),
         )
         if not db_field.is_list:
-            pipeline += _set(_as=path_str)
+            pipeline += set_(as_=path_str)
 
         for index, path_str in enumerate(reversed(paths_str_to_group)):
             reverse_index = len(paths_str_to_group) - index - 1
@@ -155,7 +155,7 @@ def resolve_reference_pipeline(cls: BaseModel, pipeline: list):
                 "_id" if reverse_index - 1 < 0 else unwind_index_list[reverse_index - 1]
             )
             pipeline += group_set_replace_root(
-                _id=unwind_index, field=path_str.split(".")[-1], path_str=path_str
+                id_=unwind_index, field=path_str.split(".")[-1], path_str=path_str
             )
             pipeline += unset(fields=[unwind_index_list[reverse_index - 1]])
 
