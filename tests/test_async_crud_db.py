@@ -514,37 +514,32 @@ async def drop_collections_one_three():
 
 
 @pytest.mark.asyncio
-async def test_nested_none_object(drop_collections_one_three):
-    # obj_1 = ClassOne(attr_1="obj_1")
-    # obj_2 = ClassOne(attr_1="obj_2")
-    # obj_3 = ClassOne(attr_1="obj_3")
-    # obj_4 = ClassOne(attr_1="obj_4")
-    # obj_5 = ClassOne(attr_1="obj_5")
-    # obj_6 = ClassOne(attr_1="obj_6")
-    # obj_7 = ClassOne(attr_1="obj_7")
-    # obj_8 = ClassOne(attr_1="obj_8")
-    # await db.save_all([obj_1, obj_2, obj_3, obj_4, obj_5, obj_6, obj_7, obj_8])
-    # obj_9 = ClassTwoA(attr_2_a="obj_9", class_one=[obj_1, obj_2])
-    # obj_10 = ClassTwoA(attr_2_a="obj_10", class_one=[obj_3, obj_4])
-    # obj_11 = ClassTwoA(attr_2_a="obj_11", class_one=[obj_5, obj_6])
-    # obj_12 = ClassTwoA(attr_2_a="obj_12", class_one=[obj_7, obj_8])
-    # obj_13 = ClassTwoB(
-    #     attr_2_b="obj_13", class_two_a=obj_9, class_two_a_list=[obj_9, obj_10]
-    # )
-    # obj_14 = ClassTwoB(
-    #     attr_2_b="obj_14", class_two_a=obj_11, class_two_a_list=[obj_11, obj_12]
-    # )
-    # obj_15 = ClassThree(
-    #     attr_3="obj_16", class_two_b=obj_13, class_two_b_list=[obj_13, obj_14]
-    # )
-    # await db.save(obj_15)
+async def test_nested_list_objects(drop_collections_one_three):
+    obj_1 = ClassOne(attr_1="obj_1")
+    obj_2 = ClassOne(attr_1="obj_2")
+    obj_3 = ClassOne(attr_1="obj_3")
+    obj_4 = ClassOne(attr_1="obj_4")
+    obj_5 = ClassOne(attr_1="obj_5")
+    obj_6 = ClassOne(attr_1="obj_6")
+    obj_7 = ClassOne(attr_1="obj_7")
+    obj_8 = ClassOne(attr_1="obj_8")
+    await db.save_all([obj_1, obj_2, obj_3, obj_4, obj_5, obj_6, obj_7, obj_8])
+    obj_9 = ClassTwoA(attr_2_a="obj_9", class_one=[obj_1, obj_2])
+    obj_10 = ClassTwoA(attr_2_a="obj_10", class_one=[obj_3, obj_4])
+    obj_11 = ClassTwoA(attr_2_a="obj_11", class_one=[obj_5, obj_6])
+    obj_12 = ClassTwoA(attr_2_a="obj_12", class_one=[obj_7, obj_8])
+    obj_13 = ClassTwoB(
+        attr_2_b="obj_13", class_two_a=obj_9, class_two_a_list=[obj_9, obj_10]
+    )
+    obj_14 = ClassTwoB(
+        attr_2_b="obj_14", class_two_a=obj_11, class_two_a_list=[obj_11, obj_12]
+    )
+    obj_15 = ClassThree(
+        attr_3="obj_15", class_two_b=obj_13, class_two_b_list=[obj_13, obj_14]
+    )
+    await db.save(obj_15)
+    from pprint import pprint
 
-    # obj_list = await db.find_many(Model=ClassThree)
-    # print(obj_list)
-    # obj = ClassThree()
-    # await db.save(obj=ClassOne())
-    # await db.save(obj=obj)
-    # print(ClassThree._reference_pipeline)
-    # obj_found = await db.find_one(Model=ClassThree, populate=True)
-    # assert obj_found == obj
-    pass
+    obj_found = await db.find_one(Model=ClassThree, populate=True)
+    assert obj_found.id == obj_15.id
+    assert obj_found.class_two_b.attr_2_b == "obj_13"

@@ -49,11 +49,15 @@ def lookup(_from: str, local_field: str, foreign_field: str, _as: str, pipeline:
     ]
 
 
-def group_set_replace_root(id: str, field: str, path_str: str):
+def _set(_as: str):
+    return [{"$set": {_as: {"$arrayElemAt": [f"${_as}", 0]}}}]
+
+
+def group_set_replace_root(_id: str, field: str, path_str: str):
     return [
         {
             "$group": {
-                "_id": f"${id}",
+                "_id": f"${_id}",
                 "_document": {"$first": "$$ROOT"},
                 field: {"$push": f"${path_str}"},
             }
