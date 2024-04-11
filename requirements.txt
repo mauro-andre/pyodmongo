@@ -31,9 +31,9 @@ Markdown==3.4.4
 MarkupSafe==2.1.3
 mccabe==0.7.0
 mergedeep==1.3.4
-mkdocs==1.5.2
-mkdocs-material==9.2.8
-mkdocs-material-extensions==1.1.1
+mkdocs==1.5.3
+mkdocs-material==9.5.17
+mkdocs-material-extensions==1.3.1
 mkdocs-static-i18n==1.0.3
 motor==3.3.2
 mypy-extensions==1.0.0
