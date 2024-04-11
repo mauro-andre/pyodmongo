@@ -48,11 +48,12 @@ def consolidate_dict(obj: BaseModel, dct: dict):
     return dct
 
 
-def mount_base_pipeline(Model, query, populate: bool = False):
+def mount_base_pipeline(Model, query: dict, sort: dict, populate: bool = False):
     match_stage = [{"$match": query}]
+    sort_stage = [{"$sort": sort}] if sort != {} else []
     model_stage = Model._pipeline
     reference_stage = Model._reference_pipeline
     if populate:
-        return match_stage + model_stage + reference_stage
+        return match_stage + model_stage + reference_stage + sort_stage
     else:
-        return match_stage + model_stage
+        return match_stage + model_stage + sort_stage

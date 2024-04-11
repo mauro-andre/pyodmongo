@@ -16,9 +16,10 @@ from pyodmongo.queries import (
     and_,
     or_,
     nor,
+    sort,
     mount_query_filter,
 )
-from pyodmongo.services.query_operators import query_dict
+from pyodmongo.services.query_operators import query_dict, sort_dict
 import pytest
 
 
@@ -114,7 +115,7 @@ def test_logical_operators():
 def test_mount_query_filter_with_invalid_field():
     dict_input = {"c_eq": "value1", "d_in": '["abc", "xyz"]', "vrau_eq": "ddsff"}
     with pytest.raises(AttributeError):
-        query = mount_query_filter(
+        query, _ = mount_query_filter(
             Model=Model2, items=dict_input, initial_comparison_operators=[]
         )
 
@@ -124,7 +125,7 @@ def test_mount_query_filter():
         "id_eq": "64e8ef019af47dc6f91c5a48",
         "g_in": "['64e8ef019af47dc6f91c5a48', '64e8f1a5f1dae6703924546a']",
     }
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=Model3, items=dict_input, initial_comparison_operators=[]
     )
     assert query_dict(query_operator=query, dct={}) == {
@@ -164,7 +165,7 @@ def test_mount_query_filter_inheritance():
         "attr_4_in": "",
         "attr_4_er": "Value_error",
     }
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=FourthModel, items=input_dict, initial_comparison_operators=[]
     )
     expected_query_dict = {
@@ -200,7 +201,7 @@ def test_mount_query_filter_is_not_inheritance():
         "attr_4_eq": "Value4",
     }
     with pytest.raises(TypeError, match="Model must be a DbModel"):
-        query = mount_query_filter(
+        query, _ = mount_query_filter(
             Model=FourthModel, items=input_dict, initial_comparison_operators=[]
         )
 
@@ -211,7 +212,7 @@ def test_mount_query_filter_with_none_value():
         _collection: ClassVar = "main_model"
 
     input_dict = {}
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=MainModel, items=input_dict, initial_comparison_operators=[]
     )
     assert query is None
@@ -226,7 +227,7 @@ def test_mount_query_filter_with_regex():
 
     input_dict = {"attr1_in": "['/^agr[oóôõ]s/i', 123, 'abc']", "attr2_eq": "123"}
 
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=MyModel, items=input_dict, initial_comparison_operators=[]
     )
     query_dct = query_dict(query_operator=query, dct={})
@@ -254,7 +255,7 @@ def test_mount_query_filter_with_data_types():
         "bool_value_eq": "True",
         "date_value_lte": "2024-06-01",
     }
-    query_dct = mount_query_filter(
+    query_dct, _ = mount_query_filter(
         Model=MyClass, items=input_dct, initial_comparison_operators=[]
     )
     assert query_dct.operators[0].value == "AString"
@@ -292,3 +293,54 @@ def test_logical_operator_inside_another():
     }
     query_dct = query_dict(query_operator=query, dct={})
     assert query_dct == expected_dct
+
+
+def test_sort_operator():
+    class MyNestedClass(BaseModel):
+        n: int
+
+    class MyClass(DbModel):
+        a: str
+        b: int
+        c: int
+        nested: MyNestedClass
+
+    sort_operator = sort(
+        (MyClass.nested.n, -1), (MyClass.b, 1), (MyClass.c, -1), (MyClass.a, 1)
+    )
+    assert sort_dict(sort_operators=sort_operator) == {
+        "nested.n": -1,
+        "b": 1,
+        "c": -1,
+        "a": 1,
+    }
+
+    with pytest.raises(
+        ValueError, match="Only values 1 ascending and -1 descending are valid"
+    ):
+        sort_dict(sort_operators=sort((MyClass.a, 2)))
+
+
+def test_mount_query_string_with_sort():
+    class MyClass(DbModel):
+        attr_1: str
+        attr_2: str
+        attr_3: str
+
+    input_dict = {
+        "attr_1_eq": "attr 1",
+        "attr_2_in": "['value_1', 'value_2']",
+        "attr_3_gte": "10",
+        "_sort": "[['attr_1', 1], ['attr_2', -1]]",
+    }
+
+    query, sort_operator = mount_query_filter(
+        Model=MyClass, items=input_dict, initial_comparison_operators=[]
+    )
+
+    assert query == and_(
+        eq(MyClass.attr_1, "attr 1"),
+        in_(MyClass.attr_2, ["value_1", "value_2"]),
+        gte(MyClass.attr_3, 10),
+    )
+    assert sort_operator == sort((MyClass.attr_1, 1), (MyClass.attr_2, -1))

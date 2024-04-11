@@ -7,7 +7,7 @@ from pyodmongo import (
     Id,
     Field,
 )
-from pyodmongo.queries import eq, gte, gt, mount_query_filter
+from pyodmongo.queries import eq, gte, gt, mount_query_filter, sort
 from pyodmongo.engine.utils import consolidate_dict
 from pydantic import ConfigDict, BaseModel
 from typing import ClassVar
@@ -308,7 +308,7 @@ async def create_regex_collection():
 @pytest.mark.asyncio
 async def test_find_regex(create_regex_collection):
     input_dict = {"attr_1_in": "['/^ind[uúû]stria/i']"}
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=MyModelRegex, items=input_dict, initial_comparison_operators=[]
     )
     results = await db.find_many(Model=MyModelRegex, query=query)
@@ -474,7 +474,7 @@ async def test_find_nested_field_mount_query(drop_collections_a_b):
     obj_b = ClassB(a=obj_a)
     await db.save(obj=obj_b)
     input_dict = {"a": obj_a.id}
-    query = mount_query_filter(
+    query, _ = mount_query_filter(
         Model=ClassB, items=input_dict, initial_comparison_operators=[]
     )
     result = await db.find_many(Model=ClassB, query=query, populate=True)
@@ -509,8 +509,8 @@ async def drop_collections_one_three():
     await db._db[ClassOne._collection].drop()
     await db._db[ClassThree._collection].drop()
     yield
-    # await db._db[ClassOne._collection].drop()
-    # await db._db[ClassThree._collection].drop()
+    await db._db[ClassOne._collection].drop()
+    await db._db[ClassThree._collection].drop()
 
 
 @pytest.mark.asyncio
@@ -538,8 +538,51 @@ async def test_nested_list_objects(drop_collections_one_three):
         attr_3="obj_15", class_two_b=obj_13, class_two_b_list=[obj_13, obj_14]
     )
     await db.save(obj_15)
-    from pprint import pprint
 
     obj_found = await db.find_one(Model=ClassThree, populate=True)
     assert obj_found.id == obj_15.id
     assert obj_found.class_two_b.attr_2_b == "obj_13"
+
+
+class MySortClass(DbModel):
+    attr_1: str
+    attr_2: int
+    attr_3: datetime
+    _collection: ClassVar = "my_class_to_sort"
+
+
+@pytest_asyncio.fixture()
+async def drop_collection_for_test_sort():
+    await db._db[MySortClass._collection].drop()
+    yield
+    await db._db[MySortClass._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_sort_query(drop_collection_for_test_sort):
+    obj_list = [
+        MySortClass(
+            attr_1="Juliet", attr_2=100, attr_3=datetime(year=2023, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Albert", attr_2=50, attr_3=datetime(year=2025, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Zack", attr_2=30, attr_3=datetime(year=2020, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Charlie", attr_2=150, attr_3=datetime(year=2027, month=1, day=20)
+        ),
+        MySortClass(
+            attr_1="Albert", attr_2=40, attr_3=datetime(year=2025, month=1, day=20)
+        ),
+    ]
+    await db.save_all(obj_list=obj_list)
+    sort_oprator = sort((MySortClass.attr_1, 1), (MySortClass.attr_2, 1))
+    result_many = await db.find_many(Model=MySortClass, sort=sort_oprator)
+    assert result_many[0] == obj_list[4]
+    assert result_many[1] == obj_list[1]
+
+    sort_oprator = sort((MySortClass.attr_3, 1))
+    result_one = await db.find_one(Model=MySortClass, sort=sort_oprator)
+    assert result_one == obj_list[2]

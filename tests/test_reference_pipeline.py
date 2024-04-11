@@ -1,7 +1,6 @@
 from pyodmongo import DbModel, Id, Field
 from pydantic import BaseModel
 from typing import ClassVar
-from pprint import pprint
 
 
 def test_single_class_project_pipeline():
@@ -129,8 +128,6 @@ def test_manual_pipeline():
 
 
 def test_recursive_reference_pipeline():
-    from pprint import pprint
-
     class Zero(DbModel):
         attr_0: str = "Zero"
         _collection: ClassVar = "col_0"

@@ -46,7 +46,8 @@ class Product(DbModel):
 
 async def main():
     query = gte(Product.price, 5)
-    result: Product = await engine.find_one(Model=Product, query=query)
+    sort_oprator = sort((Product.name, 1), (Product.price, -1))
+    result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
 asyncio.run(main())
 ```
@@ -69,7 +70,8 @@ class Product(DbModel):
 
 
 query = gte(Product.price, 5)
-result: Product = engine.find_one(Model=Product, query=query)
+sort_oprator = sort((Product.name, 1), (Product.price, -1))
+result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 ```
 ///
 
@@ -113,7 +115,8 @@ async def main():
         eq(Product.is_available, True),
         gte(Product.price, 5)
     )
-    result: Product = await engine.find_one(Model=Product, query=query)
+    sort_oprator = sort((Product.name, 1), (Product.price, -1))
+    result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
 asyncio.run(main())
 ```
@@ -140,7 +143,8 @@ query = and_(
     eq(Product.is_available, True),
     gte(Product.price, 5)
 )
-result: Product = engine.find_one(Model=Product, query=query)
+sort_oprator = sort((Product.name, 1), (Product.price, -1))
+result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
 ```
 ///
@@ -149,3 +153,56 @@ In this example, the query returns all documents from the 'products' collection 
 
 !!! tip
     The inputs for these Logical Operators can be Comparison Operators or even other Logical Operators. This flexibility allows you to create complex and nested queries, enabling you to express intricate data retrieval conditions with precision.
+
+## Sort
+
+/// tab | Async
+```python hl_lines="19"
+from pyodmongo import AsyncDbEngine, DbModel
+from pyodmongo.queries import ( eq, gt, gte, in_, lt, lte, ne, nin, text, 
+                                and_, or_, nor)
+from typing import ClassVar
+import asyncio
+
+engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
+
+
+class Product(DbModel):
+    name: str
+    price: float
+    is_available: bool
+    _collection: ClassVar = 'products'
+
+
+async def main():
+    query = gte(Product.price, 5)
+    sort_oprator = sort((Product.name, 1), (Product.price, -1))
+    result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
+
+asyncio.run(main())
+```
+///
+/// tab | Sync
+```python hl_lines="17"
+from pyodmongo import DbEngine, DbModel
+from pyodmongo.queries import ( eq, gt, gte, in_, lt, lte, ne, nin, text, 
+                                and_, or_, nor)
+from typing import ClassVar
+
+engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
+
+
+class Product(DbModel):
+    name: str
+    price: float
+    is_available: bool
+    _collection: ClassVar = 'products'
+
+
+query = gte(Product.price, 5)
+sort_oprator = sort((Product.name, 1), (Product.price, -1))
+result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
+```
+///
+
+In the provided example, the `sort_operator` is defined using the `sort` function, which takes tuples. Each tuple contains two elements: the first one is the field by which you want to sort, and the second one is the sorting direction, where 1 indicates ascending order and -1 indicates descending order. In the presented case, the `sort_operator` sorts the results first by the name field in ascending order and then by the price field in descending order. Thus, the products are returned in alphabetical order by name and, in case of a tie, in descending order by price.

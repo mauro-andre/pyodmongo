@@ -2,9 +2,9 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import UpdateResult, DeleteResult
 from ..models.responses import SaveResponse, DeleteResponse
 from ..engine.utils import consolidate_dict, mount_base_pipeline
-from ..services.query_operators import query_dict
+from ..services.query_operators import query_dict, sort_dict
 from ..models.paginate import ResponsePaginate
-from ..models.query_operators import LogicalOperator, ComparisonOperator
+from ..models.query_operators import LogicalOperator, ComparisonOperator, SortOperator
 from ..models.db_model import DbModel
 from datetime import datetime
 from typing import TypeVar
@@ -149,6 +149,8 @@ class AsyncDbEngine:
         Model: type[Model],
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
+        sort: SortOperator = None,
+        raw_sort: dict = None,
         populate: bool = False,
         as_dict: bool = False,
     ) -> type[Model]:
@@ -158,10 +160,18 @@ class AsyncDbEngine:
             raise TypeError(
                 'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
+        if sort and (type(sort) != SortOperator):
+            raise TypeError(
+                'sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument'
+            )
         raw_query = {} if not raw_query else raw_query
+        query = query_dict(query_operator=query, dct={}) if query else raw_query
+        raw_sort = {} if not raw_sort else raw_sort
+        sort = sort_dict(sort_operators=sort) if sort else raw_sort
         pipeline = mount_base_pipeline(
             Model=Model,
-            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+            query=query,
+            sort=sort,
             populate=populate,
         )
         pipeline += [{"$limit": 1}]
@@ -178,6 +188,8 @@ class AsyncDbEngine:
         Model: type[Model],
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
+        sort: SortOperator = None,
+        raw_sort: dict = None,
         populate: bool = False,
         as_dict: bool = False,
         paginate: bool = False,
@@ -190,11 +202,18 @@ class AsyncDbEngine:
             raise TypeError(
                 'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
+        if sort and (type(sort) != SortOperator):
+            raise TypeError(
+                'sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument'
+            )
         raw_query = {} if not raw_query else raw_query
         query = query_dict(query_operator=query, dct={}) if query else raw_query
+        raw_sort = {} if not raw_sort else raw_sort
+        sort = sort_dict(sort_operators=sort) if sort else raw_sort
         pipeline = mount_base_pipeline(
             Model=Model,
             query=query,
+            sort=sort,
             populate=populate,
         )
         if not paginate:
