@@ -21,12 +21,12 @@ class MyModel(DbModel):
 
 @app.get("/", response_model=list[MyModel])
 async def get_route(request: Request):
-    query = mount_query_filter(
+    query, sort = mount_query_filter(
         Model=MyModel,
         items=request.query_params._dict,
         initial_comparison_operators=[],
     )
-    return await engine.find_many(Model=MyModel, query=query)
+    return await engine.find_many(Model=MyModel, query=query, sort=sort)
 ```
 
 In the example above, we defined a FastAPI route `GET /` that accepts query parameters. The `mount_query_filter` function, designed for use with FastAPI `Request`, dynamically constructs a query based on the items in these parameters.
@@ -47,13 +47,14 @@ The function returns a query with the `and` operator applied between all items i
 
 ![Image title](./assets/images/insomnia_request.png)
 
-When you trigger the following route with query strings: `http://localhost:8000/?attr1_eq=value_1&attr2_in=%5B'value_2',%20'value_3'%5D&attr3_gte=10`, the `request.query_params._dict` will contain the following dictionary:
+When you trigger the following route with query strings: `http://localhost:8000/?attr1_eq=value_1&attr2_in=%5B'value_2',%20'value_3'%5D&attr3_gte=10&_sort=%5B%5B'attr1',%201%5D,%20%5B'attr2',%20-1%5D%5D`, the `request.query_params._dict` will contain the following dictionary:
 
 ```python
 {
     "attr1_eq": "value_1", 
     "attr2_in": "['value_2', 'value_3']", 
-    "attr3_gte": 10
+    "attr3_gte": 10,
+    "_sort": "[['attr1', 1], ['attr2', -1]]",
 }
 ```
 
