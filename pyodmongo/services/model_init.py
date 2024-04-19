@@ -187,4 +187,4 @@ def resolve_class_fields_db_info(cls: BaseModel):
         field_to_set = _recursice_db_fields_info(
             db_field_info=db_field_info, path=[path]
         )
-        setattr(cls, field, field_to_set)
+        setattr(cls, field + "__pyodmongo", field_to_set)

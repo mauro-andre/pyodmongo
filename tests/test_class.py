@@ -167,3 +167,21 @@ def test_field_with_email_str():
 
     with pytest.raises(ValidationError):
         obj = MyClass(attr_1="Value one", email="shunda")
+
+
+def test_polymorphism():
+    class FirstClass(DbModel):
+        attr_1: str = "one"
+        attr_2: int = 2
+
+    class SecondClass(FirstClass):
+        attr_1: int = 1
+        attr_3: int = 3
+
+    obj_1 = FirstClass()
+    obj_2 = SecondClass()
+
+    assert obj_1.attr_1 == "one"
+    assert type(obj_1.attr_1) is str
+    assert obj_2.attr_1 == 1
+    assert type(obj_2.attr_1) is int
