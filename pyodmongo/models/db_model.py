@@ -17,7 +17,7 @@ from typing import ClassVar
 class PyOdmongoMeta(ABCMeta):
     def __getattr__(cls, name: str):
         if cls.__dict__.get("pyodmongo_complete"):
-            is_attr = name in cls.__dict__["model_fields"].keys()
+            is_attr = name in cls.__dict__.get("model_fields").keys()
             if is_attr:
                 return cls.__dict__.get(name + "__pyodmongo")
         ModelMetaclass.__getattr__(cls, name)
