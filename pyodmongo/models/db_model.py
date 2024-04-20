@@ -1,7 +1,7 @@
 from pydantic import ConfigDict
 from .id_model import Id
 from datetime import datetime
-from typing import ClassVar
+from typing import Any, ClassVar
 from ..services.model_init import (
     resolve_indexes,
     resolve_class_fields_db_info,
@@ -15,8 +15,26 @@ from typing import ClassVar
 
 
 class PyOdmongoMeta(ABCMeta):
+    def __new__(cls, name: str, bases: tuple, namespace: dict, **kwargs: Any) -> type:
+        setattr(cls, "__pyodmongo_complete__", False)
+        for base in bases:
+            setattr(base, "__pyodmongo_complete__", False)
+
+        cls = ModelMetaclass.__new__(cls, name, bases, namespace, **kwargs)
+
+        setattr(cls, "__pyodmongo_complete__", True)
+        for base in bases:
+            setattr(base, "__pyodmongo_complete__", True)
+
+        resolve_class_fields_db_info(cls=cls)
+        pipeline = resolve_reference_pipeline(cls=cls, pipeline=[])
+        setattr(cls, "_reference_pipeline", pipeline)
+        indexes = resolve_indexes(cls=cls)
+        setattr(cls, "_init_indexes", indexes)
+        return cls
+
     def __getattr__(cls, name: str):
-        if cls.__dict__.get("pyodmongo_complete"):
+        if cls.__dict__.get("__pyodmongo_complete__"):
             is_attr = name in cls.__dict__.get("model_fields").keys()
             if is_attr:
                 return cls.__dict__.get(name + "__pyodmongo")
@@ -33,23 +51,6 @@ class DbModel(BaseModel, metaclass=DbMeta):
     updated_at: datetime | None = None
     model_config = ConfigDict(populate_by_name=True)
     _pipeline: ClassVar = []
-
-    @classmethod
-    def __init_subclass__(cls):
-        setattr(cls, "pyodmongo_complete", False)
-        for base in cls.__bases__:
-            setattr(base, "pyodmongo_complete", False)
-
-    @classmethod
-    def __pydantic_init_subclass__(cls):
-        setattr(cls, "pyodmongo_complete", True)
-        for base in cls.__bases__:
-            setattr(base, "pyodmongo_complete", True)
-        resolve_class_fields_db_info(cls=cls)
-        pipeline = resolve_reference_pipeline(cls=cls, pipeline=[])
-        setattr(cls, "_reference_pipeline", pipeline)
-        indexes = resolve_indexes(cls=cls)
-        setattr(cls, "_init_indexes", indexes)
 
     def __remove_empty_dict(self, dct: dict):
         for key, value in dct.items():
