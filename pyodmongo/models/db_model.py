@@ -9,18 +9,18 @@ from ..services.model_init import (
 )
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
-from abc import ABCMeta
 from typing_extensions import dataclass_transform
 from typing import ClassVar
 
 
-class PyOdmongoMeta(ABCMeta):
+@dataclass_transform()
+class DbMeta(ModelMetaclass):
     def __new__(cls, name: str, bases: tuple, namespace: dict, **kwargs: Any) -> type:
         setattr(cls, "__pyodmongo_complete__", False)
         for base in bases:
             setattr(base, "__pyodmongo_complete__", False)
 
-        cls = ModelMetaclass.__new__(cls, name, bases, namespace, **kwargs)
+        cls: BaseModel = ModelMetaclass.__new__(cls, name, bases, namespace, **kwargs)
 
         setattr(cls, "__pyodmongo_complete__", True)
         for base in bases:
@@ -39,10 +39,6 @@ class PyOdmongoMeta(ABCMeta):
             if is_attr:
                 return cls.__dict__.get(name + "__pyodmongo")
         ModelMetaclass.__getattr__(cls, name)
-
-
-@dataclass_transform()
-class DbMeta(PyOdmongoMeta, ModelMetaclass): ...
 
 
 class DbModel(BaseModel, metaclass=DbMeta):
