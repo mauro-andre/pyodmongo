@@ -18,11 +18,9 @@
     </a>
 </div>
 
-**PyODMongo** é uma biblioteca Python moderna que funciona como um mapeador de objetos-documentos (ODM) robusto para **MongoDB**. Aproveitando o poder do **Pydantic V2**, ele preenche perfeitamente a lacuna entre o Python e o MongoDB, oferecendo uma maneira intuitiva e eficiente de interagir com documentos do MongoDB.
+**PyODMongo** é uma biblioteca moderna em Python que atua como um robusto Mapeador Objeto-Documento (ODM) e faz uma ponte perfeita entre Python e **MongoDB**. Ela oferece uma maneira intuitiva e eficiente de interagir com documentos.
 
-Ao usar o **PyODMongo**, você pode mapear facilmente suas classes Python para documentos MongoDB, permitindo uma abordagem mais Pythonica para lidar com dados. Esta biblioteca simplifica todo o processo de definição e trabalho com coleções, documentos e consultas do MongoDB.
-
-**PyODMongo** é construído sobre **Pydantic V2**, tornando a classe `DbModel` uma extensão da `BaseModel` do Pydantic. Isso significa que toda a rica funcionalidade da `BaseModel` do Pydantic, incluindo **Validators**, **Fields** e **Model Config**, está prontamente disponível em `DbModel`.
+Construído em cima do **Pydantic V2**, o **PyODMongo** garante que os documentos no banco de dados representem rigorosamente a estrutura dos objetos Python. Isso significa que os documentos são salvos e recuperados do banco de dados exatamente como um objeto Python é estruturado, independentemente de quão aninhados os objetos estejam e se eles estão armazenados de forma persistente ou por referência. O **PyODMongo** pode popular automaticamente esses documentos.
 
 ## Principais Recursos
 
