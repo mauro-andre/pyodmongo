@@ -6,19 +6,27 @@ from ..services.model_init import (
     resolve_indexes,
     resolve_class_fields_db_info,
     resolve_reference_pipeline,
+    resolve_db_fields,
 )
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
 from typing_extensions import dataclass_transform
 from typing import ClassVar
+import copy
 
 
-@dataclass_transform()
+@dataclass_transform(kw_only_default=True)
 class DbMeta(ModelMetaclass):
-    def __new__(cls, name: str, bases: tuple, namespace: dict, **kwargs: Any) -> type:
+    def __new__(
+        cls, name: str, bases: tuple[Any], namespace: dict, **kwargs: Any
+    ) -> type:
         setattr(cls, "__pyodmongo_complete__", False)
         for base in bases:
             setattr(base, "__pyodmongo_complete__", False)
+
+        #TODO finish db_fields after ModelMetaclass
+        db_fields = copy.deepcopy(namespace.get("__annotations__"))
+        db_fields = resolve_db_fields(bases=bases, db_fields=db_fields)
 
         cls: BaseModel = ModelMetaclass.__new__(cls, name, bases, namespace, **kwargs)
 
