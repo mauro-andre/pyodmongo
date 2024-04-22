@@ -24,7 +24,7 @@ class DbMeta(ModelMetaclass):
         for base in bases:
             setattr(base, "__pyodmongo_complete__", False)
 
-        #TODO finish db_fields after ModelMetaclass
+        # TODO finish db_fields after ModelMetaclass
         db_fields = copy.deepcopy(namespace.get("__annotations__"))
         db_fields = resolve_db_fields(bases=bases, db_fields=db_fields)
 

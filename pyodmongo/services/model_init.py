@@ -189,10 +189,12 @@ def resolve_class_fields_db_info(cls: BaseModel):
         )
         setattr(cls, field + "__pyodmongo", field_to_set)
 
-#TODO finish resolve_single_db_field
+
+# TODO finish resolve_single_db_field
 def resolve_single_db_field(value: Any) -> DbField:
     by_reference = False
     return value
+
 
 def resolve_db_fields(bases: tuple[Any], db_fields: dict):
     for base in bases:
