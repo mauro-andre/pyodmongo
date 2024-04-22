@@ -188,3 +188,21 @@ def resolve_class_fields_db_info(cls: BaseModel):
             db_field_info=db_field_info, path=[path]
         )
         setattr(cls, field + "__pyodmongo", field_to_set)
+
+
+# TODO finish resolve_single_db_field
+def resolve_single_db_field(value: Any) -> DbField:
+    by_reference = False
+    return value
+
+
+def resolve_db_fields(bases: tuple[Any], db_fields: dict):
+    for base in bases:
+        if base is object:
+            continue
+        base_annotations = base.__dict__.get("__annotations__")
+        for base_field, value in base_annotations.items():
+            if base_field not in db_fields.keys() and not base_field.startswith("_"):
+                db_fields[base_field] = resolve_single_db_field(value=value)
+        resolve_db_fields(bases=base.__bases__, db_fields=db_fields)
+    return db_fields
