@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from .db_field_info import DbField
 from typing import Any
 
 
@@ -22,6 +21,12 @@ class ComparisonOperator(BaseModel):
     path_str: str
     operator: str
     value: Any
+
+    def __and__(self, value):
+        return LogicalOperator(operator="$and", operators=(self, value))
+
+    def __or__(self, value):
+        return LogicalOperator(operator="$or", operators=(self, value))
 
 
 class _LogicalOperator(BaseModel):
@@ -55,3 +60,9 @@ class LogicalOperator(_LogicalOperator):
     """
 
     operators: tuple[ComparisonOperator | _LogicalOperator, ...]
+
+    def __and__(self, value):
+        return LogicalOperator(operator="$and", operators=(self, value))
+
+    def __or__(self, value):
+        return LogicalOperator(operator="$or", operators=(self, value))

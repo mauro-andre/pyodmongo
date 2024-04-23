@@ -63,7 +63,7 @@ async def test_create_and_delete_one(drop_collection, new_obj):
     result: SaveResponse = await db.save(new_obj)
     assert result.upserted_id is not None
     id = result.upserted_id
-    query = eq(MyClass.id, id)
+    query = MyClass.id == id
     result: DeleteResponse = await db.delete_one(Model=MyClass, query=query)
     assert result.deleted_count == 1
 
@@ -122,8 +122,8 @@ async def test_delete(drop_collection, objs):
 
 @pytest.mark.asyncio
 async def test_find_many_without_paginate(drop_collection, create_100_docs_in_db):
-    obj_list_50 = await db.find_many(Model=MyClass, query=gt(MyClass.random_number, 50))
-    obj_list_100 = await db.find_many(Model=MyClass, query=gt(MyClass.random_number, 0))
+    obj_list_50 = await db.find_many(Model=MyClass, query=MyClass.random_number > 50)
+    obj_list_100 = await db.find_many(Model=MyClass, query=MyClass.random_number > 0)
     assert len(obj_list_50) == 50
     assert len(obj_list_100) == 100
     assert all(isinstance(obj, MyClass) for obj in obj_list_100)
@@ -219,7 +219,7 @@ async def test_fields_alias_generator():
 async def test_find_many_with_zero_results(drop_collection):
     await db.save(obj=drop_collection)
     result = await db.find_many(
-        Model=MyClass, query=eq(MyClass.attr1, "value_that_not_exists"), paginate=True
+        Model=MyClass, query=MyClass.attr1 == "value_that_not_exists", paginate=True
     )
 
     assert result.page_quantity == 0

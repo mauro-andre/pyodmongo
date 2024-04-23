@@ -6,16 +6,16 @@ In **PyODMongo**, a query serves as an essential attribute of the `find_many` an
 
 ## Comparison Operators
 
-| Operator | Description                          |
-| ---------| ------------------------------------ |
-| `eq`     | Matches values that are equal to a specified value.  |
-| `gt`     | Matches values that are greater than a specified value. |
-| `gte`    | Matches values that are greater than or equal to a specified value. |
-| `in_`    | Matches any of the values specified in an list. |
-| `lt`     | Matches values that are less than a specified value. |
-| `lte`    | Matches values that are less than or equal to a specified value. |
-| `ne`     | Matches all values that are not equal to a specified value. |
-| `nin`    | Matches none of the values specified in an list. |
+| Operator | Usage |
+| ---------|--- |
+| **EQ**  | `eq(Model.attr, value)`</br>`Model.attr == value` |
+| **GT**   | `gt(Model.attr, value)`</br>`Model.attr > value` |
+| **GTE** | `gte(Model.attr, value)`</br>`Model.attr >= value` |
+| **IN**        | `in_(Model.attr, value)` |
+| **LT**   | `lt(Model.attr, value)`</br>`Model.attr < value` |
+| **LTE** | `lte(Model.attr, value)`</br>`Model.attr <= value` |
+| **NE**  | `ne(Model.attr, value)`</br>`Model.attr != value` |
+| **NIN**            | `nin(Model.attr, value)` |
 
 
 When using these Comparison Operators in PyODMongo, you'll typically provide two arguments:
@@ -45,7 +45,8 @@ class Product(DbModel):
 
 
 async def main():
-    query = gte(Product.price, 5)
+    query =  Product.price >= 5
+    #query = gte(Product.price, 5)
     sort_oprator = sort((Product.name, 1), (Product.price, -1))
     result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
@@ -69,7 +70,8 @@ class Product(DbModel):
     _collection: ClassVar = 'products'
 
 
-query = gte(Product.price, 5)
+query = Product.price >= 5
+#query = gte(Product.price, 5)
 sort_oprator = sort((Product.name, 1), (Product.price, -1))
 result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 ```
@@ -83,11 +85,11 @@ Just like Comparison Operators, Logical Operators in **PyODMongo** are designed 
 
 Here are the primary Logical Operators available in PyODMongo:
 
-| Operator | Description                          |
-| ---------| ------------------------------------ |
-| `and_` | Join query clauses with a logical **AND**. Returns all documents that match the conditions of all clauses. |
-| `or_` | Join query clauses with a logical **OR**. Returns all documents that match the conditions of any of the clauses. |
-| `nor` | Join query clauses with a logical **NOR**. Returns the inverse of **OR** |
+| Operator | Usage |
+| ---------|-|
+| **AND**| `and_(gt(Model.attr_1, value_1), lt(Model.attr_1, value_2))`</br>`(Model.attr_1 > value_1) & (Model.attr_1 < value_2)` |
+| **OR** | `or_(eq(Model.attr_1, value_1), eq(Model.attr_1, value_2))`</br>`(Model.attr_1 == value_1) | (Model.attr_1 == value_2)` |
+| **NOR** | `nor(Model.attr_1 == value_1, Model.attr_1 == value_2)` |
 
 
 Here's an example of how you can use Logical Operators in PyODMongo:
@@ -111,10 +113,11 @@ class Product(DbModel):
 
 
 async def main():
-    query = and_(
-        eq(Product.is_available, True),
-        gte(Product.price, 5)
-    )
+    query = (Product.is_available == True) & (Product.price >= 5)
+    # query = and_(
+    #     eq(Product.is_available, True),
+    #     gte(Product.price, 5)
+    # )
     sort_oprator = sort((Product.name, 1), (Product.price, -1))
     result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
@@ -139,10 +142,11 @@ class Product(DbModel):
     _collection: ClassVar = 'products'
 
 
-query = and_(
-    eq(Product.is_available, True),
-    gte(Product.price, 5)
-)
+query = (Product.is_available == True) & (Product.price >= 5)
+# query = and_(
+#     eq(Product.is_available, True),
+#     gte(Product.price, 5)
+# )
 sort_oprator = sort((Product.name, 1), (Product.price, -1))
 result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
@@ -175,7 +179,7 @@ class Product(DbModel):
 
 
 async def main():
-    query = gte(Product.price, 5)
+    query = Product.price >= 5
     sort_oprator = sort((Product.name, 1), (Product.price, -1))
     result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
 
@@ -199,7 +203,7 @@ class Product(DbModel):
     _collection: ClassVar = 'products'
 
 
-query = gte(Product.price, 5)
+query = Product.price >= 5
 sort_oprator = sort((Product.name, 1), (Product.price, -1))
 result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 ```
