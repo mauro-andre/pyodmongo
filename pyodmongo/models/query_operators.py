@@ -55,7 +55,3 @@ class LogicalOperator(_LogicalOperator):
     """
 
     operators: tuple[ComparisonOperator | _LogicalOperator, ...]
-
-
-class SortOperator(BaseModel):
-    operators: tuple[tuple[DbField, int], ...]

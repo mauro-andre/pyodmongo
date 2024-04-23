@@ -4,7 +4,8 @@ from ..models.responses import SaveResponse, DeleteResponse
 from ..engine.utils import consolidate_dict, mount_base_pipeline
 from ..services.query_operators import query_dict, sort_dict
 from ..models.paginate import ResponsePaginate
-from ..models.query_operators import LogicalOperator, ComparisonOperator, SortOperator
+from ..models.query_operators import LogicalOperator, ComparisonOperator
+from ..models.sort_operators import SortOperator
 from ..models.db_model import DbModel
 from datetime import datetime
 from typing import TypeVar

@@ -1,6 +1,6 @@
 from ..models.db_model import DbModel
 from ..models.db_field_info import DbField
-from ..models.query_operators import LogicalOperator, ComparisonOperator, SortOperator
+from ..models.query_operators import LogicalOperator, ComparisonOperator
 from .comparison_operators import comparison_operator
 from .sort_operator import sort
 from .logical_operators import and_
