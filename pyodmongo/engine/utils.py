@@ -5,6 +5,27 @@ from ..services.model_init import field_annotation_infos
 
 
 def consolidate_dict(obj: BaseModel, dct: dict):
+    """
+    Recursively consolidates the attributes of a Pydantic model into a dictionary,
+    handling nested models, list fields, and references appropriately based on the model's
+    field specifications.
+
+    Args:
+        obj (BaseModel): The Pydantic model instance from which to extract data.
+        dct (dict): The dictionary into which data should be consolidated. This dictionary
+                    is modified in-place.
+
+    Returns:
+        dict: The modified dictionary with model data consolidated into it, including handling
+              of MongoDB ObjectId conversions and nested structures.
+
+    Description:
+        This function iterates over each field of the provided model instance, extracting the
+        value and associated metadata. Depending on whether the field contains model data,
+        is a list, or is a reference, the function appropriately processes the value to fit
+        MongoDB storage requirements, including converting to ObjectIds where necessary.
+        The function is recursive for nested models and lists of models.
+    """
     for field, field_info in obj.model_fields.items():
         value = getattr(obj, field)
         db_field_info = field_annotation_infos(field=field, field_info=field_info)
@@ -49,6 +70,25 @@ def consolidate_dict(obj: BaseModel, dct: dict):
 
 
 def mount_base_pipeline(Model, query: dict, sort: dict, populate: bool = False):
+    """
+    Constructs a basic MongoDB aggregation pipeline based on the provided query, sort, and
+    model settings, optionally including reference population stages.
+
+    Args:
+        Model (type[Model]): The model class defining the MongoDB collection and its aggregation logic.
+        query (dict): MongoDB query dictionary to filter the documents.
+        sort (dict): Dictionary defining the sorting order of the documents.
+        populate (bool): Flag indicating whether to include reference population stages in the pipeline.
+
+    Returns:
+        list: The MongoDB aggregation pipeline configured with match, sort, and optionally population stages.
+
+    Description:
+        This function constructs a MongoDB aggregation pipeline using the provided model's
+        internal pipeline stages and the specified query and sort parameters. If 'populate' is
+        true, reference population stages defined in the model are included to resolve document
+        references as part of the aggregation process.
+    """
     match_stage = [{"$match": query}]
     sort_stage = [{"$sort": sort}] if sort != {} else []
     model_stage = Model._pipeline
