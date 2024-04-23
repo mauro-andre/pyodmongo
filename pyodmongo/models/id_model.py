@@ -38,11 +38,11 @@ class Id(str):
             raise ValueError("invalid Id")
         return str(v)
 
-    @classmethod
-    def serialization(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("invalid Id")
-        return str(v)
+    # @classmethod
+    # def serialization(cls, v):
+    #     if not ObjectId.is_valid(v):
+    #         raise ValueError("invalid Id")
+    #     return str(v)
 
     @classmethod
     def __get_pydantic_core_schema__(

@@ -225,15 +225,37 @@ def test_mount_query_filter_with_regex():
         attr1: str
         attr2: str
 
-    input_dict = {"attr1_in": "['/^agr[oóôõ]s/i', 123, 'abc']", "attr2_eq": "123"}
+    input_dict_1 = {"attr1_in": "['/^agr[oóôõ]s/i', 123, 'abc']", "attr2_eq": "123"}
+    input_dict_2 = {"attr1_in": "['/^agr[oóôõ]s/m', 123, 'abc']", "attr2_eq": "123"}
+    input_dict_3 = {"attr1_in": "['/^agr[oóôõ]s/s', 123, 'abc']", "attr2_eq": "123"}
 
-    query, _ = mount_query_filter(
-        Model=MyModel, items=input_dict, initial_comparison_operators=[]
+    query_1, _ = mount_query_filter(
+        Model=MyModel, items=input_dict_1, initial_comparison_operators=[]
     )
-    query_dct = query_dict(query_operator=query, dct={})
-    assert query_dct == {
+    query_2, _ = mount_query_filter(
+        Model=MyModel, items=input_dict_2, initial_comparison_operators=[]
+    )
+    query_3, _ = mount_query_filter(
+        Model=MyModel, items=input_dict_3, initial_comparison_operators=[]
+    )
+    query_dct_1 = query_dict(query_operator=query_1, dct={})
+    query_dct_2 = query_dict(query_operator=query_2, dct={})
+    query_dct_3 = query_dict(query_operator=query_3, dct={})
+    assert query_dct_1 == {
         "$and": [
             {"attr1": {"$in": [re.compile("^agr[oóôõ]s", re.IGNORECASE), 123, "abc"]}},
+            {"attr2": {"$eq": 123}},
+        ]
+    }
+    assert query_dct_2 == {
+        "$and": [
+            {"attr1": {"$in": [re.compile("^agr[oóôõ]s", re.MULTILINE), 123, "abc"]}},
+            {"attr2": {"$eq": 123}},
+        ]
+    }
+    assert query_dct_3 == {
+        "$and": [
+            {"attr1": {"$in": [re.compile("^agr[oóôõ]s", re.DOTALL), 123, "abc"]}},
             {"attr2": {"$eq": 123}},
         ]
     }

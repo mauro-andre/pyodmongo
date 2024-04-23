@@ -13,17 +13,20 @@ def test_empty_dict():
 
     class MyModel3(DbModel):
         attr3: str
-        my_model_2: MyModel2 | Id
+        my_model_2: MyModel2 | Id | None
+        my_model_2_2: MyModel2 | Id | None
         _collection = "my_model_3"
 
     dct = {
         "attr3": "attr3",
         "my_model_2": {},
+        "my_model_2_2": {"my_model_1": {}}
     }
     obj = MyModel3(**dct)
     assert obj.model_dump() == {
         "attr3": "attr3",
         "my_model_2": None,
+        "my_model_2_2": None,
         "id": None,
         "created_at": None,
         "updated_at": None,

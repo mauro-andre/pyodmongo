@@ -101,20 +101,17 @@ class DbModel(BaseModel, metaclass=DbMeta):
     _pipeline: ClassVar = []
 
     def __remove_empty_dict(self, dct: dict):
+        if dct == {}:
+            return None
         for key, value in dct.items():
             if value == {}:
                 dct[key] = None
             elif type(value) == dict:
                 self.__remove_empty_dict(dct=value)
-                is_full_empty = all(
-                    v == None or v == {} or v == [] for v in value.values()
-                )
-                if is_full_empty:
-                    dct[key] = None
-        if dct == {}:
+        is_full_empty = all(v == None or v == {} or v == [] for v in dct.values())
+        if is_full_empty:
             return None
-        else:
-            return dct
+        return dct
 
     def __init__(self, **attrs):
         for key, value in attrs.items():

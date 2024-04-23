@@ -586,3 +586,16 @@ async def test_sort_query(drop_collection_for_test_sort):
     sort_oprator = sort((MySortClass.attr_3, 1))
     result_one = await db.find_one(Model=MySortClass, sort=sort_oprator)
     assert result_one == obj_list[2]
+
+    sort_oprator = ["attr_3", 1]
+    with pytest.raises(
+        TypeError,
+        match='sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument',
+    ):
+        result_one = await db.find_one(Model=MySortClass, sort=sort_oprator)
+
+    with pytest.raises(
+        TypeError,
+        match='sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument',
+    ):
+        result_many = await db.find_many(Model=MySortClass, sort=sort_oprator)
