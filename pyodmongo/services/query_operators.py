@@ -1,4 +1,5 @@
-from ..models.query_operators import ComparisonOperator, LogicalOperator, SortOperator
+from ..models.query_operators import ComparisonOperator, LogicalOperator
+from ..models.sort_operators import SortOperator
 
 
 def comparison_operator_dict(co: ComparisonOperator):
