@@ -17,6 +17,24 @@ import copy
 
 @dataclass_transform(kw_only_default=True)
 class DbMeta(ModelMetaclass):
+    """
+    Metaclass for database model entities in a PyODMongo environment. It extends
+    the functionality of the ModelMetaclass by applying specific behaviors and
+    transformations related to database operations such as indexing, reference
+    resolution, and initialization of database fields.
+
+    Attributes:
+        __pyodmongo_complete__ (bool): Attribute used to track the completion of
+                                      the meta-level configuration.
+
+    Methods:
+        __new__(cls, name, bases, namespace, **kwargs): Constructs a new class
+            instance, ensuring database-specific adjustments and initializations
+            are applied.
+        __getattr__(cls, name): Custom attribute access handling that supports
+            dynamic attributes based on database field definitions.
+    """
+
     def __new__(
         cls, name: str, bases: tuple[Any], namespace: dict, **kwargs: Any
     ) -> type:
@@ -50,6 +68,32 @@ class DbMeta(ModelMetaclass):
 
 
 class DbModel(BaseModel, metaclass=DbMeta):
+    """
+    Base class for all database models using PyODMongo with auto-mapped fields
+    to MongoDB documents. Provides automatic timestamping and ID management,
+    along with utilities for managing nested dictionary fields.
+
+    Attributes:
+        id (Id | None): Unique identifier for the database record, typically
+                        mapped to MongoDB's '_id'.
+        created_at (datetime | None): Timestamp indicating when the record was
+                                      created.
+        updated_at (datetime | None): Timestamp indicating when the record was
+                                      last updated.
+        model_config (ConfigDict): Configuration dictionary to control model
+                                   serialization and deserialization behaviors.
+        _pipeline (ClassVar): Class variable to store pipeline operations for
+                              reference resolution.
+
+    Methods:
+        __init__(**attrs): Initializes a new instance of DbModel, applying
+                           transformations to nested dictionary fields to clean
+                           up empty values.
+        __remove_empty_dict(dct): Recursively removes empty dictionaries from
+                                  nested dictionary fields, aiding in the
+                                  cleanup process during initialization.
+    """
+
     id: Id | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None

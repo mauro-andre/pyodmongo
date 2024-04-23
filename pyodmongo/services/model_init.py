@@ -15,6 +15,20 @@ import copy
 
 
 def resolve_indexes(cls: BaseModel):
+    """
+    Resolves and constructs MongoDB index models for the fields of a given class based on field attributes.
+
+    Args:
+        cls (BaseModel): The model class whose indexes are to be resolved.
+
+    Returns:
+        list[IndexModel]: A list of MongoDB index models constructed for the class fields.
+
+    Description:
+        This method iterates over the model fields and checks for index-related attributes (index, unique,
+        text_index). It creates appropriate MongoDB index structures (IndexModel) for these fields,
+        including handling of text indexes and unique constraints.
+    """
     indexes = []
     text_keys = []
     for key in cls.model_fields.keys():
@@ -69,6 +83,21 @@ def _union_collector_info(field, args):
 
 
 def field_annotation_infos(field, field_info) -> DbField:
+    """
+    Extracts and constructs database field metadata from model field annotations.
+
+    Args:
+        field (str): The name of the field in the model.
+        field_info (Field): Pydantic model field information containing metadata.
+
+    Returns:
+        DbField: A DbField instance encapsulating the database-related metadata of the model field.
+
+    Description:
+        This method processes a model field's annotation to determine its database-related properties,
+        such as whether it's a list, reference, or contains sub-model fields. It constructs and returns
+        a DbField object that represents this metadata.
+    """
     field_annotation = field_info.annotation
     by_reference = False
     field_type = field_annotation
@@ -118,6 +147,21 @@ def _paths_to_ref_ids(cls: BaseModel, paths: list, db_field_path: list):
 
 
 def resolve_reference_pipeline(cls: BaseModel, pipeline: list):
+    """
+    Constructs a MongoDB aggregation pipeline that handles document references within a given class model.
+
+    Args:
+        cls (BaseModel): The model class for which to build the reference resolution pipeline.
+        pipeline (list): Initial pipeline stages to which reference resolution stages will be added.
+
+    Returns:
+        list: The modified MongoDB aggregation pipeline including reference resolution stages.
+
+    Description:
+        This function builds a pipeline that unwinds arrays, performs lookups for references, and resets
+        document structures to correctly embed referenced documents. It supports nested models and handles
+        complex reference structures.
+    """
     paths = _paths_to_ref_ids(cls=cls, paths=[], db_field_path=[])
     for db_field_path in paths:
         path_str = ""
@@ -180,6 +224,17 @@ def _recursice_db_fields_info(db_field_info: DbField, path: list) -> DbField:
 
 
 def resolve_class_fields_db_info(cls: BaseModel):
+    """
+    Resolves and sets database field information for all fields of the specified class.
+
+    Args:
+        cls (BaseModel): The class whose fields are to be resolved.
+
+    Description:
+        This method iterates over each field of the given class, resolves its database field information,
+        and sets additional properties directly on the class to facilitate database operations. This includes
+        constructing nested DbField structures for complex models.
+    """
     for field, field_info in cls.model_fields.items():
         db_field_info = field_annotation_infos(field=field, field_info=field_info)
         path = db_field_info.field_alias

@@ -17,7 +17,38 @@ Model = TypeVar("Model", bound=DbModel)
 
 
 class AsyncDbEngine:
+    """
+    Provides asynchronous database operations using MongoDB with the AsyncIOMotorClient.
+    This class facilitates CRUD operations, supporting complex queries, aggregations,
+    and pagination in an asynchronous manner to improve performance in applications
+    requiring high I/O operations.
+
+    Methods:
+        __init__(mongo_uri, db_name): Initializes the AsyncIOMotorClient with the given
+                                      MongoDB URI and selects the database by name.
+        __save_dict(obj, dict_to_save, collection, indexes, query): Private method to
+                                                                    save or update documents in the specified collection.
+        __aggregate(Model, pipeline, as_dict): Private method to perform aggregation queries.
+        __resolve_count_pipeline(Model, filter_): Private method to count documents based
+                                                  on a filter.
+        delete_one(Model, query, raw_query): Deletes a single document based on the provided query.
+        delete(Model, query, raw_query): Deletes multiple documents based on the provided query.
+        save(obj, query, raw_query): Saves or updates a document in the database.
+        save_all(obj_list): Concurrently saves multiple documents.
+        find_one(Model, query, raw_query, sort, raw_sort, populate, as_dict): Finds a single document.
+        find_many(Model, query, raw_query, sort, raw_sort, populate, as_dict, paginate,
+                  current_page, docs_per_page): Finds multiple documents with optional pagination.
+    """
+
     def __init__(self, mongo_uri, db_name):
+        """
+        Initialize the asynchronous database engine with a MongoDB connection URI and
+        database name. Sets up the client and selects the specified database.
+
+        Args:
+            mongo_uri (str): MongoDB URI to connect to.
+            db_name (str): Name of the database to operate on.
+        """
         self._client = AsyncIOMotorClient(mongo_uri)
         self._db = self._client[db_name]
 
@@ -68,6 +99,19 @@ class AsyncDbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
     ) -> DeleteResponse:
+        """
+        Asynchronously deletes a single document from the database based on the specified
+        query or raw_query.
+
+        Args:
+            Model (type[Model]): The model class that defines the MongoDB collection.
+            query (ComparisonOperator | LogicalOperator, optional): The structured query
+                object.
+            raw_query (dict, optional): Raw MongoDB query dictionary.
+
+        Returns:
+            DeleteResponse: A response object containing details of the delete operation.
+        """
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
         ):
@@ -90,6 +134,19 @@ class AsyncDbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
     ) -> DeleteResponse:
+        """
+        Asynchronously deletes multiple documents from the database based on the specified
+        query or raw_query.
+
+        Args:
+            Model (type[Model]): The model class that defines the MongoDB collection.
+            query (ComparisonOperator | LogicalOperator, optional): The structured query
+                object.
+            raw_query (dict, optional): Raw MongoDB query dictionary.
+
+        Returns:
+            DeleteResponse: A response object containing details of the delete operation.
+        """
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
         ):
@@ -116,6 +173,24 @@ class AsyncDbEngine:
         query: ComparisonOperator | LogicalOperator = None,
         raw_query: dict = None,
     ) -> SaveResponse:
+        """
+        Asynchronously saves or updates an object in the database. This method
+        processes the object by converting it to a dictionary, applies the specified
+        query for updates, and handles the indexing.
+
+        Args:
+            obj (type[Model]): The model instance to save.
+            query (ComparisonOperator | LogicalOperator, optional): Query to identify the document
+                for update operations.
+            raw_query (dict, optional): Raw query dictionary if a more specific query is needed.
+
+        Returns:
+            SaveResponse: The result of the save operation, including details about the
+                          operation's success, matched and modified counts, and any upserted ID.
+
+        Raises:
+            TypeError: If the query argument is not of type ComparisonOperator or LogicalOperator.
+        """
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
         ):
@@ -141,6 +216,17 @@ class AsyncDbEngine:
         return save_response
 
     async def save_all(self, obj_list: list) -> list[SaveResponse]:
+        """
+        Asynchronously saves multiple objects to the database concurrently. This method
+        utilizes asyncio to manage concurrent save operations for efficiency.
+
+        Args:
+            obj_list (list): A list of model instances to save.
+
+        Returns:
+            list[SaveResponse]: A list of SaveResponse objects, each representing the outcome
+                                of the save operation for each model instance.
+        """
         save_calls = [self.save(obj) for obj in obj_list]
         return await gather(*save_calls)
 
@@ -154,6 +240,26 @@ class AsyncDbEngine:
         populate: bool = False,
         as_dict: bool = False,
     ) -> type[Model]:
+        """
+        Asynchronously finds a single document in the database that matches the specified
+        query and returns it as a model instance or dictionary.
+
+        Args:
+            Model (type[Model]): The model class defining the structure of the returned object.
+            query (ComparisonOperator | LogicalOperator, optional): The query to filter documents.
+            raw_query (dict, optional): Raw MongoDB query if specific conditions are needed.
+            sort (SortOperator, optional): Sorting instructions for the results.
+            raw_sort (dict, optional): Raw sort dictionary if a specific sort is needed.
+            populate (bool): Whether to populate referenced documents.
+            as_dict (bool): Whether to return the document as a dictionary instead of a model instance.
+
+        Returns:
+            type[Model] | None: The found document as a model instance or dictionary, or None if no
+                                 document matches the query.
+
+        Raises:
+            TypeError: If the query or sort arguments are not the correct type from pyodmongo.queries.
+        """
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
         ):
@@ -196,6 +302,29 @@ class AsyncDbEngine:
         current_page: int = 1,
         docs_per_page: int = 1000,
     ):
+        """
+        Asynchronously retrieves multiple documents from the database that match the specified
+        query. Supports sorting, pagination, and population of references.
+
+        Args:
+            Model (type[Model]): The model class defining the structure of the documents.
+            query (ComparisonOperator | LogicalOperator, optional): The query to filter documents.
+            raw_query (dict, optional): Raw MongoDB query if specific conditions are needed.
+            sort (SortOperator, optional): Sorting instructions for the results.
+            raw_sort (dict, optional): Raw sort dictionary if a specific sort is needed.
+            populate (bool): Whether to populate referenced documents.
+            as_dict (bool): Whether to return documents as dictionaries.
+            paginate (bool): Whether to paginate the results.
+            current_page (int): The current page number for pagination.
+            docs_per_page (int): The number of documents per page.
+
+        Returns:
+            ResponsePaginate | list[type[Model]]: Paginated response or list of model instances
+                                                  or dictionaries, depending on the 'as_dict' flag.
+
+        Raises:
+            TypeError: If the query or sort arguments are not the correct type from pyodmongo.queries.
+        """
         if query and (
             type(query) != ComparisonOperator and type(query) != LogicalOperator
         ):
