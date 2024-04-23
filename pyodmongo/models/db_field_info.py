@@ -1,5 +1,8 @@
 from typing import Any
 from dataclasses import dataclass
+from .query_operators import ComparisonOperator
+from .id_model import Id
+from bson import ObjectId
 
 
 @dataclass
@@ -34,3 +37,31 @@ class DbField:
     by_reference: bool = None
     is_list: bool = None
     has_model_fields: bool = None
+
+    def comparison_operator(self, operator: str, value: Any) -> ComparisonOperator:
+        if self.by_reference or self.field_type == Id:
+            if type(value) != list and value is not None:
+                value = ObjectId(value)
+            if type(value) == list:
+                value = [ObjectId(v) for v in value]
+        return ComparisonOperator(
+            path_str=self.path_str, operator=operator, value=value
+        )
+
+    def __lt__(self, value) -> ComparisonOperator:
+        return self.comparison_operator(operator="$lt", value=value)
+
+    def __le__(self, value) -> ComparisonOperator:
+        return self.comparison_operator(operator="$lte", value=value)
+
+    def __eq__(self, value) -> ComparisonOperator:
+        return self.comparison_operator(operator="$eq", value=value)
+
+    def __ne__(self, value) -> ComparisonOperator:
+        return self.comparison_operator(operator="$ne", value=value)
+
+    def __gt__(self, value) -> ComparisonOperator:
+        return self.comparison_operator(operator="$gt", value=value)
+
+    def __ge__(self, value) -> ComparisonOperator:
+        return self.comparison_operator(operator="$gte", value=value)

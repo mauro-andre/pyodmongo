@@ -366,3 +366,65 @@ def test_mount_query_string_with_sort():
         gte(MyClass.attr_3, 10),
     )
     assert sort_operator == sort((MyClass.attr_1, 1), (MyClass.attr_2, -1))
+
+
+def test_query_with_magic_methods():
+    class MyRefClass(DbModel):
+        attr_ref: str
+        _collection: ClassVar = "my_ref_class"
+
+    class MyMagicClass(DbModel):
+        attr_1: int
+        attr_2: int
+        attr_3: list[MyRefClass | Id]
+        _collection: ClassVar = "my_magic_class"
+
+    query_eq_magic_list = MyMagicClass.attr_3 == [
+        "628b7e33e36332a5dc17a0f7",
+        "628b7e5de36332a5dc17a119",
+    ]
+    query_eq_list = eq(
+        MyMagicClass.attr_3, ["628b7e33e36332a5dc17a0f7", "628b7e5de36332a5dc17a119"]
+    )
+
+    query_lt_magic = MyMagicClass.attr_1 < 123
+    query_lt = lt(MyMagicClass.attr_1, 123)
+    assert query_lt_magic == query_lt
+
+    query_lte_magic = MyMagicClass.attr_1 <= 123
+    query_lte = lte(MyMagicClass.attr_1, 123)
+    assert query_lte_magic == query_lte
+
+    query_eq_magic = MyMagicClass.attr_1 == 123
+    query_eq = eq(MyMagicClass.attr_1, 123)
+    assert query_eq_magic == query_eq
+
+    query_ne_magic = MyMagicClass.attr_1 != 123
+    query_ne = ne(MyMagicClass.attr_1, 123)
+    assert query_ne_magic == query_ne
+
+    query_gt_magic = MyMagicClass.attr_1 > 123
+    query_gt = gt(MyMagicClass.attr_1, 123)
+    assert query_gt_magic == query_gt
+
+    query_gte_magic = MyMagicClass.attr_1 >= 123
+    query_gte = gte(MyMagicClass.attr_1, 123)
+    assert query_gte_magic == query_gte
+
+    query_and_magic = ((MyMagicClass.attr_1 >= 100) | (MyMagicClass.attr_1 <= 200)) & (
+        MyMagicClass.attr_2 > 10
+    )
+    query_and = and_(
+        or_(gte(MyMagicClass.attr_1, 100), lte(MyMagicClass.attr_1, 200)),
+        gt(MyMagicClass.attr_2, 10),
+    )
+    assert query_and_magic == query_and
+
+    query_or_magic = (MyMagicClass.attr_1 == 100) & (MyMagicClass.attr_2 == 200) | (
+        MyMagicClass.attr_1 > 10
+    )
+    query_or = or_(
+        and_(eq(MyMagicClass.attr_1, 100), eq(MyMagicClass.attr_2, 200)),
+        gt(MyMagicClass.attr_1, 10),
+    )
+    assert query_or_magic == query_or
