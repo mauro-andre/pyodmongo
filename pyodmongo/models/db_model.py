@@ -6,7 +6,7 @@ from ..services.model_init import (
     resolve_indexes,
     resolve_class_fields_db_info,
     resolve_reference_pipeline,
-    resolve_db_fields,
+    # resolve_db_fields,
 )
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
