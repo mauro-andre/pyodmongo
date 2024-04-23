@@ -17,11 +17,7 @@ def test_empty_dict():
         my_model_2_2: MyModel2 | Id | None
         _collection = "my_model_3"
 
-    dct = {
-        "attr3": "attr3",
-        "my_model_2": {},
-        "my_model_2_2": {"my_model_1": {}}
-    }
+    dct = {"attr3": "attr3", "my_model_2": {}, "my_model_2_2": {"my_model_1": {}}}
     obj = MyModel3(**dct)
     assert obj.model_dump() == {
         "attr3": "attr3",
