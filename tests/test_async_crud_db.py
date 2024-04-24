@@ -12,13 +12,16 @@ from pyodmongo.engine.utils import consolidate_dict
 from pydantic import ConfigDict, BaseModel
 from typing import ClassVar
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, UTC, timezone, timedelta
+import pytz
 import pytest
 import pytest_asyncio
 
 mongo_uri = "mongodb://localhost:27017"
 db_name = "pyodmongo_pytest"
-db = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
+db = AsyncDbEngine(
+    mongo_uri=mongo_uri, db_name=db_name, tz_info=pytz.timezone("America/Sao_Paulo")
+)
 
 
 class MyClass(DbModel):
@@ -562,19 +565,19 @@ async def drop_collection_for_test_sort():
 async def test_sort_query(drop_collection_for_test_sort):
     obj_list = [
         MySortClass(
-            attr_1="Juliet", attr_2=100, attr_3=datetime(year=2023, month=1, day=20)
+            attr_1="Juliet", attr_2=100, attr_3=datetime(year=2023, month=1, day=20, tzinfo=UTC)
         ),
         MySortClass(
-            attr_1="Albert", attr_2=50, attr_3=datetime(year=2025, month=1, day=20)
+            attr_1="Albert", attr_2=50, attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC)
         ),
         MySortClass(
-            attr_1="Zack", attr_2=30, attr_3=datetime(year=2020, month=1, day=20)
+            attr_1="Zack", attr_2=30, attr_3=datetime(year=2020, month=1, day=20, tzinfo=UTC)
         ),
         MySortClass(
-            attr_1="Charlie", attr_2=150, attr_3=datetime(year=2027, month=1, day=20)
+            attr_1="Charlie", attr_2=150, attr_3=datetime(year=2027, month=1, day=20, tzinfo=UTC)
         ),
         MySortClass(
-            attr_1="Albert", attr_2=40, attr_3=datetime(year=2025, month=1, day=20)
+            attr_1="Albert", attr_2=40, attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC)
         ),
     ]
     await db.save_all(obj_list=obj_list)
@@ -599,3 +602,38 @@ async def test_sort_query(drop_collection_for_test_sort):
         match='sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument',
     ):
         result_many = await db.find_many(Model=MySortClass, sort=sort_oprator)
+
+
+class ClassWithDate(DbModel):
+    name: str
+    date: datetime
+    _collection: ClassVar = "class_with_date"
+
+
+@pytest_asyncio.fixture()
+async def drop_collection_class_with_date():
+    await db._db[ClassWithDate._collection].drop()
+    yield
+    await db._db[ClassWithDate._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_save_and_retrieve_objs_with_datetime(drop_collection_class_with_date):
+
+    tz = timezone(timedelta(hours=-3))
+    date = datetime(
+        year=2024,
+        month=4,
+        day=24,
+        hour=23,
+        minute=0,
+        second=0,
+        tzinfo=tz,
+    )
+    obj = ClassWithDate(name="A name", date=date)
+    await db.save(obj)
+    query = (ClassWithDate.date >= datetime(2024, 4, 24, 22, 30, 0, tzinfo=tz)) & (
+        ClassWithDate.date <= datetime(2024, 4, 24, 23, 30, 0, tzinfo=tz)
+    )
+    obj_found: ClassWithDate = await db.find_one(Model=ClassWithDate, query=query)
+    assert obj_found.date == date
