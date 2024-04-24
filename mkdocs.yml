@@ -41,6 +41,7 @@ nav:
   - indexes.md
   - aggregation.md
   - contributing.md
+  - release_notes.md
 
 extra:
   analytics:
