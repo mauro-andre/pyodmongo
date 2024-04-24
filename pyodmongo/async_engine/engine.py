@@ -7,9 +7,10 @@ from ..models.paginate import ResponsePaginate
 from ..models.query_operators import LogicalOperator, ComparisonOperator
 from ..models.sort_operators import SortOperator
 from ..models.db_model import DbModel
-from datetime import datetime
+from datetime import datetime, UTC, timezone
 from typing import TypeVar
 from bson import ObjectId
+from bson.codec_options import CodecOptions
 from math import ceil
 from asyncio import gather
 
@@ -41,7 +42,7 @@ class AsyncDbEngine:
                   current_page, docs_per_page): Finds multiple documents with optional pagination.
     """
 
-    def __init__(self, mongo_uri, db_name):
+    def __init__(self, mongo_uri, db_name, tz_info: timezone = None):
         """
         Initialize the asynchronous database engine with a MongoDB connection URI and
         database name. Sets up the client and selects the specified database.
@@ -52,13 +53,14 @@ class AsyncDbEngine:
         """
         self._client = AsyncIOMotorClient(mongo_uri)
         self._db = self._client[db_name]
+        self._tz_info = tz_info
 
     # ----------DB OPERATIONS----------
     async def __save_dict(
         self, obj: type[Model], dict_to_save: dict, collection, indexes, query=None
     ):
         find_filter = query or {"_id": ObjectId(dict_to_save.get("_id"))}
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         now = now.replace(microsecond=int(now.microsecond / 1000) * 1000)
         dict_to_save[obj.__class__.updated_at.field_alias] = now
         dict_to_save.pop("_id")
@@ -81,9 +83,18 @@ class AsyncDbEngine:
         )
 
     async def __aggregate(
-        self, Model: type[Model], pipeline, as_dict: bool
+        self,
+        Model: type[Model],
+        pipeline,
+        as_dict: bool,
+        tz_info: timezone = None,
     ) -> list[type[Model]]:
-        docs_cursor = self._db[Model._collection].aggregate(pipeline)
+        tz_info = tz_info if tz_info else self._tz_info
+        tz_aware = True if tz_info else False
+        collection = self._db[Model._collection].with_options(
+            codec_options=CodecOptions(tz_aware=tz_aware, tzinfo=tz_info)
+        )
+        docs_cursor = collection.aggregate(pipeline)
         if as_dict:
             return await docs_cursor.to_list(length=None)
         return [Model(**doc) async for doc in docs_cursor]
@@ -240,6 +251,7 @@ class AsyncDbEngine:
         raw_sort: dict = None,
         populate: bool = False,
         as_dict: bool = False,
+        tz_info: timezone = None,
     ) -> type[Model]:
         """
         Asynchronously finds a single document in the database that matches the specified
@@ -284,7 +296,7 @@ class AsyncDbEngine:
         pipeline += [{"$limit": 1}]
         try:
             result = await self.__aggregate(
-                Model=Model, pipeline=pipeline, as_dict=as_dict
+                Model=Model, pipeline=pipeline, as_dict=as_dict, tz_info=tz_info
             )
             return result[0]
         except IndexError:
@@ -299,6 +311,7 @@ class AsyncDbEngine:
         raw_sort: dict = None,
         populate: bool = False,
         as_dict: bool = False,
+        tz_info: timezone = None,
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
@@ -348,7 +361,7 @@ class AsyncDbEngine:
         )
         if not paginate:
             return await self.__aggregate(
-                Model=Model, pipeline=pipeline, as_dict=as_dict
+                Model=Model, pipeline=pipeline, as_dict=as_dict, tz_info=tz_info
             )
         max_docs_per_page = 1000
         current_page = 1 if current_page <= 0 else current_page

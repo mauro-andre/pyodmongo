@@ -60,8 +60,11 @@ result: Product = engine.find_one(Model=Product, query=query)
 - `Model: type[DbModel]`: The class that inherits from `DbModel` to be used for forming the retrieved object from the database.
 - `query: ComparisonOperator | LogicalOperator`: The query used to filter the objects in the database.
 - `raw_query: dict`: An optional query in the dictionary format compatible with MongoDB.
+- `sort: SortOperator`: An optional parameter that specifies the sort order of the results. Each tuple in the list contains a field name and a direction (`1` for ascending, `-1` for descending). This parameter allows for sorting the results based on one or more fields, helping in organizing the retrieved data as per specific requirements.
+- `raw_sort: dict`: An optional parameter similar to `sort` but uses a dictionary format directly compatible with MongoDB sort specifications. It's particularly useful when complex sorting criteria are needed that are directly supported by MongoDB. This can provide more direct control over the sorting process in the database query.
 - `populate: bool`: A boolean flag that determines whether the returned object will have its relationship fields populated with other objects or will only contain the `id` field.
 - `as_dict: bool`:  A boolean flag that, when set to `True`, returns the response as a dictionary instead of instantiated objects. This is particularly useful when a lightweight, serializable format is required, such as for JSON responses in web applications, or when the consumer prefers to work with basic data structures rather than complex object models.
+- `tz_info: timezone`: An optional parameter that specifies the time zone information for any `datetime` fields in the retrieved objects. This parameter is crucial when dealing with records in different time zones and ensures that the `datetime` values are correctly adjusted to the specified time zone. If not set, the `datetime` fields will be returned in the default time zone of the database or the application server.
 
 !!! warning
     If `raw_query` is passed, `query` will not be considered.
@@ -110,12 +113,7 @@ result: list[Product] = engine.find_many(Model=Product, query=query)
 
 Additionally, it includes three extra arguments for pagination control:
 
-- `Model: type[DbModel]`: The class that inherits from DbModel to be used for forming the retrieved object from the database.
-- `query: ComparisonOperator | LogicalOperator`: The query used to filter the objects in the database.
-- `raw_query: dict`: An optional query in the dictionary format compatible with MongoDB.
-- `populate: bool`: A boolean flag that determines whether the returned object will have its relationship fields populated with other objects or will only contain the id field.
 - `paginate: bool`: A boolean flag that specifies whether the response should be paginated or a regular list.
-- `as_dict: bool`:  A boolean flag that, when set to `True`, returns the response as a dictionary instead of instantiated objects. This is particularly useful when a lightweight, serializable format is required, such as for JSON responses in web applications, or when the consumer prefers to work with basic data structures rather than complex object models.
 - `current_page: int`: If `paginate=True`, this argument determines the page of results to be retrieved.
 - `docs_per_page: int`: If `paginate=True`, this argument determines the maximum number of objects per page in the query results.
 
