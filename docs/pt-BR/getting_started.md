@@ -55,6 +55,9 @@ result = engine.save(box)
 
 Certifique-se de substituir `mongodb://localhost:27017` pela string de conexão com seu banco de dados do MongoDB e `my_db` pelo nome do banco.
 
+!!! tip
+    Ao criar um motor, você pode passar o parâmetro `tz_info` nas classes `AsyncDbEngine` ou `DbEngine` que define o fuso horário padrão para todas as operações de `find_one` e `find_many` realizadas através deste motor, a menos que `tz_info` também seja passado nos métodos `find_one` e `find_many`. Neste caso o fuso horário dos métodos de busca terão prevalência.
+
 ## Definindo um modelo
 A seguir, você definirá um modelo que herda de DbModel. Este modelo representa a estrutura dos seus documentos MongoDB. Você também precisará criar o atributo `_collection`, que carregará a string do nome da coleção a ser salva no banco de dados.
 

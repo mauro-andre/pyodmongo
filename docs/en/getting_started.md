@@ -56,6 +56,9 @@ result = engine.save(box)
 
 Make sure to replace `mongodb://localhost:27017` with the connection string to your MongoDB database and `my_db` with de database name.
 
+!!! tip
+    When creating an engine, you can pass the `tz_info` parameter in the `AsyncDbEngine` or `DbEngine` classes which sets the default time zone for all `find_one` and `find_many` operations performed through this engine, unless `tz_info ` is also passed in the `find_one` and `find_many` methods. In this case, the time zone of the search methods will prevail.
+
 ## Defining a Model
 Next, you'll define a model that inherits from DbModel. This model represents the structure of your MongoDB documents. You'll also need to create the `_collection` attribute, which will carry the collection name string to be saved in the database.
 
