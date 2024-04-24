@@ -374,19 +374,29 @@ def drop_collection_for_test_sort():
 def test_sort_query(drop_collection_for_test_sort):
     obj_list = [
         MySortClass(
-            attr_1="Juliet", attr_2=100, attr_3=datetime(year=2023, month=1, day=20, tzinfo=UTC)
+            attr_1="Juliet",
+            attr_2=100,
+            attr_3=datetime(year=2023, month=1, day=20, tzinfo=UTC),
         ),
         MySortClass(
-            attr_1="Albert", attr_2=50, attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC)
+            attr_1="Albert",
+            attr_2=50,
+            attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC),
         ),
         MySortClass(
-            attr_1="Zack", attr_2=30, attr_3=datetime(year=2020, month=1, day=20, tzinfo=UTC)
+            attr_1="Zack",
+            attr_2=30,
+            attr_3=datetime(year=2020, month=1, day=20, tzinfo=UTC),
         ),
         MySortClass(
-            attr_1="Charlie", attr_2=150, attr_3=datetime(year=2027, month=1, day=20, tzinfo=UTC)
+            attr_1="Charlie",
+            attr_2=150,
+            attr_3=datetime(year=2027, month=1, day=20, tzinfo=UTC),
         ),
         MySortClass(
-            attr_1="Albert", attr_2=40, attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC)
+            attr_1="Albert",
+            attr_2=40,
+            attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC),
         ),
     ]
     db.save_all(obj_list=obj_list)
@@ -411,6 +421,7 @@ def test_sort_query(drop_collection_for_test_sort):
         match='sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument',
     ):
         result_many = db.find_many(Model=MySortClass, sort=sort_oprator)
+
 
 class ClassWithDate(DbModel):
     name: str
