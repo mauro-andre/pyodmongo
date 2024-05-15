@@ -3,26 +3,39 @@ from pyodmongo import DbModel, Id
 
 def test_empty_dict():
     class MyModel1(DbModel):
-        attr1: str
+        attr1: str | None
         _collection = "my_model_1"
 
     class MyModel2(DbModel):
-        attr2: str
-        my_model_1: MyModel1 | Id
+        attr2: str | None
+        my_model_1: MyModel1 | Id | None
         _collection = "my_model_2"
 
     class MyModel3(DbModel):
-        attr3: str
+        attr3: str | None
         my_model_2: MyModel2 | Id | None
         my_model_2_2: MyModel2 | Id | None
+        my_model_2_3: MyModel2 | Id | None
         _collection = "my_model_3"
 
-    dct = {"attr3": "attr3", "my_model_2": {}, "my_model_2_2": {"my_model_1": {}}}
+    dct = {
+        "attr3": "attr3",
+        "my_model_2": {"attr2": "Escrito", "my_model_1": {"attr1": {}}},
+        "my_model_2_2": {"my_model_1": {}},
+        "my_model_2_3": {},
+    }
     obj = MyModel3(**dct)
     assert obj.model_dump() == {
         "attr3": "attr3",
-        "my_model_2": None,
+        "my_model_2": {
+            "id": None,
+            "created_at": None,
+            "updated_at": None,
+            "attr2": "Escrito",
+            "my_model_1": None,
+        },
         "my_model_2_2": None,
+        "my_model_2_3": None,
         "id": None,
         "created_at": None,
         "updated_at": None,
