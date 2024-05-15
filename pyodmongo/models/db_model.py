@@ -104,11 +104,11 @@ class DbModel(BaseModel, metaclass=DbMeta):
         if dct == {}:
             return None
         for key, value in dct.items():
-            if value == {} or value == []:
+            if value == {}:
                 dct[key] = None
             elif type(value) == dict:
                 dct[key] = self.__remove_empty_dict(dct=value)
-        is_full_empty = all(v == None or v == {} or v == [] for v in dct.values())
+        is_full_empty = all(v == None or v == {} for v in dct.values())
         if is_full_empty:
             return None
         return dct
