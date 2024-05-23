@@ -2,11 +2,11 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from pymongo.results import UpdateResult, DeleteResult
 from ..models.responses import SaveResponse, DeleteResponse
 from ..engine.utils import consolidate_dict, mount_base_pipeline
-from ..services.query_operators import query_dict, sort_dict
 from ..models.paginate import ResponsePaginate
-from ..models.query_operators import LogicalOperator, ComparisonOperator
+from ..models.query_operators import QueryOperator
 from ..models.sort_operators import SortOperator
 from ..models.db_model import DbModel
+from ..services.verify_subclasses import is_subclass
 from datetime import datetime, UTC, timezone
 from typing import TypeVar
 from bson import ObjectId
@@ -108,7 +108,7 @@ class AsyncDbEngine:
     async def delete_one(
         self,
         Model: type[Model],
-        query: ComparisonOperator | LogicalOperator = None,
+        query: QueryOperator = None,
         raw_query: dict = None,
     ) -> DeleteResponse:
         """
@@ -124,15 +124,20 @@ class AsyncDbEngine:
         Returns:
             DeleteResponse: A response object containing details of the delete operation.
         """
-        if query and (
-            type(query) != ComparisonOperator and type(query) != LogicalOperator
-        ):
+        if not is_subclass(class_to_verify=query.__class__, subclass=QueryOperator):
             raise TypeError(
-                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+                'query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
+
+        # if query and (
+        #     type(query) != ComparisonOperator and type(query) != LogicalOperator
+        # ):
+        #     raise TypeError(
+        #         'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+        #     )
         raw_query = {} if not raw_query else raw_query
         result: DeleteResult = await self._db[Model._collection].delete_one(
-            filter=query_dict(query_operator=query, dct={}) if query else raw_query
+            filter=query.to_dict() if query else raw_query
         )
         return DeleteResponse(
             acknowledged=result.acknowledged,
@@ -143,7 +148,7 @@ class AsyncDbEngine:
     async def delete(
         self,
         Model: type[Model],
-        query: ComparisonOperator | LogicalOperator = None,
+        query: QueryOperator = None,
         raw_query: dict = None,
     ) -> DeleteResponse:
         """
@@ -159,15 +164,13 @@ class AsyncDbEngine:
         Returns:
             DeleteResponse: A response object containing details of the delete operation.
         """
-        if query and (
-            type(query) != ComparisonOperator and type(query) != LogicalOperator
-        ):
+        if not is_subclass(class_to_verify=query.__class__, subclass=QueryOperator):
             raise TypeError(
-                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+                'query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
         raw_query = {} if not raw_query else raw_query
         result: DeleteResult = await self._db[Model._collection].delete_many(
-            filter=query_dict(query_operator=query, dct={}) if query else raw_query
+            filter=query.to_dict() if query else raw_query
         )
         return DeleteResponse(
             acknowledged=result.acknowledged,
@@ -182,7 +185,7 @@ class AsyncDbEngine:
     async def save(
         self,
         obj: type[Model],
-        query: ComparisonOperator | LogicalOperator = None,
+        query: QueryOperator = None,
         raw_query: dict = None,
     ) -> SaveResponse:
         """
@@ -203,11 +206,9 @@ class AsyncDbEngine:
         Raises:
             TypeError: If the query argument is not of type ComparisonOperator or LogicalOperator.
         """
-        if query and (
-            type(query) != ComparisonOperator and type(query) != LogicalOperator
-        ):
+        if not is_subclass(class_to_verify=query.__class__, subclass=QueryOperator):
             raise TypeError(
-                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+                'query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
         dct = consolidate_dict(obj=obj, dct={})
         try:
@@ -219,7 +220,7 @@ class AsyncDbEngine:
             dict_to_save=dct,
             collection=self._db[obj._collection],
             indexes=indexes,
-            query=query_dict(query_operator=query, dct={}) if query else raw_query,
+            query=query.to_dict() if query else raw_query,
         )
         if save_response.upserted_id:
             obj.id = save_response.upserted_id
@@ -245,7 +246,7 @@ class AsyncDbEngine:
     async def find_one(
         self,
         Model: type[Model],
-        query: ComparisonOperator | LogicalOperator = None,
+        query: QueryOperator = None,
         raw_query: dict = None,
         sort: SortOperator = None,
         raw_sort: dict = None,
@@ -273,20 +274,18 @@ class AsyncDbEngine:
         Raises:
             TypeError: If the query or sort arguments are not the correct type from pyodmongo.queries.
         """
-        if query and (
-            type(query) != ComparisonOperator and type(query) != LogicalOperator
-        ):
+        if not is_subclass(class_to_verify=query.__class__, subclass=QueryOperator):
             raise TypeError(
-                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+                'query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
         if sort and (type(sort) != SortOperator):
             raise TypeError(
                 'sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument'
             )
         raw_query = {} if not raw_query else raw_query
-        query = query_dict(query_operator=query, dct={}) if query else raw_query
+        query = query.to_dict() if query else raw_query
         raw_sort = {} if not raw_sort else raw_sort
-        sort = sort_dict(sort_operators=sort) if sort else raw_sort
+        sort = sort.to_dict() if sort else raw_sort
         pipeline = mount_base_pipeline(
             Model=Model,
             query=query,
@@ -305,7 +304,7 @@ class AsyncDbEngine:
     async def find_many(
         self,
         Model: type[Model],
-        query: ComparisonOperator | LogicalOperator = None,
+        query: QueryOperator = None,
         raw_query: dict = None,
         sort: SortOperator = None,
         raw_sort: dict = None,
@@ -339,20 +338,18 @@ class AsyncDbEngine:
         Raises:
             TypeError: If the query or sort arguments are not the correct type from pyodmongo.queries.
         """
-        if query and (
-            type(query) != ComparisonOperator and type(query) != LogicalOperator
-        ):
+        if not is_subclass(class_to_verify=query.__class__, subclass=QueryOperator):
             raise TypeError(
-                'query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
+                'query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument'
             )
         if sort and (type(sort) != SortOperator):
             raise TypeError(
                 'sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument'
             )
         raw_query = {} if not raw_query else raw_query
-        query = query_dict(query_operator=query, dct={}) if query else raw_query
+        query = query.to_dict() if query else raw_query
         raw_sort = {} if not raw_sort else raw_sort
-        sort = sort_dict(sort_operators=sort) if sort else raw_sort
+        sort = sort.to_dict() if sort else raw_sort
         pipeline = mount_base_pipeline(
             Model=Model,
             query=query,

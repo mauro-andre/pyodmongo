@@ -48,20 +48,20 @@ class DbField:
             path_str=self.path_str, operator=operator, value=value
         )
 
-    def __lt__(self, value) -> ComparisonOperator:
+    def __lt__(self, value: Any) -> ComparisonOperator:
         return self.comparison_operator(operator="$lt", value=value)
 
-    def __le__(self, value) -> ComparisonOperator:
+    def __le__(self, value: Any) -> ComparisonOperator:
         return self.comparison_operator(operator="$lte", value=value)
 
-    def __eq__(self, value) -> ComparisonOperator:
+    def __eq__(self, value: Any) -> ComparisonOperator:
         return self.comparison_operator(operator="$eq", value=value)
 
-    def __ne__(self, value) -> ComparisonOperator:
+    def __ne__(self, value: Any) -> ComparisonOperator:
         return self.comparison_operator(operator="$ne", value=value)
 
-    def __gt__(self, value) -> ComparisonOperator:
+    def __gt__(self, value: Any) -> ComparisonOperator:
         return self.comparison_operator(operator="$gt", value=value)
 
-    def __ge__(self, value) -> ComparisonOperator:
+    def __ge__(self, value: Any) -> ComparisonOperator:
         return self.comparison_operator(operator="$gte", value=value)

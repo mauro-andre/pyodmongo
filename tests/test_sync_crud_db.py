@@ -229,7 +229,7 @@ def test_find_one_with_zero_results(drop_collection):
 def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         db.delete_one(Model=MyClass, query="string")
 
@@ -237,7 +237,7 @@ def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator(
 def test_delete_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         db.delete(Model=MyClass, query="string")
 
@@ -247,7 +247,7 @@ def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
 ):
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         db.save(obj=drop_collection, query="string")
 
@@ -255,7 +255,7 @@ def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
 def test_find_one_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         db.find_one(Model=MyClass, query="string")
 
@@ -263,7 +263,7 @@ def test_find_one_type_error_when_query_is_not_comparison_or_logical_operator():
 def test_find_many_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         db.find_many(Model=MyClass, query="string")
 

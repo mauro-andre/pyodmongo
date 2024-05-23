@@ -1,9 +1,7 @@
 from ..models.db_model import DbModel
 from ..models.db_field_info import DbField
 from ..models.query_operators import LogicalOperator, ComparisonOperator
-from .comparison_operators import comparison_operator
-from .sort_operator import sort
-from .logical_operators import and_
+from .operators import and_, sort
 from typing import Type
 from datetime import datetime
 import re
@@ -126,12 +124,11 @@ def mount_query_filter(
             for index, item in enumerate(value):
                 value[index] = js_regex_to_python(item)
         try:
-            # db_field_info: DbField = getattr(Model, field_name)
             db_field_info: DbField = eval("Model." + field_name)
         except AttributeError:
             raise AttributeError(f"There's no field '{field_name}' in {Model.__name__}")
         initial_comparison_operators.append(
-            comparison_operator(field=db_field_info, operator=operator, value=value)
+            db_field_info.comparison_operator(operator=operator, value=value)
         )
     if len(initial_comparison_operators) == 0:
         return None, sort_operators
