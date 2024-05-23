@@ -69,7 +69,11 @@ def _has_a_list_in_union(field_type: Any):
 
 def _union_collector_info(field, args):
     args = get_args(args)
-    by_reference = (Id in args) and (field != "id")
+    has_any_model_field = False
+    for arg in args:
+        if hasattr(arg, "model_fields"):
+            has_any_model_field = True
+    by_reference = (Id in args) and (field != "id") and has_any_model_field
     if by_reference:
         field_type_index = 0
         for arg in args:

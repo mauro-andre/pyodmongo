@@ -10,11 +10,12 @@ def test_main_base_model():
     class MainModel(MainBaseModel):
         attr_1: int
         attr_2: str
+        attr_3: Id | None
 
     assert issubclass(MainModel, MainBaseModel)
     assert isinstance(MainModel.attr_1, DbField)
     assert isinstance(MainModel.attr_2, DbField)
-    obj = MainModel(attr_1=1, attr_2="one")
+    obj = MainModel(attr_1=1, attr_2="one", attr_3=None)
     assert obj.attr_1 == 1
     assert obj.attr_2 == "one"
 
