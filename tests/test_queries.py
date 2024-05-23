@@ -440,3 +440,39 @@ def test_elem_match():
             }
         }
     }
+
+
+def test_mount_query_filter_with_elem_match():
+    class MyBaseModel(MainBaseModel):
+        attr_1: int
+        attr_2: str
+
+    class MyModel(DbModel):
+        attr_3: str
+        attr_4: list[MyBaseModel]
+        _collection: ClassVar = "my_model"
+
+    dict_input = {"attr_3_eq": "value_3"}
+    elem_match_operator = elem_match(
+        MyBaseModel.attr_1 == "value_1",
+        MyBaseModel.attr_2 == "value_2",
+        field=MyModel.attr_4,
+    )
+    query, _ = mount_query_filter(
+        Model=MyModel,
+        items=dict_input,
+        initial_comparison_operators=[elem_match_operator],
+    )
+    assert query.to_dict() == {
+        "$and": [
+            {
+                "attr_4": {
+                    "$elemMatch": {
+                        "attr_1": {"$eq": "value_1"},
+                        "attr_2": {"$eq": "value_2"},
+                    }
+                }
+            },
+            {"attr_3": {"$eq": "value_3"}},
+        ]
+    }

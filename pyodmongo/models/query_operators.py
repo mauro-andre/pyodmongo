@@ -61,7 +61,7 @@ class _LogicalOperator(QueryOperator):
     """
 
     operator: str
-    operators: tuple[ComparisonOperator, ...]
+    operators: tuple[Any, ...]
 
     def to_dict(self):
         acu_list = []
@@ -83,7 +83,7 @@ class LogicalOperator(_LogicalOperator):
                           intricate query logic necessary for advanced database operations.
     """
 
-    operators: tuple[ComparisonOperator | _LogicalOperator, ...]
+    operators: tuple[Any, ...]
 
 
 class ElemMatchOperator(QueryOperator):
@@ -102,7 +102,7 @@ class ElemMatchOperator(QueryOperator):
     """
 
     field: Any
-    operators: tuple[ComparisonOperator | _LogicalOperator, ...]
+    operators: tuple[Any, ...]
 
     def to_dict(self):
         elem_match = {}
