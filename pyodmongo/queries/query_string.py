@@ -1,6 +1,6 @@
 from ..models.db_model import DbModel
 from ..models.db_field_info import DbField
-from ..models.query_operators import LogicalOperator, ComparisonOperator
+from ..models.query_operators import QueryOperator
 from .operators import and_, sort
 from typing import Type
 from datetime import datetime
@@ -69,8 +69,8 @@ def js_regex_to_python(js_regex_str):
 def mount_query_filter(
     Model: Type[DbModel],
     items: dict,
-    initial_comparison_operators: list[ComparisonOperator],
-) -> LogicalOperator:
+    initial_comparison_operators: list[QueryOperator],
+) -> QueryOperator:
     """
     Constructs a MongoDB query filter from a dictionary of conditions and initializes
     additional comparison operators based on the Model's field definitions.
