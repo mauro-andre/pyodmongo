@@ -1,4 +1,4 @@
-from pyodmongo import DbModel, Field, Id
+from pyodmongo import MainBaseModel, DbModel, Field, Id
 from pydantic import BaseModel
 from typing import ClassVar
 from bson import ObjectId
@@ -17,10 +17,12 @@ from pyodmongo.queries import (
     or_,
     nor,
     sort,
+    elem_match,
     mount_query_filter,
 )
-from pyodmongo.services.query_operators import query_dict, sort_dict
+
 import pytest
+import re
 
 
 class Model1(DbModel):
@@ -43,24 +45,19 @@ class Model3(DbModel):
 
 
 def test_comparison_operators():
-    assert query_dict(query_operator=eq(Model3.f.e.a, "value"), dct={}) == {
-        "f.eAlias.aAlias": {"$eq": "value"}
+    assert eq(Model3.f.e.a, "value").to_dict() == {"f.eAlias.aAlias": {"$eq": "value"}}
+    assert gt(Model3.f.id, "64e8ef019af47dc6f91c5a48").to_dict() == {
+        "f._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}
     }
-    assert query_dict(
-        query_operator=gt(Model3.f.id, "64e8ef019af47dc6f91c5a48"), dct={}
-    ) == {"f._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}}
-    assert query_dict(
-        query_operator=gt(Model3.f.e.id, "64e8ef019af47dc6f91c5a48"), dct={}
-    ) == {"f.eAlias._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}}
-    assert query_dict(
-        query_operator=gte(Model3.g, "64e8ef019af47dc6f91c5a48"), dct={}
-    ) == {"g": {"$gte": ObjectId("64e8ef019af47dc6f91c5a48")}}
-    assert query_dict(
-        query_operator=in_(
-            Model3.g, ["64e8ef019af47dc6f91c5a48", "64e8f1a5f1dae6703924546a"]
-        ),
-        dct={},
-    ) == {
+    assert gt(Model3.f.e.id, "64e8ef019af47dc6f91c5a48").to_dict() == {
+        "f.eAlias._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}
+    }
+    assert gte(Model3.g, "64e8ef019af47dc6f91c5a48").to_dict() == {
+        "g": {"$gte": ObjectId("64e8ef019af47dc6f91c5a48")}
+    }
+    assert in_(
+        Model3.g, ["64e8ef019af47dc6f91c5a48", "64e8f1a5f1dae6703924546a"]
+    ).to_dict() == {
         "g": {
             "$in": [
                 ObjectId("64e8ef019af47dc6f91c5a48"),
@@ -68,21 +65,12 @@ def test_comparison_operators():
             ]
         }
     }
-    assert query_dict(
-        query_operator=nin(Model3.g.e.b, ["value_1", "value_2"]), dct={}
-    ) == {"g.eAlias.b": {"$nin": ["value_1", "value_2"]}}
-    assert query_dict(query_operator=text("Text to find"), dct={}) == {
-        "$text": {"$search": '"Text to find"'}
+    assert nin(Model3.g.e.b, ["value_1", "value_2"]).to_dict() == {
+        "g.eAlias.b": {"$nin": ["value_1", "value_2"]}
     }
-    assert query_dict(query_operator=lt(Model2.d, "value_d"), dct={}) == {
-        "d": {"$lt": "value_d"}
-    }
-    assert query_dict(query_operator=lte(Model2.c, "value_c"), dct={}) == {
-        "cAlias": {"$lte": "value_c"}
-    }
-    assert query_dict(query_operator=ne(Model3.g.e.a, "value_a"), dct={}) == {
-        "g.eAlias.aAlias": {"$ne": "value_a"}
-    }
+    assert text("Text to find").to_dict() == {"$text": {"$search": '"Text to find"'}}
+    assert lt(Model2.d, "value_d").to_dict() == {"d": {"$lt": "value_d"}}
+    assert lte(Model2.c, "value_c").to_dict() == {"cAlias": {"$lte": "value_c"}}
 
 
 def test_logical_operators():
@@ -92,19 +80,19 @@ def test_logical_operators():
     or_query = or_(op1, op2)
     nor_query = nor(op1, op2)
 
-    assert query_dict(query_operator=and_query, dct={}) == {
+    assert and_query.to_dict() == {
         "$and": [
             {"f.eAlias.aAlias": {"$eq": "value"}},
             {"f._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}},
         ]
     }
-    assert query_dict(query_operator=or_query, dct={}) == {
+    assert or_query.to_dict() == {
         "$or": [
             {"f.eAlias.aAlias": {"$eq": "value"}},
             {"f._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}},
         ]
     }
-    assert query_dict(query_operator=nor_query, dct={}) == {
+    assert nor_query.to_dict() == {
         "$nor": [
             {"f.eAlias.aAlias": {"$eq": "value"}},
             {"f._id": {"$gt": ObjectId("64e8ef019af47dc6f91c5a48")}},
@@ -128,7 +116,7 @@ def test_mount_query_filter():
     query, _ = mount_query_filter(
         Model=Model3, items=dict_input, initial_comparison_operators=[]
     )
-    assert query_dict(query_operator=query, dct={}) == {
+    assert query.to_dict() == {
         "$and": [
             {"_id": {"$eq": ObjectId("64e8ef019af47dc6f91c5a48")}},
             {
@@ -177,7 +165,7 @@ def test_mount_query_filter_inheritance():
         ]
     }
 
-    assert query_dict(query_operator=query, dct={}) == expected_query_dict
+    assert query.to_dict() == expected_query_dict
 
 
 def test_mount_query_filter_is_not_inheritance():
@@ -219,8 +207,6 @@ def test_mount_query_filter_with_none_value():
 
 
 def test_mount_query_filter_with_regex():
-    import re
-
     class MyModel(DbModel):
         attr1: str
         attr2: str
@@ -238,9 +224,9 @@ def test_mount_query_filter_with_regex():
     query_3, _ = mount_query_filter(
         Model=MyModel, items=input_dict_3, initial_comparison_operators=[]
     )
-    query_dct_1 = query_dict(query_operator=query_1, dct={})
-    query_dct_2 = query_dict(query_operator=query_2, dct={})
-    query_dct_3 = query_dict(query_operator=query_3, dct={})
+    query_dct_1 = query_1.to_dict()
+    query_dct_2 = query_2.to_dict()
+    query_dct_3 = query_3.to_dict()
     assert query_dct_1 == {
         "$and": [
             {"attr1": {"$in": [re.compile("^agr[oóôõ]s", re.IGNORECASE), 123, "abc"]}},
@@ -313,7 +299,7 @@ def test_logical_operator_inside_another():
             {"aAlias": {"$eq": "string_to_find_1"}},
         ]
     }
-    query_dct = query_dict(query_operator=query, dct={})
+    query_dct = query.to_dict()
     assert query_dct == expected_dct
 
 
@@ -330,7 +316,7 @@ def test_sort_operator():
     sort_operator = sort(
         (MyClass.nested.n, -1), (MyClass.b, 1), (MyClass.c, -1), (MyClass.a, 1)
     )
-    assert sort_dict(sort_operators=sort_operator) == {
+    assert sort_operator.to_dict() == {
         "nested.n": -1,
         "b": 1,
         "c": -1,
@@ -340,7 +326,7 @@ def test_sort_operator():
     with pytest.raises(
         ValueError, match="Only values 1 ascending and -1 descending are valid"
     ):
-        sort_dict(sort_operators=sort((MyClass.a, 2)))
+        sort((MyClass.a, 2)).to_dict()
 
 
 def test_mount_query_string_with_sort():
@@ -428,3 +414,29 @@ def test_query_with_magic_methods():
         gt(MyMagicClass.attr_1, 10),
     )
     assert query_or_magic == query_or
+
+
+def test_elem_match():
+    class MyBaseModel(MainBaseModel):
+        attr_1: int
+        attr_2: str
+
+    class MyModel(DbModel):
+        attr_3: str
+        attr_4: list[MyBaseModel]
+
+    query = elem_match(
+        MyBaseModel.attr_1 == 1,
+        MyBaseModel.attr_2 == "one",
+        (MyBaseModel.attr_1 > 100) & (MyBaseModel.attr_1 < 200),
+        field=MyModel.attr_4,
+    )
+    query.to_dict() == {
+        "attr_4": {
+            "$elemMatch": {
+                "attr_1": {"$eq": 1},
+                "attr_2": {"$eq": "one"},
+                "$and": [{"attr_1": {"$gt": 100}}, {"attr_1": {"$lt": 200}}],
+            }
+        }
+    }

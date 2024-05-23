@@ -7,7 +7,20 @@ from typing import ClassVar
 from .metaclasses import PyOdmongoMeta, DbMeta
 
 
-class MainBaseModel(BaseModel, metaclass=PyOdmongoMeta): ...
+class MainBaseModel(BaseModel, metaclass=PyOdmongoMeta):
+    """
+    Base class for all models in PyODMongo, using PyOdmongoMeta as its metaclass.
+    This class provides the foundational structure for other models, enabling
+    the integration of database-specific configurations and behaviors.
+
+    Attributes:
+        None (The class itself does not define any attributes; it serves as a
+              base for other models to extend and utilize the provided metaclass.)
+
+    Methods:
+        None (The class does not define any methods; it relies on the metaclass
+              and derived classes for functionality.)
+    """
 
 
 class DbModel(BaseModel, metaclass=DbMeta):

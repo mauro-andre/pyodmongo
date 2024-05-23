@@ -2,7 +2,28 @@ from pydantic import BaseModel
 from typing import Any
 
 
-class ComparisonOperator(BaseModel):
+class QueryOperator(BaseModel):
+    """
+    Base model for operators used in PyODMongo queries. Provides the foundational
+    structure for combining query conditions using logical operators.
+
+    Methods:
+        __and__(self, value): Combines the current operator with another using
+                              the logical AND ('$and') operator.
+        __or__(self, value): Combines the current operator with another using
+                             the logical OR ('$or') operator.
+    """
+
+    def __and__(self, value):
+        return LogicalOperator(operator="$and", operators=(self, value))
+
+    def __or__(self, value):
+        return LogicalOperator(operator="$or", operators=(self, value))
+
+    def to_dict(self): ...
+
+
+class ComparisonOperator(QueryOperator):
     """
     Represents a single comparison operation in a PyODMongo query, containing a field
     path, an operator, and a value. This model is used to construct query conditions
@@ -22,14 +43,11 @@ class ComparisonOperator(BaseModel):
     operator: str
     value: Any
 
-    def __and__(self, value):
-        return LogicalOperator(operator="$and", operators=(self, value))
-
-    def __or__(self, value):
-        return LogicalOperator(operator="$or", operators=(self, value))
+    def to_dict(self):
+        return {self.path_str: {self.operator: self.value}}
 
 
-class _LogicalOperator(BaseModel):
+class _LogicalOperator(QueryOperator):
     """
     A base model for logical operators used in PyODMongo queries. This class is not
     intended to be used directly but is extended to support complex logical structures
@@ -44,6 +62,12 @@ class _LogicalOperator(BaseModel):
 
     operator: str
     operators: tuple[ComparisonOperator, ...]
+
+    def to_dict(self):
+        acu_list = []
+        for op in self.operators:
+            acu_list.append(op.to_dict())
+        return {self.operator: acu_list}
 
 
 class LogicalOperator(_LogicalOperator):
@@ -61,8 +85,28 @@ class LogicalOperator(_LogicalOperator):
 
     operators: tuple[ComparisonOperator | _LogicalOperator, ...]
 
-    def __and__(self, value):
-        return LogicalOperator(operator="$and", operators=(self, value))
 
-    def __or__(self, value):
-        return LogicalOperator(operator="$or", operators=(self, value))
+class ElemMatchOperator(QueryOperator):
+    """
+    Represents an $elemMatch operation in a PyODMongo query, used to match documents
+    containing an array field with at least one element that matches the specified
+    criteria.
+
+    Attributes:
+        field (Any): The field on which the $elemMatch operation is applied. This
+                     typically represents the path to an array field in the database
+                     document.
+        operators (tuple[ComparisonOperator | _LogicalOperator, ...]): A tuple of comparison
+                     operators and/or logical operators that define the matching criteria
+                     for elements within the array.
+    """
+
+    field: Any
+    operators: tuple[ComparisonOperator | _LogicalOperator, ...]
+
+    def to_dict(self):
+        elem_match = {}
+        for op in self.operators:
+            for key, value in op.to_dict().items():
+                elem_match[key] = value
+        return {self.field.path_str: {"$elemMatch": elem_match}}

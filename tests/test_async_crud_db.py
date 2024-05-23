@@ -1,5 +1,6 @@
 from pyodmongo import (
     AsyncDbEngine,
+    MainBaseModel,
     DbModel,
     SaveResponse,
     DeleteResponse,
@@ -7,7 +8,7 @@ from pyodmongo import (
     Id,
     Field,
 )
-from pyodmongo.queries import eq, gte, gt, mount_query_filter, sort
+from pyodmongo.queries import eq, gte, gt, mount_query_filter, sort, elem_match
 from pyodmongo.engine.utils import consolidate_dict
 from pydantic import ConfigDict, BaseModel
 from typing import ClassVar
@@ -244,7 +245,7 @@ async def test_find_one_with_zero_results(drop_collection):
 async def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         await db.delete_one(Model=MyClass, query="string")
 
@@ -253,7 +254,7 @@ async def test_delete_one_type_error_when_query_is_not_comparison_or_logical_ope
 async def test_delete_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         await db.delete(Model=MyClass, query="string")
 
@@ -264,7 +265,7 @@ async def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
 ):
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         await db.save(obj=drop_collection, query="string")
 
@@ -273,7 +274,7 @@ async def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
 async def test_find_one_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         await db.find_one(Model=MyClass, query="string")
 
@@ -282,7 +283,7 @@ async def test_find_one_type_error_when_query_is_not_comparison_or_logical_opera
 async def test_find_many_type_error_when_query_is_not_comparison_or_logical_operator():
     with pytest.raises(
         TypeError,
-        match='query argument must be a ComparisonOperator or LogicalOperator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
         await db.find_many(Model=MyClass, query="string")
 
@@ -647,3 +648,43 @@ async def test_save_and_retrieve_objs_with_datetime(drop_collection_class_with_d
     )
     obj_found: ClassWithDate = await db.find_one(Model=ClassWithDate, query=query)
     assert obj_found.date == date
+
+
+class ModelEmbedded(MainBaseModel):
+    attr_1: str
+    attr_2: str
+
+
+class ModelMain(DbModel):
+    attr_3: list[ModelEmbedded]
+    _collection: ClassVar = "model_elem_match"
+
+
+@pytest_asyncio.fixture()
+async def drop_collection_for_elem_match():
+    await db._db[ModelMain._collection].drop()
+    yield
+    await db._db[ModelMain._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_elem_match_in_db(drop_collection_for_elem_match):
+    obj_embedded_0 = ModelEmbedded(attr_1="one", attr_2="one")
+    obj_embedded_1 = ModelEmbedded(attr_1="two", attr_2="two")
+    obj_embedded_2 = ModelEmbedded(attr_1="one", attr_2="two")
+    obj_embedded_3 = ModelEmbedded(attr_1="two", attr_2="one")
+
+    obj_db_0 = ModelMain(attr_3=[obj_embedded_0, obj_embedded_1])
+    obj_db_1 = ModelMain(attr_3=[obj_embedded_2, obj_embedded_3])
+
+    await db.save_all([obj_db_0, obj_db_1])
+    query_0 = (ModelMain.attr_3.attr_1 == "one") & (ModelMain.attr_3.attr_2 == "two")
+    result_0 = await db.find_many(Model=ModelMain, query=query_0)
+    query_1 = elem_match(
+        ModelEmbedded.attr_1 == "one",
+        ModelEmbedded.attr_2 == "two",
+        field=ModelMain.attr_3,
+    )
+    result_1 = await db.find_many(Model=ModelMain, query=query_1)
+    assert len(result_0) == 2
+    assert len(result_1) == 1
