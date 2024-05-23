@@ -1,8 +1,22 @@
-from pyodmongo import DbModel, Id
+from pyodmongo import MainBaseModel, DbModel, Id
+from pyodmongo.models.db_field_info import DbField
 from pydantic import EmailStr, ValidationError
 from datetime import datetime
 from typing import ClassVar, Union
 import pytest
+
+
+def test_main_base_model():
+    class MainModel(MainBaseModel):
+        attr_1: int
+        attr_2: str
+
+    assert issubclass(MainModel, MainBaseModel)
+    assert isinstance(MainModel.attr_1, DbField)
+    assert isinstance(MainModel.attr_2, DbField)
+    obj = MainModel(attr_1=1, attr_2="one")
+    assert obj.attr_1 == 1
+    assert obj.attr_2 == "one"
 
 
 def test_create_class():
