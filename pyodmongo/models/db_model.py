@@ -1,70 +1,13 @@
 from pydantic import ConfigDict
 from .id_model import Id
 from datetime import datetime
-from typing import Any, ClassVar
-from ..services.model_init import (
-    resolve_indexes,
-    resolve_class_fields_db_info,
-    resolve_reference_pipeline,
-    # resolve_db_fields,
-)
-from pydantic import BaseModel
-from pydantic._internal._model_construction import ModelMetaclass
-from typing_extensions import dataclass_transform
 from typing import ClassVar
-import copy
+from pydantic import BaseModel
+from typing import ClassVar
+from .metaclasses import PyOdmongoMeta, DbMeta
 
 
-@dataclass_transform(kw_only_default=True)
-class DbMeta(ModelMetaclass):
-    """
-    Metaclass for database model entities in a PyODMongo environment. It extends
-    the functionality of the ModelMetaclass by applying specific behaviors and
-    transformations related to database operations such as indexing, reference
-    resolution, and initialization of database fields.
-
-    Attributes:
-        __pyodmongo_complete__ (bool): Attribute used to track the completion of
-                                      the meta-level configuration.
-
-    Methods:
-        __new__(cls, name, bases, namespace, **kwargs): Constructs a new class
-            instance, ensuring database-specific adjustments and initializations
-            are applied.
-        __getattr__(cls, name): Custom attribute access handling that supports
-            dynamic attributes based on database field definitions.
-    """
-
-    def __new__(
-        cls, name: str, bases: tuple[Any], namespace: dict, **kwargs: Any
-    ) -> type:
-        setattr(cls, "__pyodmongo_complete__", False)
-        for base in bases:
-            setattr(base, "__pyodmongo_complete__", False)
-
-        # TODO finish db_fields after ModelMetaclass
-        # db_fields = copy.deepcopy(namespace.get("__annotations__"))
-        # db_fields = resolve_db_fields(bases=bases, db_fields=db_fields)
-
-        cls: BaseModel = ModelMetaclass.__new__(cls, name, bases, namespace, **kwargs)
-
-        setattr(cls, "__pyodmongo_complete__", True)
-        for base in bases:
-            setattr(base, "__pyodmongo_complete__", True)
-
-        resolve_class_fields_db_info(cls=cls)
-        pipeline = resolve_reference_pipeline(cls=cls, pipeline=[])
-        setattr(cls, "_reference_pipeline", pipeline)
-        indexes = resolve_indexes(cls=cls)
-        setattr(cls, "_init_indexes", indexes)
-        return cls
-
-    def __getattr__(cls, name: str):
-        if cls.__dict__.get("__pyodmongo_complete__"):
-            is_attr = name in cls.__dict__.get("model_fields").keys()
-            if is_attr:
-                return cls.__dict__.get(name + "__pyodmongo")
-        ModelMetaclass.__getattr__(cls, name)
+class MainBaseModel(BaseModel, metaclass=PyOdmongoMeta): ...
 
 
 class DbModel(BaseModel, metaclass=DbMeta):
