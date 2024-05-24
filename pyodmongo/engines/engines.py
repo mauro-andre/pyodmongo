@@ -4,6 +4,8 @@ from pymongo.results import BulkWriteResult
 from datetime import datetime, timezone, UTC
 from bson import ObjectId
 from ..models.db_model import DbModel
+from ..models.id_model import Id
+from ..models.responses import DbResponse
 from ..models.query_operators import QueryOperator
 from ..engine.utils import consolidate_dict, mount_base_pipeline
 
@@ -61,9 +63,20 @@ class _Engine:
             filter(lambda x: x._collection == collection_name, objs)
         )
         for index, obj_id in result.upserted_ids.items():
-            objs_from_collection[index].id = obj_id
+            objs_from_collection[index].id = Id(obj_id)
             objs_from_collection[index].created_at = now
             objs_from_collection[index].updated_at = now
+
+    def _db_response(self, result: BulkWriteResult):
+        return DbResponse(
+            acknowledged=result.acknowledged,
+            deleted_count=result.deleted_count,
+            inserted_count=result.inserted_count,
+            matched_count=result.matched_count,
+            modified_count=result.modified_count,
+            upserted_count=result.upserted_count,
+            upserted_ids=result.upserted_ids,
+        )
 
 
 class AsyncDbEngine(_Engine):
@@ -75,9 +88,9 @@ class AsyncDbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    async def save_all(self, objs: list[DbModel]):
+    async def save_all(self, obj_list: list[DbModel]):
         indexes, operations, now = self._create_operations_list(
-            objs=objs, query=None, raw_query=None
+            objs=obj_list, query=None, raw_query=None
         )
         for collection_name, index_list in indexes.items():
             await self._db[collection_name].create_indexes(index_list)
@@ -86,8 +99,26 @@ class AsyncDbEngine(_Engine):
                 operation_list
             )
             self._after_save(
-                result=result, objs=objs, collection_name=collection_name, now=now
+                result=result, objs=obj_list, collection_name=collection_name, now=now
             )
+
+    async def save(
+        self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
+    ):
+        indexes, operations, now = self._create_operations_list(
+            objs=[obj], query=query, raw_query=raw_query
+        )
+        collection_name = obj._collection
+        index_list = indexes[collection_name]
+        await self._db[collection_name].create_indexes(index_list)
+        operation_list = operations[collection_name]
+        result: BulkWriteResult = await self._db[collection_name].bulk_write(
+            operation_list
+        )
+        self._after_save(
+            result=result, objs=[obj], collection_name=collection_name, now=now
+        )
+        return self._db_response(result=result)
 
 
 class DbEngine(_Engine):
@@ -99,9 +130,9 @@ class DbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    def save_all(self, objs: list[DbModel]):
+    def save_all(self, obj_list: list[DbModel]):
         indexes, operations, now = self._create_operations_list(
-            objs=objs, query=None, raw_query=None
+            objs=obj_list, query=None, raw_query=None
         )
         for collection_name, index_list in indexes.items():
             self._db[collection_name].create_indexes(index_list)
@@ -110,5 +141,19 @@ class DbEngine(_Engine):
                 operation_list
             )
             self._after_save(
-                result=result, objs=objs, collection_name=collection_name, now=now
+                result=result, objs=obj_list, collection_name=collection_name, now=now
             )
+
+    def save(self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None):
+        indexes, operations, now = self._create_operations_list(
+            objs=[obj], query=query, raw_query=raw_query
+        )
+        collection_name = obj._collection
+        index_list = indexes[collection_name]
+        self._db[collection_name].create_indexes(index_list)
+        operation_list = operations[collection_name]
+        result: BulkWriteResult = self._db[collection_name].bulk_write(operation_list)
+        self._after_save(
+            result=result, objs=[obj], collection_name=collection_name, now=now
+        )
+        return self._db_response(result=result)
