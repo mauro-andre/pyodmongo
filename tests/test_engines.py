@@ -5,6 +5,7 @@ import pytest_asyncio
 from pyodmongo import AsyncDbEngine, DbEngine, DbModel, Field, DbResponse
 from bson import ObjectId
 import copy
+from faker import Faker
 
 mongo_uri = "mongodb://localhost:27017"
 db_name = "pyodmongo_pytest"
@@ -12,6 +13,8 @@ tz_info = timezone(timedelta(hours=-3))
 
 async_engine = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name, tz_info=tz_info)
 engine = DbEngine(mongo_uri=mongo_uri, db_name=db_name, tz_info=tz_info)
+
+fake = Faker()
 
 
 @pytest_asyncio.fixture()
@@ -87,3 +90,30 @@ async def test_save(drop_db):
 
     assert obj_0.id == response_0.upserted_ids[0]
     assert obj_1.id == response_1.upserted_ids[0]
+
+
+@pytest.mark.asyncio
+async def test_find_one(drop_db):
+    class MyClass0(DbModel):
+        attr_0: str = Field(index=True)
+        attr_1: int = Field(index=True)
+        _collection: ClassVar = "my_class_0"
+
+    objs_0_49 = [MyClass0(attr_0=fake.name(), attr_1=n) for n in range(0, 50)]
+    objs_50_99 = [MyClass0(attr_0=fake.name(), attr_1=n) for n in range(50, 100)]
+
+    await async_engine.save_all(objs_0_49)
+    engine.save_all(objs_50_99)
+
+    obj_to_find_0_49: MyClass0 = copy.deepcopy(objs_0_49[24])
+    obj_to_find_50_99: MyClass0 = copy.deepcopy(objs_50_99[24])
+
+    obj_found_0_49: MyClass0 = await async_engine.find_one(
+        Model=MyClass0, query=MyClass0.id == obj_to_find_0_49.id
+    )
+    obj_found_50_49: MyClass0 = engine.find_one(
+        Model=MyClass0, query=MyClass0.id == obj_to_find_50_99.id
+    )
+
+    assert obj_found_0_49 == obj_to_find_0_49
+    assert obj_found_50_49 == obj_to_find_50_99
