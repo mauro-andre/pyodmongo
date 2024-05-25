@@ -9,8 +9,11 @@ from ..models.id_model import Id
 from ..models.responses import DbResponse
 from ..models.query_operators import QueryOperator
 from ..models.sort_operators import SortOperator
+from ..models.paginate import ResponsePaginate
 from ..engine.utils import consolidate_dict, mount_base_pipeline
 from ..services.verify_subclasses import is_subclass
+from asyncio import gather
+from math import ceil
 
 
 class _Engine:
@@ -123,33 +126,29 @@ class _Engine:
     ) -> dict:
         query = self._query(query=query, raw_query=raw_query)
         sort = self._sort(sort=sort, raw_sort=raw_sort)
-        return mount_base_pipeline(
-            Model=Model,
-            query=query,
-            sort=sort,
-            populate=populate,
+        return (
+            mount_base_pipeline(
+                Model=Model,
+                query=query,
+                sort=sort,
+                populate=populate,
+            ),
+            query,
+            sort,
         )
 
-    def _find_one_cursor(
-        self,
-        Model: DbModel,
-        query: QueryOperator,
-        raw_query: dict,
-        sort: SortOperator,
-        raw_sort: dict,
-        populate: bool,
-        tz_info: timezone,
+    def _add_paginate_to_pipeline(
+        self, pipeline: list, current_page: int, docs_per_page: int
     ):
-        pipeline = self._aggregate_pipeline(
-            Model=Model,
-            query=query,
-            raw_query=raw_query,
-            sort=sort,
-            raw_sort=raw_sort,
-            populate=populate,
+        max_docs_per_page = 1000
+        current_page = 1 if current_page <= 0 else current_page
+        docs_per_page = (
+            max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
         )
-        pipeline += [{"$limit": 1}]
-        return self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
+        skip = (docs_per_page * current_page) - docs_per_page
+        skip_stage = [{"$skip": skip}]
+        limit_stage = [{"$limit": docs_per_page}]
+        pipeline += skip_stage + limit_stage
 
 
 class AsyncDbEngine(_Engine):
@@ -204,22 +203,79 @@ class AsyncDbEngine(_Engine):
         as_dict: bool = False,
         tz_info: timezone = None,
     ) -> DbModel:
-        cursor = self._find_one_cursor(
+        pipeline, _, _ = self._aggregate_pipeline(
             Model=Model,
             query=query,
             raw_query=raw_query,
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
-            tz_info=tz_info,
         )
+        pipeline += [{"$limit": 1}]
+        cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
         if as_dict:
             result = await cursor.to_list(length=None)
-        result = [Model(**doc) async for doc in cursor]
+        else:
+            result = [Model(**doc) async for doc in cursor]
         try:
             return result[0]
         except IndexError:
             return None
+
+    async def find_many(
+        self,
+        Model: DbModel,
+        query: QueryOperator = None,
+        raw_query: dict = None,
+        sort: SortOperator = None,
+        raw_sort: dict = None,
+        populate: bool = False,
+        as_dict: bool = False,
+        tz_info: timezone = None,
+        paginate: bool = False,
+        current_page: int = 1,
+        docs_per_page: int = 1000,
+    ) -> list[DbModel]:
+        pipeline, query, _ = self._aggregate_pipeline(
+            Model=Model,
+            query=query,
+            raw_query=raw_query,
+            sort=sort,
+            raw_sort=raw_sort,
+            populate=populate,
+        )
+
+        async def _result():
+            cursor = self._aggregate_cursor(
+                Model=Model, pipeline=pipeline, tz_info=tz_info
+            )
+            if as_dict:
+                result = await cursor.to_list(length=None)
+            else:
+                result = [Model(**doc) async for doc in cursor]
+            return result
+
+        if not paginate:
+            return await _result()
+        self._add_paginate_to_pipeline(
+            pipeline=pipeline, current_page=current_page, docs_per_page=docs_per_page
+        )
+        cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
+
+        async def _count():
+            kwargs = {"hint": "_id_"} if not query else {}
+            return await self._db[Model._collection].count_documents(
+                filter=query, **kwargs
+            )
+
+        result, count = await gather(_result(), _count())
+        page_quantity = ceil(count / docs_per_page)
+        return ResponsePaginate(
+            current_page=current_page,
+            page_quantity=page_quantity,
+            docs_quantity=count,
+            docs=result,
+        )
 
 
 class DbEngine(_Engine):
@@ -272,19 +328,75 @@ class DbEngine(_Engine):
         as_dict: bool = False,
         tz_info: timezone = None,
     ) -> DbModel:
-        cursor = self._find_one_cursor(
+        pipeline, _, _ = self._aggregate_pipeline(
             Model=Model,
             query=query,
             raw_query=raw_query,
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
-            tz_info=tz_info,
         )
+        pipeline += [{"$limit": 1}]
+        cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
         if as_dict:
-            result = cursor.to_list(length=None)
-        result = [Model(**doc) for doc in cursor]
+            result = list(cursor)
+        else:
+            result = [Model(**doc) for doc in cursor]
         try:
             return result[0]
         except IndexError:
             return None
+
+    def find_many(
+        self,
+        Model: DbModel,
+        query: QueryOperator = None,
+        raw_query: dict = None,
+        sort: SortOperator = None,
+        raw_sort: dict = None,
+        populate: bool = False,
+        as_dict: bool = False,
+        tz_info: timezone = None,
+        paginate: bool = False,
+        current_page: int = 1,
+        docs_per_page: int = 1000,
+    ) -> list[DbModel]:
+        pipeline, query, _ = self._aggregate_pipeline(
+            Model=Model,
+            query=query,
+            raw_query=raw_query,
+            sort=sort,
+            raw_sort=raw_sort,
+            populate=populate,
+        )
+
+        def _result():
+            cursor = self._aggregate_cursor(
+                Model=Model, pipeline=pipeline, tz_info=tz_info
+            )
+            if as_dict:
+                result = list(cursor)
+            else:
+                result = [Model(**doc) for doc in cursor]
+            return result
+
+        if not paginate:
+            return _result()
+        self._add_paginate_to_pipeline(
+            pipeline=pipeline, current_page=current_page, docs_per_page=docs_per_page
+        )
+        cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
+
+        def _count():
+            kwargs = {"hint": "_id_"} if not query else {}
+            return self._db[Model._collection].count_documents(filter=query, **kwargs)
+
+        result = _result()
+        count = _count()
+        page_quantity = ceil(count / docs_per_page)
+        return ResponsePaginate(
+            current_page=current_page,
+            page_quantity=page_quantity,
+            docs_quantity=count,
+            docs=result,
+        )

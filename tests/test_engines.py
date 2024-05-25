@@ -2,7 +2,14 @@ from datetime import timezone, timedelta
 from typing import ClassVar
 import pytest
 import pytest_asyncio
-from pyodmongo import AsyncDbEngine, DbEngine, DbModel, Field, DbResponse
+from pyodmongo import (
+    AsyncDbEngine,
+    DbEngine,
+    DbModel,
+    Field,
+    DbResponse,
+    ResponsePaginate,
+)
 from bson import ObjectId
 import copy
 from faker import Faker
@@ -93,7 +100,7 @@ async def test_save(drop_db):
 
 
 @pytest.mark.asyncio
-async def test_find_one(drop_db):
+async def test_find(drop_db):
     class MyClass0(DbModel):
         attr_0: str = Field(index=True)
         attr_1: int = Field(index=True)
@@ -117,3 +124,21 @@ async def test_find_one(drop_db):
 
     assert obj_found_0_49 == obj_to_find_0_49
     assert obj_found_50_49 == obj_to_find_50_99
+
+    query_0 = (MyClass0.attr_1 > 10) & (MyClass0.attr_1 <= 20)
+    query_1 = (MyClass0.attr_1 > 60) & (MyClass0.attr_1 <= 70)
+
+    result_0: ResponsePaginate = await async_engine.find_many(
+        Model=MyClass0, query=query_0, paginate=True, current_page=2, docs_per_page=2
+    )
+    result_1: ResponsePaginate = engine.find_many(
+        Model=MyClass0, query=query_1, paginate=True, current_page=2, docs_per_page=2
+    )
+    assert result_0.current_page == 2
+    assert result_0.page_quantity == 5
+    assert result_0.docs_quantity == 10
+    assert len(result_0.docs) == 2
+    assert result_1.current_page == 2
+    assert result_1.page_quantity == 5
+    assert result_1.docs_quantity == 10
+    assert len(result_1.docs) == 2
