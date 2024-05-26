@@ -20,7 +20,8 @@ class QueryOperator(BaseModel):
     def __or__(self, value):
         return LogicalOperator(operator="$or", operators=(self, value))
 
-    def to_dict(self): ...
+    def to_dict(self):
+        ...
 
 
 class ComparisonOperator(QueryOperator):

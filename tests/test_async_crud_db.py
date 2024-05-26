@@ -67,9 +67,7 @@ async def test_create_and_delete_one(drop_collection, new_obj):
     assert result.upserted_ids is not None
     id = result.upserted_ids[0]
     query = MyClass.id == id
-    result: DbResponse = await db.delete(
-        Model=MyClass, query=query, delete_one=True
-    )
+    result: DbResponse = await db.delete(Model=MyClass, query=query, delete_one=True)
     assert result.deleted_count == 1
 
 
@@ -292,7 +290,6 @@ class MyModelRegex(DbModel):
 
 @pytest_asyncio.fixture
 async def create_regex_collection():
-
     await db._db[MyModelRegex._collection].drop()
     obj_list = [
         MyModelRegex(attr_1="Agroindústria"),
@@ -411,7 +408,6 @@ async def create_find_dict_collection():
 
 @pytest.mark.asyncio
 async def test_recursive_reference_pipeline(create_find_dict_collection):
-
     a1 = A()
     a2 = A()
     a3 = A()
@@ -626,7 +622,6 @@ async def drop_collection_class_with_date():
 
 @pytest.mark.asyncio
 async def test_save_and_retrieve_objs_with_datetime(drop_collection_class_with_date):
-
     tz = timezone(timedelta(hours=-3))
     date = datetime(
         year=2024,

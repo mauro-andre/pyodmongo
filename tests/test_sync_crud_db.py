@@ -431,7 +431,6 @@ def drop_collection_class_with_date():
 
 
 def test_save_and_retrieve_objs_with_datetime(drop_collection_class_with_date):
-
     tz = timezone(timedelta(hours=-3))
     date = datetime(
         year=2024,

@@ -83,7 +83,6 @@ class DbMeta(PyOdmongoMeta):
     def __new__(
         cls, name: str, bases: tuple[Any], namespace: dict, **kwargs: Any
     ) -> type:
-
         cls: BaseModel = PyOdmongoMeta.__new__(cls, name, bases, namespace, **kwargs)
 
         pipeline = resolve_reference_pipeline(cls=cls, pipeline=[])
