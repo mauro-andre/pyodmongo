@@ -29,8 +29,8 @@ async def drop_db():
     await async_engine._client.drop_database(db_name)
     engine._client.drop_database(db_name)
     yield
-    # await async_engine._client.drop_database(db_name)
-    # engine._client.drop_database(db_name)
+    await async_engine._client.drop_database(db_name)
+    engine._client.drop_database(db_name)
 
 
 @pytest.mark.asyncio
@@ -142,3 +142,44 @@ async def test_find(drop_db):
     assert result_1.page_quantity == 5
     assert result_1.docs_quantity == 10
     assert len(result_1.docs) == 2
+
+
+@pytest.mark.asyncio
+async def test_delete(drop_db):
+    class MyClass0(DbModel):
+        attr_0: str = Field(index=True)
+        attr_1: int = Field(index=True)
+        _collection: ClassVar = "my_class_0"
+
+    objs_0_49 = [MyClass0(attr_0=fake.name(), attr_1=n) for n in range(0, 50)]
+    objs_50_99 = [MyClass0(attr_0=fake.name(), attr_1=n) for n in range(50, 100)]
+
+    await async_engine.save_all(objs_0_49)
+    engine.save_all(objs_50_99)
+
+    query_0 = (MyClass0.attr_1 >= 0) & (MyClass0.attr_1 < 10)
+    query_1 = (MyClass0.attr_1 >= 50) & (MyClass0.attr_1 < 60)
+
+    response_0: DbResponse = await async_engine.delete(
+        Model=MyClass0, query=query_0, delete_one=True
+    )
+    response_1: DbResponse = engine.delete(
+        Model=MyClass0, query=query_1, delete_one=True
+    )
+    assert response_0.deleted_count == 1
+    assert response_1.deleted_count == 1
+
+    find_result_0 = await async_engine.find_many(Model=MyClass0)
+    find_result_1 = engine.find_many(Model=MyClass0)
+    assert len(find_result_0) == 98
+    assert len(find_result_1) == 98
+
+    response_0: DbResponse = await async_engine.delete(Model=MyClass0, query=query_0)
+    response_1: DbResponse = engine.delete(Model=MyClass0, query=query_1)
+    assert response_0.deleted_count == 9
+    assert response_1.deleted_count == 9
+
+    find_result_0 = await async_engine.find_many(Model=MyClass0)
+    find_result_1 = engine.find_many(Model=MyClass0)
+    assert len(find_result_0) == 80
+    assert len(find_result_1) == 80

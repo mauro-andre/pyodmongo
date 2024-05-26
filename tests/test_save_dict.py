@@ -2,7 +2,7 @@ from pyodmongo import DbModel, Field, Id
 from pydantic import BaseModel
 from typing import ClassVar
 from bson import ObjectId
-from pyodmongo.engine.utils import consolidate_dict
+from pyodmongo.engines.utils import consolidate_dict
 
 
 def test_save_dict_is_correct():

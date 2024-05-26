@@ -1,7 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
-from pymongo import MongoClient, UpdateMany
+from pymongo import MongoClient, UpdateMany, DeleteOne, DeleteMany
 from pymongo.results import BulkWriteResult
-from datetime import datetime, timezone, UTC
+from datetime import datetime, timezone
 from bson import ObjectId
 from bson.codec_options import CodecOptions
 from ..models.db_model import DbModel
@@ -10,7 +10,7 @@ from ..models.responses import DbResponse
 from ..models.query_operators import QueryOperator
 from ..models.sort_operators import SortOperator
 from ..models.paginate import ResponsePaginate
-from ..engine.utils import consolidate_dict, mount_base_pipeline
+from .utils import consolidate_dict, mount_base_pipeline
 from ..services.verify_subclasses import is_subclass
 from asyncio import gather
 from math import ceil
@@ -53,7 +53,15 @@ class _Engine:
         }
         return UpdateMany(filter=find_filter, update=to_save, upsert=True)
 
-    def _create_operations_list(
+    def _create_delete_operations_list(
+        self, query: QueryOperator, raw_query: dict, delete_one: bool
+    ):
+        query = self._query(query=query, raw_query=raw_query)
+        if delete_one:
+            return [DeleteOne(filter=query)]
+        return [DeleteMany(filter=query)]
+
+    def _create_save_operations_list(
         self,
         objs: list[DbModel],
         query: QueryOperator,
@@ -161,11 +169,12 @@ class AsyncDbEngine(_Engine):
         )
 
     async def save_all(self, obj_list: list[DbModel]):
-        indexes, operations, now = self._create_operations_list(
+        indexes, operations, now = self._create_save_operations_list(
             objs=obj_list, query=None, raw_query=None
         )
         for collection_name, index_list in indexes.items():
-            await self._db[collection_name].create_indexes(index_list)
+            if index_list:
+                await self._db[collection_name].create_indexes(index_list)
         for collection_name, operation_list in operations.items():
             result: BulkWriteResult = await self._db[collection_name].bulk_write(
                 operation_list
@@ -177,12 +186,13 @@ class AsyncDbEngine(_Engine):
     async def save(
         self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
     ) -> DbResponse:
-        indexes, operations, now = self._create_operations_list(
+        indexes, operations, now = self._create_save_operations_list(
             objs=[obj], query=query, raw_query=raw_query
         )
         collection_name = obj._collection
         index_list = indexes[collection_name]
-        await self._db[collection_name].create_indexes(index_list)
+        if index_list:
+            await self._db[collection_name].create_indexes(index_list)
         operation_list = operations[collection_name]
         result: BulkWriteResult = await self._db[collection_name].bulk_write(
             operation_list
@@ -277,6 +287,20 @@ class AsyncDbEngine(_Engine):
             docs=result,
         )
 
+    async def delete(
+        self,
+        Model: DbModel,
+        query: QueryOperator = None,
+        raw_query: dict = None,
+        delete_one: bool = False,
+    ) -> DbResponse:
+        operations = self._create_delete_operations_list(
+            query=query, raw_query=raw_query, delete_one=delete_one
+        )
+        collection_name = Model._collection
+        result: BulkWriteResult = await self._db[collection_name].bulk_write(operations)
+        return self._db_response(result=result)
+
 
 class DbEngine(_Engine):
     def __init__(self, mongo_uri, db_name, tz_info: timezone = None):
@@ -288,11 +312,12 @@ class DbEngine(_Engine):
         )
 
     def save_all(self, obj_list: list[DbModel]):
-        indexes, operations, now = self._create_operations_list(
+        indexes, operations, now = self._create_save_operations_list(
             objs=obj_list, query=None, raw_query=None
         )
         for collection_name, index_list in indexes.items():
-            self._db[collection_name].create_indexes(index_list)
+            if index_list:
+                self._db[collection_name].create_indexes(index_list)
         for collection_name, operation_list in operations.items():
             result: BulkWriteResult = self._db[collection_name].bulk_write(
                 operation_list
@@ -304,12 +329,13 @@ class DbEngine(_Engine):
     def save(
         self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
     ) -> DbResponse:
-        indexes, operations, now = self._create_operations_list(
+        indexes, operations, now = self._create_save_operations_list(
             objs=[obj], query=query, raw_query=raw_query
         )
         collection_name = obj._collection
         index_list = indexes[collection_name]
-        self._db[collection_name].create_indexes(index_list)
+        if index_list:
+            self._db[collection_name].create_indexes(index_list)
         operation_list = operations[collection_name]
         result: BulkWriteResult = self._db[collection_name].bulk_write(operation_list)
         self._after_save(
@@ -400,3 +426,17 @@ class DbEngine(_Engine):
             docs_quantity=count,
             docs=result,
         )
+
+    def delete(
+        self,
+        Model: DbModel,
+        query: QueryOperator = None,
+        raw_query: dict = None,
+        delete_one: bool = False,
+    ) -> DbResponse:
+        operations = self._create_delete_operations_list(
+            query=query, raw_query=raw_query, delete_one=delete_one
+        )
+        collection_name = Model._collection
+        result: BulkWriteResult = self._db[collection_name].bulk_write(operations)
+        return self._db_response(result=result)

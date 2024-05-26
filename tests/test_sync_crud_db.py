@@ -2,13 +2,12 @@ from pyodmongo import (
     DbEngine,
     DbModel,
     Id,
-    SaveResponse,
-    DeleteResponse,
+    DbResponse,
     ResponsePaginate,
     Field,
 )
 from pyodmongo.queries import eq, gte, gt, sort
-from pyodmongo.engine.utils import consolidate_dict
+from pyodmongo.engines.utils import consolidate_dict
 from pydantic import ConfigDict
 from typing import ClassVar
 from bson import ObjectId
@@ -51,26 +50,26 @@ def new_obj():
 
 
 def test_check_if_create_a_new_doc_on_save(drop_collection, new_obj):
-    result: SaveResponse = db.save(new_obj)
-    assert ObjectId.is_valid(result.upserted_id)
-    assert new_obj.id == result.upserted_id
+    result: DbResponse = db.save(new_obj)
+    assert ObjectId.is_valid(result.upserted_ids[0])
+    assert new_obj.id == result.upserted_ids[0]
     assert isinstance(new_obj.created_at, datetime)
     assert isinstance(new_obj.updated_at, datetime)
     assert new_obj.created_at == new_obj.updated_at
 
 
 def test_create_and_delete_one(drop_collection, new_obj):
-    result: SaveResponse = db.save(new_obj)
-    assert result.upserted_id is not None
-    id = result.upserted_id
+    result: DbResponse = db.save(new_obj)
+    assert result.upserted_ids[0] is not None
+    id = result.upserted_ids[0]
     query = eq(MyClass.id, id)
-    result: DeleteResponse = db.delete_one(Model=MyClass, query=query)
+    result: DbResponse = db.delete(Model=MyClass, query=query, delete_one=True)
     assert result.deleted_count == 1
 
 
 def test_find_one(drop_collection, new_obj):
-    result: SaveResponse = db.save(new_obj)
-    id_returned = result.upserted_id
+    result: DbResponse = db.save(new_obj)
+    id_returned = result.upserted_ids[0]
     obj_found = db.find_one(MyClass, eq(MyClass.id, id_returned))
 
     assert isinstance(obj_found, MyClass)
@@ -78,7 +77,7 @@ def test_find_one(drop_collection, new_obj):
 
 
 @pytest.fixture()
-def objs() -> list[SaveResponse]:
+def objs():
     objs = [
         MyClass(attr1="attr_1", attr2="attr_2"),
         MyClass(attr1="attr_1", attr2="attr_2"),
@@ -91,28 +90,23 @@ def objs() -> list[SaveResponse]:
 
 
 def test_save_all_created(drop_collection, objs):
-    response: list[SaveResponse] = db.save_all(objs)
-    upserted_quantity = 0
-    for obj_response in response:
-        obj_response: SaveResponse
-        upserted_quantity += 1 if ObjectId.is_valid(obj_response.upserted_id) else 0
-
-    assert upserted_quantity == 6
+    db.save_all(objs)
+    assert all([ObjectId.is_valid(obj.id) for obj in objs])
 
 
 def test_update_on_save(drop_collection, objs):
     db.save_all(objs)
     obj = MyClass(attr1="value_1", attr2="value_2")
-    response: SaveResponse = db.save(obj, eq(MyClass.attr1, "attr_3"))
+    response: DbResponse = db.save(obj, eq(MyClass.attr1, "attr_3"))
 
     assert response.matched_count == 2
     assert response.modified_count == 2
-    assert response.upserted_id is None
+    assert response.upserted_ids == {}
 
 
 def test_delete(drop_collection, objs):
     db.save_all(objs)
-    response: DeleteResponse = db.delete(MyClass, eq(MyClass.attr1, "attr_1"))
+    response: DbResponse = db.delete(MyClass, eq(MyClass.attr1, "attr_1"))
     assert response.deleted_count == 3
 
 
@@ -231,7 +225,7 @@ def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator(
         TypeError,
         match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
-        db.delete_one(Model=MyClass, query="string")
+        db.delete(Model=MyClass, query="string", delete_one=True)
 
 
 def test_delete_type_error_when_query_is_not_comparison_or_logical_operator():
