@@ -43,7 +43,6 @@ mkdocs-static-i18n==1.0.3
 motor==3.3.2
 mypy-extensions==1.0.0
 nodeenv==1.8.0
-packaging==23.1
 paginate==0.5.6
 pathspec==0.11.2
 Pillow==10.0.1
