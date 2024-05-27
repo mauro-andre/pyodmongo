@@ -16,8 +16,8 @@ fi
 black pyodmongo tests
 
 # Check if black made any changes
-if [ $? -ne 0 ]; then
-    echo "Black formatting failed, please fix the issues and commit again."
+if ! git diff --exit-code; then
+    echo "Black formatting made changes. Please add the changes and commit again."
     exit 1
 fi
 
