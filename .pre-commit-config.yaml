@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: black (local)
+        entry: black pyodmongo tests
+        language: system
+        types: [python]
+        stages: [commit]
