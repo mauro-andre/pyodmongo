@@ -4,5 +4,6 @@ repos:
       - id: black
         name: black
         entry: black pyodmongo tests
-        language: python
+        language: system
+        types: [python]
         stages: [commit]
