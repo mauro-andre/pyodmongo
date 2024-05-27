@@ -24,6 +24,12 @@ fi
 # Update requirements.txt
 pip freeze > requirements.txt
 
+# Check if requirements.txt was modified
+if ! git diff --exit-code requirements.txt; then
+    echo "requirements.txt was updated. Please add the changes and commit again."
+    exit 1
+fi
+
 # Add requirements.txt to the commit
 git add requirements.txt
 
