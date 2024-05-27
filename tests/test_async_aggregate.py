@@ -6,8 +6,6 @@ import pytest
 mongo_uri = "mongodb://localhost:27017"
 db_name = "pyodmongo_pytest"
 engine = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
-
-
 class Customer(DbModel):
     name: str
     email: str
