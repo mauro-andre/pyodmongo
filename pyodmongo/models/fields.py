@@ -7,7 +7,7 @@ from pydantic_core import PydanticUndefined
 from typing_extensions import Literal, Unpack
 
 from pydantic.fields import AliasPath, AliasChoices, _EmptyKwargs
-from pydantic import Field as Pydantic_Fields
+from pydantic import Field as Pydantic_Field
 
 
 _Unset: Any = PydanticUndefined
@@ -115,7 +115,7 @@ def Field(  # noqa: C901
     json_schema_extra["unique"] = unique
     json_schema_extra["text_index"] = text_index
     json_schema_extra["default_language"] = default_language
-    return Pydantic_Fields(
+    return Pydantic_Field(
         default=default,
         default_factory=default_factory,
         alias=alias,
