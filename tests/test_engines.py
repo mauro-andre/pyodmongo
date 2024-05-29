@@ -1,4 +1,3 @@
-from datetime import timezone, timedelta
 from typing import ClassVar
 import pytest
 import pytest_asyncio
@@ -14,27 +13,21 @@ from bson import ObjectId
 import copy
 from faker import Faker
 
-mongo_uri = "mongodb://localhost:27017"
-db_name = "pyodmongo_pytest"
-tz_info = timezone(timedelta(hours=-3))
-
-async_engine = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name, tz_info=tz_info)
-engine = DbEngine(mongo_uri=mongo_uri, db_name=db_name, tz_info=tz_info)
 
 fake = Faker()
 
 
-@pytest_asyncio.fixture()
-async def drop_db():
-    await async_engine._client.drop_database(db_name)
-    engine._client.drop_database(db_name)
+@pytest_asyncio.fixture
+async def drop_db(async_engine: AsyncDbEngine, engine: DbEngine):
+    await async_engine._client.drop_database("pyodmongo_pytest")
+    engine._client.drop_database("pyodmongo_pytest")
     yield
-    await async_engine._client.drop_database(db_name)
-    engine._client.drop_database(db_name)
+    await async_engine._client.drop_database("pyodmongo_pytest")
+    engine._client.drop_database("pyodmongo_pytest")
 
 
 @pytest.mark.asyncio
-async def test_save_all(drop_db):
+async def test_save_all(async_engine: AsyncDbEngine, engine: DbEngine):
     class MyClass0(DbModel):
         attr_0: str = Field(index=True)
         attr_1: int = Field(index=True)
@@ -78,7 +71,7 @@ async def test_save_all(drop_db):
 
 
 @pytest.mark.asyncio
-async def test_save(drop_db):
+async def test_save(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
     class MyClass0(DbModel):
         attr_0: str = Field(index=True)
         attr_1: int = Field(index=True)
@@ -100,7 +93,7 @@ async def test_save(drop_db):
 
 
 @pytest.mark.asyncio
-async def test_find(drop_db):
+async def test_find(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
     class MyClass0(DbModel):
         attr_0: str = Field(index=True)
         attr_1: int = Field(index=True)
@@ -145,7 +138,7 @@ async def test_find(drop_db):
 
 
 @pytest.mark.asyncio
-async def test_delete(drop_db):
+async def test_delete(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
     class MyClass0(DbModel):
         attr_0: str = Field(index=True)
         attr_1: int = Field(index=True)

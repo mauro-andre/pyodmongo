@@ -1,10 +1,18 @@
 import pytest
-import asyncio
+from pyodmongo import AsyncDbEngine, DbEngine
+from datetime import timezone, timedelta
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    policy = asyncio.get_event_loop_policy()
-    loop = policy.new_event_loop()
-    yield loop
-    loop.close()
+mongo_uri = "mongodb://localhost:27017"
+db_name = "pyodmongo_pytest"
+tz_info = timezone(timedelta(hours=-3))
+
+
+@pytest.fixture
+def async_engine():
+    yield AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name, tz_info=tz_info)
+
+
+@pytest.fixture
+def engine():
+    return DbEngine(mongo_uri=mongo_uri, db_name=db_name, tz_info=tz_info)

@@ -3,10 +3,6 @@ from typing import ClassVar
 import pytest_asyncio
 import pytest
 
-mongo_uri = "mongodb://localhost:27017"
-db_name = "pyodmongo_pytest"
-engine = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
-
 
 class Customer(DbModel):
     name: str
@@ -36,28 +32,28 @@ class OrdersByCustomers(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collections():
-    await engine._db[Customer._collection].drop()
-    await engine._db[Order._collection].drop()
+async def drop_collections(async_engine):
+    await async_engine._db[Customer._collection].drop()
+    await async_engine._db[Order._collection].drop()
     yield
-    await engine._db[Customer._collection].drop()
-    await engine._db[Order._collection].drop()
+    await async_engine._db[Customer._collection].drop()
+    await async_engine._db[Order._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_pipeline_aggregate(drop_collections):
+async def test_pipeline_aggregate(drop_collections, async_engine):
     customer_1 = Customer(name="Customer 1", email="customer1@email.com")
     customer_2 = Customer(name="Customer 2", email="customer2@email.com")
     customer_3 = Customer(name="Customer 3", email="customer3@email.com")
-    await engine.save_all([customer_1, customer_2, customer_3])
+    await async_engine.save_all([customer_1, customer_2, customer_3])
     for n in range(1, 11):
-        await engine.save(Order(customer=customer_1, value=n))
+        await async_engine.save(Order(customer=customer_1, value=n))
     for n in range(1, 5):
-        await engine.save(Order(customer=customer_2, value=n))
+        await async_engine.save(Order(customer=customer_2, value=n))
     for n in range(1, 8):
-        await engine.save(Order(customer=customer_3, value=n))
+        await async_engine.save(Order(customer=customer_3, value=n))
 
-    objs = await engine.find_many(Model=OrdersByCustomers)
+    objs = await async_engine.find_many(Model=OrdersByCustomers)
     customer_1_aggregate: OrdersByCustomers = list(
         filter(lambda x: x.id == customer_1.id, objs)
     )[0]
