@@ -182,7 +182,6 @@ async def test_field_alias(async_engine):
     await async_engine.save(obj)
     obj_found = await async_engine.find_one(Model=MyClass)
     assert obj == obj_found
-
     await async_engine._db[MyClass._collection].drop()
 
 

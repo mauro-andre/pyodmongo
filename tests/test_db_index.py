@@ -35,25 +35,25 @@ async def async_drop_collection(async_engine: AsyncDbEngine):
 
 
 def test_index_unique_text_index():
-    assert not MyClass.model_fields["attr_0"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_0"]._attributes_set.get("unique") or False
-    assert not MyClass.model_fields["attr_0"]._attributes_set.get("text_index") or False
+    assert MyClass.model_fields["attr_1"].json_schema_extra.get("index") or False
+    assert not MyClass.model_fields["attr_1"].json_schema_extra.get("unique") or False
+    assert (
+        not MyClass.model_fields["attr_1"].json_schema_extra.get("text_index") or False
+    )
 
-    assert MyClass.model_fields["attr_1"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_1"]._attributes_set.get("unique") or False
-    assert not MyClass.model_fields["attr_1"]._attributes_set.get("text_index") or False
+    assert not MyClass.model_fields["attr_2"].json_schema_extra.get("index") or False
+    assert MyClass.model_fields["attr_2"].json_schema_extra.get("unique") or False
+    assert (
+        not MyClass.model_fields["attr_2"].json_schema_extra.get("text_index") or False
+    )
 
-    assert not MyClass.model_fields["attr_2"]._attributes_set.get("index") or False
-    assert MyClass.model_fields["attr_2"]._attributes_set.get("unique") or False
-    assert not MyClass.model_fields["attr_2"]._attributes_set.get("text_index") or False
+    assert not MyClass.model_fields["attr_3"].json_schema_extra.get("index") or False
+    assert not MyClass.model_fields["attr_3"].json_schema_extra.get("unique") or False
+    assert MyClass.model_fields["attr_3"].json_schema_extra.get("text_index") or False
 
-    assert not MyClass.model_fields["attr_3"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_3"]._attributes_set.get("unique") or False
-    assert MyClass.model_fields["attr_3"]._attributes_set.get("text_index") or False
-
-    assert MyClass.model_fields["attr_4"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_4"]._attributes_set.get("unique") or False
-    assert MyClass.model_fields["attr_4"]._attributes_set.get("text_index") or False
+    assert MyClass.model_fields["attr_4"].json_schema_extra.get("index") or False
+    assert not MyClass.model_fields["attr_4"].json_schema_extra.get("unique") or False
+    assert MyClass.model_fields["attr_4"].json_schema_extra.get("text_index") or False
 
 
 def test_check_index_field():

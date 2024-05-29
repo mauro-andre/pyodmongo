@@ -32,11 +32,15 @@ def resolve_indexes(cls: BaseModel):
     indexes = []
     text_keys = []
     for key in cls.model_fields.keys():
-        is_index = cls.model_fields[key]._attributes_set.get("index") or False
-        is_unique = cls.model_fields[key]._attributes_set.get("unique") or False
-        is_text_index = cls.model_fields[key]._attributes_set.get("text_index") or False
+        if not cls.model_fields[key].json_schema_extra:
+            continue
+        is_index = cls.model_fields[key].json_schema_extra.get("index") or False
+        is_unique = cls.model_fields[key].json_schema_extra.get("unique") or False
+        is_text_index = (
+            cls.model_fields[key].json_schema_extra.get("text_index") or False
+        )
         default_language = (
-            cls.model_fields[key]._attributes_set.get("default_language") or False
+            cls.model_fields[key].json_schema_extra.get("default_language") or False
         )
         db_field_info: DbField = getattr(cls, key)
         alias = db_field_info.field_alias
