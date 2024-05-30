@@ -43,8 +43,17 @@ async def test_save_all(async_engine: AsyncDbEngine, engine: DbEngine):
     obj_2 = MyClass1(attr_2="two", attr_3=2)
     obj_3 = MyClass1(attr_2="three", attr_3=3)
 
-    await async_engine.save_all([obj_0, obj_2])
-    engine.save_all([obj_1, obj_3])
+    response_0: dict[str, DbResponse] = await async_engine.save_all([obj_0, obj_2])
+    response_1: dict[str, DbResponse] = engine.save_all([obj_1, obj_3])
+    
+    assert response_0["my_class_0"].upserted_count == 1
+    assert response_0["my_class_0"].upserted_ids[0] == obj_0.id
+    assert response_0["my_class_1"].upserted_count == 1
+    assert response_0["my_class_1"].upserted_ids[0] == obj_2.id
+    assert response_1["my_class_0"].upserted_count == 1
+    assert response_1["my_class_0"].upserted_ids[0] == obj_1.id
+    assert response_1["my_class_1"].upserted_count == 1
+    assert response_1["my_class_1"].upserted_ids[0] == obj_3.id
 
     assert ObjectId.is_valid(obj_0.id)
     assert ObjectId.is_valid(obj_1.id)

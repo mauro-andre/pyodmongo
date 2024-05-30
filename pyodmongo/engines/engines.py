@@ -311,13 +311,14 @@ class AsyncDbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    async def save_all(self, obj_list: list[DbModel]):
+    async def save_all(self, obj_list: list[DbModel]) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
 
         Args:
             obj_list (list[DbModel]): The list of database model objects.
         """
+        response = {}
         indexes, operations, now = self._create_save_operations_list(
             objs=obj_list, query=None, raw_query=None
         )
@@ -331,6 +332,8 @@ class AsyncDbEngine(_Engine):
             self._after_save(
                 result=result, objs=obj_list, collection_name=collection_name, now=now
             )
+            response[collection_name] = self._db_response(result=result)
+        return response
 
     async def save(
         self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
@@ -530,13 +533,14 @@ class DbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    def save_all(self, obj_list: list[DbModel]):
+    def save_all(self, obj_list: list[DbModel]) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
 
         Args:
             obj_list (list[DbModel]): The list of database model objects.
         """
+        response = {}
         indexes, operations, now = self._create_save_operations_list(
             objs=obj_list, query=None, raw_query=None
         )
@@ -550,6 +554,8 @@ class DbEngine(_Engine):
             self._after_save(
                 result=result, objs=obj_list, collection_name=collection_name, now=now
             )
+            response[collection_name] = self._db_response(result=result)
+        return response
 
     def save(
         self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
