@@ -1,0 +1,90 @@
+site_name: PyODMongo
+site_description: A modern Python ODM for MongoDB
+site_url: https://pyodmongo.dev/v0
+site_author: Mauro André
+docs_dir: .
+site_dir: ../../site/v0
+
+theme:
+  language: en
+  name: material
+  logo: assets/images/logo.png
+  icon:
+    repo: fontawesome/brands/github
+
+
+  palette:
+    # Palette toggle for dark mode
+    - scheme: slate
+      primary: custom
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+    # Palette toggle for light mode
+    - scheme: default
+      primary: custom
+      toggle:
+        icon: material/weather-sunny 
+        name: Switch to dark mode
+        
+extra_javascript:
+  - assets/javascripts/version_selector.js
+extra_css:
+  - stylesheets/extras.css
+
+nav:
+  - index.md
+  - getting_started.md
+  - db_model.md
+  - CRUD:
+    - save.md
+    - find.md
+    - delete.md
+  - query.md
+  - fastapi.md
+  - indexes.md
+  - aggregation.md
+  - contributing.md
+  - release_notes.md
+
+extra:
+  analytics:
+    provider: google
+    property: G-Q63PNQN3DY
+
+repo_url: https://github.com/mauro-andre/pyodmongo
+repo_name: mauro-andre/pyodmongo
+
+plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+          nav_translations:
+        - locale: pt-BR
+          name: Português - Br
+          build: true
+          nav_translations:
+            Modeling Documents: Modelando documentos
+            Advanced: Avançado
+  - social:
+      cards_layout_options:
+        background_color: "#071F2A" 
+
+markdown_extensions:
+  - tables:
+  - pymdownx.highlight:
+  - pymdownx.blocks.tab:
+      alternate_style: True
+  - admonition:
+  - pymdownx.details:
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+

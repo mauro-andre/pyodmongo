@@ -2,6 +2,8 @@ site_name: PyODMongo
 site_description: A modern Python ODM for MongoDB
 site_url: https://pyodmongo.dev/
 site_author: Mauro André
+docs_dir: .
+site_dir: ../site
 
 theme:
   language: en
@@ -25,6 +27,8 @@ theme:
         icon: material/weather-sunny 
         name: Switch to dark mode
 
+extra_javascript:
+  - assets/javascripts/version_selector.js
 extra_css:
   - stylesheets/extras.css
 
@@ -83,3 +87,4 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+
