@@ -39,9 +39,13 @@ jobs:
         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws configure set region us-east-1
 
+    - name: Change mkdocs_build.sh chmod
+      run: |
+        chmod +x mkdocs_build.sh
+    
     - name: Building docs
       run: |
-        mkdocs build
+        ./mkdocs_build.sh
 
     - name: Upload S3 Bucket
       run: |
