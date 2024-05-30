@@ -18,7 +18,7 @@
     </a>
 </div>
 
-V0 - **PyODMongo** is a modern Python library that serves as a robust Object-Document Mapper (ODM) and seamlessly bridges the gap between Python and **MongoDB**. It offers an intuitive and efficient way to interact with documents.
+**PyODMongo** is a modern Python library that serves as a robust Object-Document Mapper (ODM) and seamlessly bridges the gap between Python and **MongoDB**. It offers an intuitive and efficient way to interact with documents.
 
 Built on top of **Pydantic V2**, **PyODMongo** ensures that documents in the database rigorously represent the structure of Python objects. This means that documents are saved and retrieved from the database exactly as a Python object is structured, regardless of how nested the objects are and whether they are stored persistently or by reference. **PyODMongo** can automatically populate these documents.
 
