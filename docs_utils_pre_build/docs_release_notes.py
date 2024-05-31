@@ -7,8 +7,8 @@ import shutil
 release_notes_api_url = "https://api.github.com/repos/mauro-andre/pyodmongo/releases"
 release_notes = requests.get(url=release_notes_api_url).json()
 
-en_file_path = Path().absolute() / "docs" / "en" / "release_notes.md"
-pt_file_path = Path().absolute() / "docs" / "pt-BR" / "release_notes.md"
+en_file_path = Path().absolute() / ".docs_tmp" / "en" / "release_notes.md"
+pt_file_path = Path().absolute() / ".docs_tmp" / "pt-BR" / "release_notes.md"
 
 
 def convert_text(input_text):
