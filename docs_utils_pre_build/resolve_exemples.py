@@ -16,10 +16,6 @@ class Replace:
     def _all_md_files_on_folder(self):
         return list(filter(lambda x: x.endswith(".md"), os.listdir(self.folder_path)))
 
-    @staticmethod
-    def _remove_blank_lines(lines: list):
-        print(lines)
-
     def resolve_replace(self):
         file_names = self._all_md_files_on_folder()
         examples = self._all_exemples()
