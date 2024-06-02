@@ -1,12 +1,12 @@
-# <center>Query</center>
+# <center>Query Operators</center>
 
-Creating queries in **PyODMongo** is straightforward and intuitive. It simplifies the process of building MongoDB queries, providing a Pythonic and straightforward approach to working with **Comparison Operators** and **Logical Operators** found in MongoDB.
+Criar consultas no **PyODMongo** é simples e intuitivo. Ele simplifica o processo de criação de consultas do MongoDB, fornecendo uma abordagem Pythônica e direta para trabalhar com **Operadores de comparação** e **Operadores lógicos** encontrados no MongoDB.
 
-In **PyODMongo**, a query serves as an essential attribute of the `find_many` and `find_one` methods, which are available through the `DbEngine` and `AsyncDbEngine` classes. These methods empower you to retrieve data from your MongoDB database with ease, combining the simplicity of Python with the robust querying capabilities of MongoDB.
+No **PyODMongo**, uma consulta serve como um atributo essencial dos métodos `find_many` e `find_one`, que estão disponíveis através das classes `DbEngine` e `AsyncDbEngine`. Esses métodos permitem recuperar dados do seu banco de dados MongoDB com facilidade, combinando a simplicidade do Python com os recursos robustos de consulta do MongoDB.
 
-## Comparison Operators
+## Operadores de comparação
 
-| Operator | Usage |
+| Operador | Uso |
 | ---------|--- |
 | **EQ**  | `eq(Model.attr, value)`</br>`Model.attr == value` |
 | **GT**   | `gt(Model.attr, value)`</br>`Model.attr > value` |
@@ -18,13 +18,13 @@ In **PyODMongo**, a query serves as an essential attribute of the `find_many` an
 | **NIN**            | `nin(Model.attr, value)` |
 
 
-When using these Comparison Operators in PyODMongo, you'll typically provide two arguments:
+Ao usar esses operadores de comparação no PyODMongo, você normalmente fornecerá dois argumentos:
 
-- `field: DbField`: This argument represents the field of your PyODMongo `DbModel` class that you want to search in the database. It defines the property you want to apply the comparison operator to.
+- `field: DbField`: Este argumento representa o campo da sua classe `DbModel` do PyODMongo que você deseja pesquisar no banco de dados. Ele define a propriedade à qual você deseja aplicar o operador de comparação.
 
-- `value: Any`: This argument specifies the value you want to compare against the field defined in the first argument. It represents the reference value to be found in the database.
+- `value: Any`: Este argumento especifica o valor que você deseja comparar com o campo definido no primeiro argumento. Representa o valor de referência a ser encontrado no banco de dados.
 
-Here's an example of how to use a Comparison Operator in PyODMongo:
+Aqui está um exemplo de como usar um operador de comparação no PyODMongo:
 
 /// tab | Async
 ```python hl_lines="18"
@@ -70,29 +70,29 @@ class Product(DbModel):
     _collection: ClassVar = 'products'
 
 
-query = Product.price >= 5
+query =  Product.price >= 5
 #query = gte(Product.price, 5)
 sort_oprator = sort((Product.name, 1), (Product.price, -1))
 result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 ```
 ///
 
-In this example, the query will return all documents  in 'products' collection where the 'price' field is equal to or greater than 5.
+Neste exemplo, a consulta retornará todos os documentos da collection 'products' onde o campo price for igual ou superior a 5.
 
-## Logical Operators
+## Operadores lógicos
 
-Just like Comparison Operators, Logical Operators in **PyODMongo** are designed to mirror their counterparts in MongoDB itself.
+Assim como os operadores de comparação, os operadores lógicos no **PyODMongo** são projetados para espelhar seus equivalentes no próprio MongoDB.
 
-Here are the primary Logical Operators available in PyODMongo:
+Aqui estão os principais operadores lógicos disponíveis no PyODMongo:
 
-| Operator | Usage |
+| Operador | Uso |
 | ---------|-|
 | **AND**| `and_(gt(Model.attr_1, value_1), lt(Model.attr_1, value_2))`</br>`(Model.attr_1 > value_1) & (Model.attr_1 < value_2)` |
 | **OR** | `or_(eq(Model.attr_1, value_1), eq(Model.attr_1, value_2))`</br>`(Model.attr_1 == value_1) | (Model.attr_1 == value_2)` |
 | **NOR** | `nor(Model.attr_1 == value_1, Model.attr_1 == value_2)` |
 
 
-Here's an example of how you can use Logical Operators in PyODMongo:
+Aqui está um exemplo de como você pode usar operadores lógicos no PyODMongo:
 
 /// tab | Async
 ```python hl_lines="18"
@@ -153,12 +153,12 @@ result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 ```
 ///
 
-In this example, the query returns all documents from the 'products' collection that `is_available` is `True` and that have `price` greater than or equal to 5
+Neste exemplo a consulta retornará todos os documentos da collecion 'products' que `is_available` seja `True` e que tenham `price` maior ou igual a 5
 
 !!! tip
-    The inputs for these Logical Operators can be Comparison Operators or even other Logical Operators. This flexibility allows you to create complex and nested queries, enabling you to express intricate data retrieval conditions with precision.
+    As entradas para estes Operadores Lógicos podem ser Operadores de Comparação ou mesmo outros Operadores Lógicos. Essa flexibilidade permite criar consultas complexas e aninhadas, permitindo expressar condições complexas de recuperação de dados com precisão.
 
-## Sort
+    ## Sort
 
 /// tab | Async
 ```python hl_lines="19"
@@ -209,4 +209,4 @@ result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
 ```
 ///
 
-In the provided example, the `sort_operator` is defined using the `sort` function, which takes tuples. Each tuple contains two elements: the first one is the field by which you want to sort, and the second one is the sorting direction, where 1 indicates ascending order and -1 indicates descending order. In the presented case, the `sort_operator` sorts the results first by the name field in ascending order and then by the price field in descending order. Thus, the products are returned in alphabetical order by name and, in case of a tie, in descending order by price.
+No exemplo fornecido, o `sort_operator` é definido usando a função `sort`, que aceita tuplas. Cada tupla contém dois elementos: o primeiro é o campo pelo qual você deseja ordenar e o segundo é a direção da ordenação, onde 1 indica ordem ascendente e -1 indica ordem descendente. No caso apresentado, o `sort_operator` ordena os resultados primeiro pelo campo name em ordem ascendente e, em seguida, pelo campo price em ordem descendente. Assim, os produtos são retornados em ordem alfabética pelo nome e, em caso de empate, em ordem decrescente pelo preço.

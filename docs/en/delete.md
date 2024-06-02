@@ -5,53 +5,13 @@
 The `delete` method is available in both `AsyncDbEngine` and `DbEngine` and is used to delete documents from a MongoDB collection based on a specified query. This method offers a straightforward way to remove documents that match specific criteria from your MongoDB database.
 
 /// tab | Async
-```python hl_lines="21"
-from pyodmongo import AsyncDbEngine, DbModel, DeleteResponse
-from pyodmongo.queries import eq
-from typing import ClassVar
-import asyncio
-
-# Initialize the database engine
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-# Define a model
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-async def main():
-    # Define a query to specify which documents to delete
-    query = eq(Product.name, 'Box')
-
-    # Use the delete method to remove documents
-    result: DeleteResponse = await engine.delete(Model=Product, query=query)
-
-asyncio.run(main())
+```python hl_lines="18"
+__delete_async.py__
 ```
 ///
 /// tab | Sync
-```python hl_lines="19"
-from pyodmongo import DbEngine, DbModel, DeleteResponse
-from pyodmongo.queries import eq
-from typing import ClassVar
-
-# Initialize the database engine
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-# Define a model
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-# Define a query to specify which documents to delete
-query = eq(Product.name, 'Box')
-
-# Use the delete method to remove documents
-result: DeleteResponse = engine.delete(Model=Product, query=query)
+```python hl_lines="16"
+__delete_sync.py__
 ```
 ///
 
@@ -67,30 +27,34 @@ result: DeleteResponse = engine.delete(Model=Product, query=query)
 
 ## Delete one
 
-The `delete_one` method is similar to the `delete` method, with the key difference being that it will delete only the first document that matches the specified query.
+In **PyODMongo**, there is only the `delete` method. To ensure that only one document is deleted, you can pass the attribute `delete_one=True` to the `delete` method. This way, only the first document that matches the specified query will be deleted.
 
 /// tab | Async
-```python
-from pyodmongo import AsyncDbEngine, DeleteResponse
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-result: DeleteResponse = async engine.delete_one(Model=Product, query=query)
+```python hl_lines="18-20"
+__delete_one_async.py__
 ```
 ///
 /// tab | Sync
-```python
-from pyodmongo import DbEngine, DeleteResponse
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-result: DeleteResponse = engine.delete_one(Model=Product, query=query)
+```python hl_lines="16"
+__delete_one_sync.py__
 ```
 ///
 
 ## Delete Response
-The `DeleteResponse` is the return object for the `delete` and `delete_one` methods, providing information about the result of the delete operation.
+The `delete` method in **PyODMongo** returns a `DbResponse` object that provides information about the outcome of the delete operation. This object contains several attributes that give insights into how the delete operation affected the database.
 
-### Attributes
+### `DbResponse` Attributes
 
-- `acknowledged: bool`: Indicates whether the delete operation was acknowledged by the MongoDB server. If `True`, it means the server acknowledged the operation; otherwise, it's `False`.
-- `deleted_count: int`: Represents the number of documents that were successfully deleted by the operation. This count may vary depending on the query criteria.
-- `raw_result: dict`: A dictionary containing the raw result of the delete operation as returned by the MongoDB driver. It provides additional details about the operation's outcome.
+- `acknowledged: bool`: A boolean value indicating whether the operation was acknowledged by the MongoDB server. If the operation was acknowledged, this attribute is set to `True`, indicating that the server recognized and processed the save request.
+
+- `deleted_count: int`: An integer representing the number of documents that were deleted from the database as part of the delete operation.
+
+- `inserted_count: int`: An integer that indicates the number of documents that were successfully inserted into the database during the insert operation.
+
+- `matched_count: int`: An integer that represents the number of documents in the database that matched the query or criteria specified during the save operation. This count indicates how many existing documents were updated as part of the save operation.
+
+- `modified_count: int`: An integer that represents the number of documents in the database that were actually modified during the save operation. This count is usually the same as or a subset of the `matched_count` and indicates how many documents had their fields changed.
+
+- `upserted_count: int`: An integer that represents the number of documents that were inserted as a result of an upsert operation. This occurs when a document does not exist and is created during the update process.
+
+- `upserted_ids: dict[int, Id]`: A dictionary that maps the index of the upserted documents to their new unique IDs. This attribute is useful for tracking which documents were created during an upsert operation.

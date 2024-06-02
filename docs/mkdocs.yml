@@ -40,7 +40,7 @@ nav:
     - save.md
     - find.md
     - delete.md
-  - query.md
+  - query_operators.md
   - fastapi.md
   - indexes.md
   - aggregation.md
@@ -87,6 +87,3 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
-  - markdown_include.include:
-      # base_path: ../docs_utils
-      # encoding: utf-8
