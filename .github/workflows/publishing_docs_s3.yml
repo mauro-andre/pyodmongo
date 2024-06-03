@@ -22,11 +22,6 @@ jobs:
       run: |
         sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
         sudo apt-get install -y pngquant
-
-    - name: Generate release notes
-      run: |
-        python docs_release_notes.py
-      if: ${{ success() }}
         
     - name: Install AWS CLI
       run: |
@@ -39,9 +34,13 @@ jobs:
         aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws configure set region us-east-1
 
+    - name: Change mkdocs_build.sh chmod
+      run: |
+        chmod +x mkdocs_build.sh
+    
     - name: Building docs
       run: |
-        mkdocs build
+        ./mkdocs_build.sh
 
     - name: Upload S3 Bucket
       run: |

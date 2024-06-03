@@ -1,4 +1,5 @@
 from pyodmongo import MainBaseModel, DbModel, Field, Id
+from pyodmongo.models.query_operators import QueryOperator
 from pydantic import BaseModel
 from typing import ClassVar
 from bson import ObjectId
@@ -476,3 +477,6 @@ def test_mount_query_filter_with_elem_match():
             {"attr_3": {"$eq": "value_3"}},
         ]
     }
+
+def test_to_dict_query_operator_default():
+    assert QueryOperator().to_dict() is None

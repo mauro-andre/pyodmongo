@@ -2,14 +2,13 @@ from pyodmongo import (
     AsyncDbEngine,
     MainBaseModel,
     DbModel,
-    SaveResponse,
-    DeleteResponse,
+    DbResponse,
     ResponsePaginate,
     Id,
     Field,
 )
 from pyodmongo.queries import eq, gte, gt, mount_query_filter, sort, elem_match
-from pyodmongo.engine.utils import consolidate_dict
+from pyodmongo.engines.utils import consolidate_dict
 from pydantic import ConfigDict, BaseModel
 from typing import ClassVar
 from bson import ObjectId
@@ -17,12 +16,6 @@ from datetime import datetime, UTC, timezone, timedelta
 import pytz
 import pytest
 import pytest_asyncio
-
-mongo_uri = "mongodb://localhost:27017"
-db_name = "pyodmongo_pytest"
-db = AsyncDbEngine(
-    mongo_uri=mongo_uri, db_name=db_name, tz_info=pytz.timezone("America/Sao_Paulo")
-)
 
 
 class MyClass(DbModel):
@@ -33,18 +26,18 @@ class MyClass(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collection():
-    await db._db[MyClass._collection].drop()
+async def drop_collection(async_engine):
+    await async_engine._db[MyClass._collection].drop()
     yield MyClass(attr1="attr_1", attr2="attr_2")
-    await db._db[MyClass._collection].drop()
+    await async_engine._db[MyClass._collection].drop()
 
 
 @pytest_asyncio.fixture()
-async def create_100_docs_in_db():
+async def create_100_docs_in_db(async_engine):
     obj_list = []
     for n in range(1, 101):
         obj_list.append(MyClass(attr1="Value 1", attr2="Value 2", random_number=n))
-    await db.save_all(obj_list)
+    await async_engine.save_all(obj_list)
 
 
 @pytest.fixture()
@@ -53,37 +46,41 @@ def new_obj():
 
 
 @pytest.mark.asyncio
-async def test_check_if_create_a_new_doc_on_save(drop_collection, new_obj):
-    result: SaveResponse = await db.save(new_obj)
-    assert ObjectId.is_valid(result.upserted_id)
-    assert new_obj.id == result.upserted_id
+async def test_check_if_create_a_new_doc_on_save(
+    drop_collection, new_obj, async_engine
+):
+    result: DbResponse = await async_engine.save(new_obj)
+    assert ObjectId.is_valid(result.upserted_ids[0])
+    assert new_obj.id == result.upserted_ids[0]
     assert isinstance(new_obj.created_at, datetime)
     assert isinstance(new_obj.updated_at, datetime)
     assert new_obj.created_at == new_obj.updated_at
 
 
 @pytest.mark.asyncio
-async def test_create_and_delete_one(drop_collection, new_obj):
-    result: SaveResponse = await db.save(new_obj)
-    assert result.upserted_id is not None
-    id = result.upserted_id
+async def test_create_and_delete_one(drop_collection, new_obj, async_engine):
+    result: DbResponse = await async_engine.save(new_obj)
+    assert result.upserted_ids is not None
+    id = result.upserted_ids[0]
     query = MyClass.id == id
-    result: DeleteResponse = await db.delete_one(Model=MyClass, query=query)
+    result: DbResponse = await async_engine.delete(
+        Model=MyClass, query=query, delete_one=True
+    )
     assert result.deleted_count == 1
 
 
 @pytest.mark.asyncio
-async def test_find_one(drop_collection, new_obj):
-    result: SaveResponse = await db.save(new_obj)
-    id_returned = result.upserted_id
-    obj_found = await db.find_one(MyClass, eq(MyClass.id, id_returned))
+async def test_find_one(drop_collection, new_obj, async_engine):
+    result: DbResponse = await async_engine.save(new_obj)
+    id_returned = result.upserted_ids[0]
+    obj_found = await async_engine.find_one(MyClass, eq(MyClass.id, id_returned))
 
     assert isinstance(obj_found, MyClass)
     assert obj_found.id == id_returned
 
 
 @pytest.fixture()
-def objs() -> list[SaveResponse]:
+def objs():
     objs = [
         MyClass(attr1="attr_1", attr2="attr_2"),
         MyClass(attr1="attr_1", attr2="attr_2"),
@@ -96,46 +93,51 @@ def objs() -> list[SaveResponse]:
 
 
 @pytest.mark.asyncio
-async def test_save_all_created(drop_collection, objs):
-    response: list[SaveResponse] = await db.save_all(objs)
-    upserted_quantity = 0
-    for obj_response in response:
-        obj_response: SaveResponse
-        upserted_quantity += 1 if ObjectId.is_valid(obj_response.upserted_id) else 0
-
-    assert upserted_quantity == 6
+async def test_save_all_created(drop_collection, objs, async_engine):
+    await async_engine.save_all(objs)
+    assert all([ObjectId.is_valid(obj.id) for obj in objs])
 
 
 @pytest.mark.asyncio
-async def test_update_on_save(drop_collection, objs):
-    await db.save_all(objs)
+async def test_update_on_save(drop_collection, objs, async_engine):
+    await async_engine.save_all(objs)
     obj = MyClass(attr1="value_1", attr2="value_2")
-    response: SaveResponse = await db.save(obj, eq(MyClass.attr1, "attr_3"))
+    response: DbResponse = await async_engine.save(obj, eq(MyClass.attr1, "attr_3"))
 
     assert response.matched_count == 2
     assert response.modified_count == 2
-    assert response.upserted_id is None
+    assert response.upserted_ids == {}
 
 
 @pytest.mark.asyncio
-async def test_delete(drop_collection, objs):
-    await db.save_all(objs)
-    response: DeleteResponse = await db.delete(MyClass, eq(MyClass.attr1, "attr_1"))
+async def test_delete(drop_collection, objs, async_engine):
+    await async_engine.save_all(objs)
+    response: DbResponse = await async_engine.delete(
+        MyClass, eq(MyClass.attr1, "attr_1")
+    )
     assert response.deleted_count == 3
 
 
 @pytest.mark.asyncio
-async def test_find_many_without_paginate(drop_collection, create_100_docs_in_db):
-    obj_list_50 = await db.find_many(Model=MyClass, query=MyClass.random_number > 50)
-    obj_list_100 = await db.find_many(Model=MyClass, query=MyClass.random_number > 0)
+async def test_find_many_without_paginate(
+    drop_collection, create_100_docs_in_db, async_engine
+):
+    obj_list_50 = await async_engine.find_many(
+        Model=MyClass, query=MyClass.random_number > 50
+    )
+    obj_list_100 = await async_engine.find_many(
+        Model=MyClass, query=MyClass.random_number > 0
+    )
     assert len(obj_list_50) == 50
     assert len(obj_list_100) == 100
     assert all(isinstance(obj, MyClass) for obj in obj_list_100)
 
 
 @pytest.mark.asyncio
-async def test_find_many_with_paginate(drop_collection, create_100_docs_in_db):
-    response_paginate: ResponsePaginate = await db.find_many(
+async def test_find_many_with_paginate(
+    drop_collection, create_100_docs_in_db, async_engine
+):
+    response_paginate: ResponsePaginate = await async_engine.find_many(
         Model=MyClass,
         query=gt(MyClass.random_number, 50),
         paginate=True,
@@ -147,20 +149,22 @@ async def test_find_many_with_paginate(drop_collection, create_100_docs_in_db):
 
 
 @pytest.mark.asyncio
-async def test_with_query_and_raw_query_none(drop_collection, create_100_docs_in_db):
-    all_obj = await db.find_many(Model=MyClass)
+async def test_with_query_and_raw_query_none(
+    drop_collection, create_100_docs_in_db, async_engine
+):
+    all_obj = await async_engine.find_many(Model=MyClass)
     assert len(all_obj) == 100
 
 
 @pytest.mark.asyncio
-async def test_field_alias():
+async def test_field_alias(async_engine):
     class MyClass(DbModel):
         first_name: str = Field(alias="firstName", default=None)
         second_name: str = Field(alias="secondName", default=None)
         third_name: str = None
         _collection: ClassVar = "alias_test"
 
-    await db._db[MyClass._collection].drop()
+    await async_engine._db[MyClass._collection].drop()
 
     obj = MyClass(
         first_name="First Name", second_name="Second Name", third_name="Third Name"
@@ -175,15 +179,14 @@ async def test_field_alias():
     }
     dict_to_save = consolidate_dict(obj=obj, dct={})
     assert dict_to_save == expected_dict
-    await db.save(obj)
-    obj_found = await db.find_one(Model=MyClass)
+    await async_engine.save(obj)
+    obj_found = await async_engine.find_one(Model=MyClass)
     assert obj == obj_found
-
-    await db._db[MyClass._collection].drop()
+    await async_engine._db[MyClass._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_fields_alias_generator():
+async def test_fields_alias_generator(async_engine):
     def to_camel(string: str) -> str:
         return "".join(word.capitalize() for word in string.split("_"))
 
@@ -198,7 +201,7 @@ async def test_fields_alias_generator():
         _collection: ClassVar = "alias_test"
         model_config = ConfigDict(alias_generator=to_lower_camel)
 
-    await db._db[MyClass._collection].drop()
+    await async_engine._db[MyClass._collection].drop()
 
     obj = MyClass(
         first_name="First Name", second_name="Second Name", third_name="Third Name"
@@ -213,16 +216,16 @@ async def test_fields_alias_generator():
         "updatedAt": None,
     }
     assert dict_to_save == expected_dict
-    await db.save(obj)
-    obj_found = await db.find_one(Model=MyClass)
+    await async_engine.save(obj)
+    obj_found = await async_engine.find_one(Model=MyClass)
     assert obj == obj_found
-    await db._db[MyClass._collection].drop()
+    await async_engine._db[MyClass._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_find_many_with_zero_results(drop_collection):
-    await db.save(obj=drop_collection)
-    result = await db.find_many(
+async def test_find_many_with_zero_results(drop_collection, async_engine):
+    await async_engine.save(obj=drop_collection)
+    result = await async_engine.find_many(
         Model=MyClass, query=MyClass.attr1 == "value_that_not_exists", paginate=True
     )
 
@@ -232,9 +235,9 @@ async def test_find_many_with_zero_results(drop_collection):
 
 
 @pytest.mark.asyncio
-async def test_find_one_with_zero_results(drop_collection):
-    await db.save(obj=drop_collection)
-    result = await db.find_one(
+async def test_find_one_with_zero_results(drop_collection, async_engine):
+    await async_engine.save(obj=drop_collection)
+    result = await async_engine.find_one(
         Model=MyClass, query=eq(MyClass.attr1, "value_that_not_exists")
     )
 
@@ -242,50 +245,58 @@ async def test_find_one_with_zero_results(drop_collection):
 
 
 @pytest.mark.asyncio
-async def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator():
-    with pytest.raises(
-        TypeError,
-        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
-    ):
-        await db.delete_one(Model=MyClass, query="string")
-
-
-@pytest.mark.asyncio
-async def test_delete_type_error_when_query_is_not_comparison_or_logical_operator():
-    with pytest.raises(
-        TypeError,
-        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
-    ):
-        await db.delete(Model=MyClass, query="string")
-
-
-@pytest.mark.asyncio
-async def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
-    drop_collection,
+async def test_delete_one_type_error_when_query_is_not_comparison_or_logical_operator(
+    async_engine,
 ):
     with pytest.raises(
         TypeError,
         match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
-        await db.save(obj=drop_collection, query="string")
+        await async_engine.delete(Model=MyClass, query="string", delete_one=True)
 
 
 @pytest.mark.asyncio
-async def test_find_one_type_error_when_query_is_not_comparison_or_logical_operator():
+async def test_delete_type_error_when_query_is_not_comparison_or_logical_operator(
+    async_engine,
+):
     with pytest.raises(
         TypeError,
         match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
-        await db.find_one(Model=MyClass, query="string")
+        await async_engine.delete(Model=MyClass, query="string")
 
 
 @pytest.mark.asyncio
-async def test_find_many_type_error_when_query_is_not_comparison_or_logical_operator():
+async def test_save_type_error_when_query_is_not_comparison_or_logical_operator(
+    drop_collection, async_engine
+):
     with pytest.raises(
         TypeError,
         match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
     ):
-        await db.find_many(Model=MyClass, query="string")
+        await async_engine.save(obj=drop_collection, query="string")
+
+
+@pytest.mark.asyncio
+async def test_find_one_type_error_when_query_is_not_comparison_or_logical_operator(
+    async_engine,
+):
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await async_engine.find_one(Model=MyClass, query="string")
+
+
+@pytest.mark.asyncio
+async def test_find_many_type_error_when_query_is_not_comparison_or_logical_operator(
+    async_engine,
+):
+    with pytest.raises(
+        TypeError,
+        match='query argument must be a valid query operator from pyodmongo.queries. If you really need to make a very specific query, use "raw_query" argument',
+    ):
+        await async_engine.find_many(Model=MyClass, query="string")
 
 
 class MyModelRegex(DbModel):
@@ -295,27 +306,26 @@ class MyModelRegex(DbModel):
 
 
 @pytest_asyncio.fixture
-async def create_regex_collection():
-
-    await db._db[MyModelRegex._collection].drop()
+async def create_regex_collection(async_engine: AsyncDbEngine):
+    await async_engine._db[MyModelRegex._collection].drop()
     obj_list = [
         MyModelRegex(attr_1="Agroindústria"),
         MyModelRegex(attr_1="Agro-indústria"),
         MyModelRegex(attr_1="indústria agro"),
         MyModelRegex(attr_1="indústriaagro"),
     ]
-    await db.save_all(obj_list=obj_list)
+    await async_engine.save_all(obj_list=obj_list)
     yield
-    await db._db[MyModelRegex._collection].drop()
+    await async_engine._db[MyModelRegex._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_find_regex(create_regex_collection):
+async def test_find_regex(create_regex_collection, async_engine: AsyncDbEngine):
     input_dict = {"attr_1_in": "['/^ind[uúû]stria/i']"}
     query, _ = mount_query_filter(
         Model=MyModelRegex, items=input_dict, initial_comparison_operators=[]
     )
-    results = await db.find_many(Model=MyModelRegex, query=query)
+    results = await async_engine.find_many(Model=MyModelRegex, query=query)
     assert len(results) == 2
 
 
@@ -345,16 +355,18 @@ class AsDict22(DbModel):
 
 
 @pytest_asyncio.fixture
-async def create_as_dict_find_dict_collection():
-    await db._db[AsDict1._collection].drop()
-    await db._db[AsDict2._collection].drop()
+async def create_as_dict_find_dict_collection(async_engine: AsyncDbEngine):
+    await async_engine._db[AsDict1._collection].drop()
+    await async_engine._db[AsDict2._collection].drop()
     yield
-    await db._db[AsDict1._collection].drop()
-    await db._db[AsDict2._collection].drop()
+    await async_engine._db[AsDict1._collection].drop()
+    await async_engine._db[AsDict2._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_find_as_dict(create_as_dict_find_dict_collection):
+async def test_find_as_dict(
+    create_as_dict_find_dict_collection, async_engine: AsyncDbEngine
+):
     obj1 = AsDict1(attr_1="Obj 1", attr_2="Obj 1", attr_3="Obj 1")
     obj2 = AsDict1(attr_1="Obj 2", attr_2="Obj 2", attr_3="Obj 2")
     obj3 = AsDict1(attr_1="Obj 3", attr_2="Obj 3", attr_3="Obj 3")
@@ -363,19 +375,19 @@ async def test_find_as_dict(create_as_dict_find_dict_collection):
     obj6 = AsDict1(attr_1="Obj 6", attr_2="Obj 6", attr_3="Obj 6")
     obj7 = AsDict1(attr_1="Obj 7", attr_2="Obj 7", attr_3="Obj 7")
     obj8 = AsDict1(attr_1="Obj 8", attr_2="Obj 8", attr_3="Obj 8")
-    await db.save_all([obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8])
+    await async_engine.save_all([obj1, obj2, obj3, obj4, obj5, obj6, obj7, obj8])
     obj9 = AsDict2(attr_4="Obj 9", as_dict_1=[obj1, obj2])
     obj10 = AsDict2(attr_4="Obj 10", as_dict_1=[obj3, obj4])
     obj11 = AsDict2(attr_4="Obj 11", as_dict_1=[obj5, obj6])
     obj12 = AsDict2(attr_4="Obj 12", as_dict_1=[obj7, obj8])
-    await db.save_all([obj9, obj10, obj11, obj12])
+    await async_engine.save_all([obj9, obj10, obj11, obj12])
 
-    obj_list = await db.find_many(Model=AsDict22, as_dict=True, populate=True)
+    obj_list = await async_engine.find_many(Model=AsDict22, as_dict=True, populate=True)
     assert len(obj_list) == 4
     assert type(obj_list) is list
     for dct in obj_list:
         assert type(dct) == dict
-    obj_dict = await db.find_one(Model=AsDict2, as_dict=True, populate=True)
+    obj_dict = await async_engine.find_one(Model=AsDict2, as_dict=True, populate=True)
     assert type(obj_dict) == dict
 
 
@@ -401,40 +413,41 @@ class D(DbModel):
 
 
 @pytest_asyncio.fixture
-async def create_find_dict_collection():
-    await db._db[A._collection].drop()
-    await db._db[B._collection].drop()
-    await db._db[C._collection].drop()
-    await db._db[D._collection].drop()
+async def create_find_dict_collection(async_engine: AsyncDbEngine):
+    await async_engine._db[A._collection].drop()
+    await async_engine._db[B._collection].drop()
+    await async_engine._db[C._collection].drop()
+    await async_engine._db[D._collection].drop()
     yield
-    await db._db[A._collection].drop()
-    await db._db[B._collection].drop()
-    await db._db[C._collection].drop()
-    await db._db[D._collection].drop()
+    await async_engine._db[A._collection].drop()
+    await async_engine._db[B._collection].drop()
+    await async_engine._db[C._collection].drop()
+    await async_engine._db[D._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_recursive_reference_pipeline(create_find_dict_collection):
-
+async def test_recursive_reference_pipeline(
+    create_find_dict_collection, async_engine: AsyncDbEngine
+):
     a1 = A()
     a2 = A()
     a3 = A()
     a4 = A()
     a5 = A()
     a6 = A()
-    await db.save_all([a1, a2, a3, a4, a5, a6])
+    await async_engine.save_all([a1, a2, a3, a4, a5, a6])
     b1 = B(b1=a3)
     b2 = B(b1=a4)
     b3 = B(b1=a5)
     b4 = B(b1=a6)
-    await db.save_all([b1, b2, b3, b4])
+    await async_engine.save_all([b1, b2, b3, b4])
     c1 = C(b1=a1, b2=[b1, b2])
     c2 = C(b1=a2, b2=[b3, b4])
-    await db.save_all([c1, c2])
+    await async_engine.save_all([c1, c2])
     d1 = D(d1=[c1, c2])
-    await db.save(d1)
+    await async_engine.save(d1)
 
-    d: D = await db.find_one(Model=D, populate=True)
+    d: D = await async_engine.find_one(Model=D, populate=True)
 
     assert d.d1[0].b2[0].b1.a1 == "A"
 
@@ -452,36 +465,40 @@ class ClassB(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collections_a_b():
-    await db._db[ClassA._collection].drop()
-    await db._db[ClassB._collection].drop()
+async def drop_collections_a_b(async_engine: AsyncDbEngine):
+    await async_engine._db[ClassA._collection].drop()
+    await async_engine._db[ClassB._collection].drop()
     yield
-    await db._db[ClassA._collection].drop()
-    await db._db[ClassB._collection].drop()
+    await async_engine._db[ClassA._collection].drop()
+    await async_engine._db[ClassB._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_find_nested_field_query(drop_collections_a_b):
+async def test_find_nested_field_query(
+    drop_collections_a_b, async_engine: AsyncDbEngine
+):
     obj_a = ClassA()
-    await db.save(obj=obj_a)
+    await async_engine.save(obj=obj_a)
     obj_b = ClassB(a=obj_a)
-    await db.save(obj=obj_b)
+    await async_engine.save(obj=obj_b)
     query = eq(ClassB.a, obj_a.id)
-    result = await db.find_many(Model=ClassB, query=query, populate=True)
+    result = await async_engine.find_many(Model=ClassB, query=query, populate=True)
     assert result == [obj_b]
 
 
 @pytest.mark.asyncio
-async def test_find_nested_field_mount_query(drop_collections_a_b):
+async def test_find_nested_field_mount_query(
+    drop_collections_a_b, async_engine: AsyncDbEngine
+):
     obj_a = ClassA()
-    await db.save(obj=obj_a)
+    await async_engine.save(obj=obj_a)
     obj_b = ClassB(a=obj_a)
-    await db.save(obj=obj_b)
+    await async_engine.save(obj=obj_b)
     input_dict = {"a": obj_a.id}
     query, _ = mount_query_filter(
         Model=ClassB, items=input_dict, initial_comparison_operators=[]
     )
-    result = await db.find_many(Model=ClassB, query=query, populate=True)
+    result = await async_engine.find_many(Model=ClassB, query=query, populate=True)
     assert result == [obj_b]
 
 
@@ -509,16 +526,18 @@ class ClassThree(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collections_one_three():
-    await db._db[ClassOne._collection].drop()
-    await db._db[ClassThree._collection].drop()
+async def drop_collections_one_three(async_engine: AsyncDbEngine):
+    await async_engine._db[ClassOne._collection].drop()
+    await async_engine._db[ClassThree._collection].drop()
     yield
-    await db._db[ClassOne._collection].drop()
-    await db._db[ClassThree._collection].drop()
+    await async_engine._db[ClassOne._collection].drop()
+    await async_engine._db[ClassThree._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_nested_list_objects(drop_collections_one_three):
+async def test_nested_list_objects(
+    drop_collections_one_three, async_engine: AsyncDbEngine
+):
     obj_1 = ClassOne(attr_1="obj_1")
     obj_2 = ClassOne(attr_1="obj_2")
     obj_3 = ClassOne(attr_1="obj_3")
@@ -527,7 +546,9 @@ async def test_nested_list_objects(drop_collections_one_three):
     obj_6 = ClassOne(attr_1="obj_6")
     obj_7 = ClassOne(attr_1="obj_7")
     obj_8 = ClassOne(attr_1="obj_8")
-    await db.save_all([obj_1, obj_2, obj_3, obj_4, obj_5, obj_6, obj_7, obj_8])
+    await async_engine.save_all(
+        [obj_1, obj_2, obj_3, obj_4, obj_5, obj_6, obj_7, obj_8]
+    )
     obj_9 = ClassTwoA(attr_2_a="obj_9", class_one=[obj_1, obj_2])
     obj_10 = ClassTwoA(attr_2_a="obj_10", class_one=[obj_3, obj_4])
     obj_11 = ClassTwoA(attr_2_a="obj_11", class_one=[obj_5, obj_6])
@@ -541,9 +562,9 @@ async def test_nested_list_objects(drop_collections_one_three):
     obj_15 = ClassThree(
         attr_3="obj_15", class_two_b=obj_13, class_two_b_list=[obj_13, obj_14]
     )
-    await db.save(obj_15)
+    await async_engine.save(obj_15)
 
-    obj_found = await db.find_one(Model=ClassThree, populate=True)
+    obj_found = await async_engine.find_one(Model=ClassThree, populate=True)
     assert obj_found.id == obj_15.id
     assert obj_found.class_two_b.attr_2_b == "obj_13"
 
@@ -556,14 +577,14 @@ class MySortClass(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collection_for_test_sort():
-    await db._db[MySortClass._collection].drop()
+async def drop_collection_for_test_sort(async_engine: AsyncDbEngine):
+    await async_engine._db[MySortClass._collection].drop()
     yield
-    await db._db[MySortClass._collection].drop()
+    await async_engine._db[MySortClass._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_sort_query(drop_collection_for_test_sort):
+async def test_sort_query(drop_collection_for_test_sort, async_engine: AsyncDbEngine):
     obj_list = [
         MySortClass(
             attr_1="Juliet",
@@ -591,14 +612,14 @@ async def test_sort_query(drop_collection_for_test_sort):
             attr_3=datetime(year=2025, month=1, day=20, tzinfo=UTC),
         ),
     ]
-    await db.save_all(obj_list=obj_list)
+    await async_engine.save_all(obj_list=obj_list)
     sort_oprator = sort((MySortClass.attr_1, 1), (MySortClass.attr_2, 1))
-    result_many = await db.find_many(Model=MySortClass, sort=sort_oprator)
+    result_many = await async_engine.find_many(Model=MySortClass, sort=sort_oprator)
     assert result_many[0] == obj_list[4]
     assert result_many[1] == obj_list[1]
 
     sort_oprator = sort((MySortClass.attr_3, 1))
-    result_one = await db.find_one(Model=MySortClass, sort=sort_oprator)
+    result_one = await async_engine.find_one(Model=MySortClass, sort=sort_oprator)
     assert result_one == obj_list[2]
 
     sort_oprator = ["attr_3", 1]
@@ -606,13 +627,13 @@ async def test_sort_query(drop_collection_for_test_sort):
         TypeError,
         match='sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument',
     ):
-        result_one = await db.find_one(Model=MySortClass, sort=sort_oprator)
+        result_one = await async_engine.find_one(Model=MySortClass, sort=sort_oprator)
 
     with pytest.raises(
         TypeError,
         match='sort argument must be a SortOperator from pyodmongo.queries. If you really need to make a very specific sort, use "raw_sort" argument',
     ):
-        result_many = await db.find_many(Model=MySortClass, sort=sort_oprator)
+        result_many = await async_engine.find_many(Model=MySortClass, sort=sort_oprator)
 
 
 class ClassWithDate(DbModel):
@@ -622,15 +643,16 @@ class ClassWithDate(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collection_class_with_date():
-    await db._db[ClassWithDate._collection].drop()
+async def drop_collection_class_with_date(async_engine: AsyncDbEngine):
+    await async_engine._db[ClassWithDate._collection].drop()
     yield
-    await db._db[ClassWithDate._collection].drop()
+    await async_engine._db[ClassWithDate._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_save_and_retrieve_objs_with_datetime(drop_collection_class_with_date):
-
+async def test_save_and_retrieve_objs_with_datetime(
+    drop_collection_class_with_date, async_engine: AsyncDbEngine
+):
     tz = timezone(timedelta(hours=-3))
     date = datetime(
         year=2024,
@@ -642,11 +664,13 @@ async def test_save_and_retrieve_objs_with_datetime(drop_collection_class_with_d
         tzinfo=tz,
     )
     obj = ClassWithDate(name="A name", date=date)
-    await db.save(obj)
+    await async_engine.save(obj)
     query = (ClassWithDate.date >= datetime(2024, 4, 24, 22, 30, 0, tzinfo=tz)) & (
         ClassWithDate.date <= datetime(2024, 4, 24, 23, 30, 0, tzinfo=tz)
     )
-    obj_found: ClassWithDate = await db.find_one(Model=ClassWithDate, query=query)
+    obj_found: ClassWithDate = await async_engine.find_one(
+        Model=ClassWithDate, query=query
+    )
     assert obj_found.date == date
 
 
@@ -661,14 +685,16 @@ class ModelMain(DbModel):
 
 
 @pytest_asyncio.fixture()
-async def drop_collection_for_elem_match():
-    await db._db[ModelMain._collection].drop()
+async def drop_collection_for_elem_match(async_engine: AsyncDbEngine):
+    await async_engine._db[ModelMain._collection].drop()
     yield
-    await db._db[ModelMain._collection].drop()
+    await async_engine._db[ModelMain._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_elem_match_in_db(drop_collection_for_elem_match):
+async def test_elem_match_in_db(
+    drop_collection_for_elem_match, async_engine: AsyncDbEngine
+):
     obj_embedded_0 = ModelEmbedded(attr_1="one", attr_2="one")
     obj_embedded_1 = ModelEmbedded(attr_1="two", attr_2="two")
     obj_embedded_2 = ModelEmbedded(attr_1="one", attr_2="two")
@@ -677,14 +703,14 @@ async def test_elem_match_in_db(drop_collection_for_elem_match):
     obj_db_0 = ModelMain(attr_3=[obj_embedded_0, obj_embedded_1])
     obj_db_1 = ModelMain(attr_3=[obj_embedded_2, obj_embedded_3])
 
-    await db.save_all([obj_db_0, obj_db_1])
+    await async_engine.save_all([obj_db_0, obj_db_1])
     query_0 = (ModelMain.attr_3.attr_1 == "one") & (ModelMain.attr_3.attr_2 == "two")
-    result_0 = await db.find_many(Model=ModelMain, query=query_0)
+    result_0 = await async_engine.find_many(Model=ModelMain, query=query_0)
     query_1 = elem_match(
         ModelEmbedded.attr_1 == "one",
         ModelEmbedded.attr_2 == "two",
         field=ModelMain.attr_3,
     )
-    result_1 = await db.find_many(Model=ModelMain, query=query_1)
+    result_1 = await async_engine.find_many(Model=ModelMain, query=query_1)
     assert len(result_0) == 2
     assert len(result_1) == 1

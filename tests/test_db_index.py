@@ -5,12 +5,6 @@ import pytest
 import pytest_asyncio
 
 
-mongo_uri = "mongodb://localhost:27017"
-db_name = "pyodmongo_pytest"
-sync_db = DbEngine(mongo_uri=mongo_uri, db_name=db_name)
-async_db = AsyncDbEngine(mongo_uri=mongo_uri, db_name=db_name)
-
-
 class MyClass(DbModel):
     attr_0: str
     attr_1: str = Field(index=True)
@@ -27,39 +21,39 @@ class MyClass2(DbModel):
 
 
 @pytest.fixture()
-def sync_drop_collection():
-    sync_db._db[MyClass._collection].drop()
+def sync_drop_collection(engine: DbEngine):
+    engine._db[MyClass._collection].drop()
     yield
-    sync_db._db[MyClass._collection].drop()
+    engine._db[MyClass._collection].drop()
 
 
 @pytest_asyncio.fixture()
-async def async_drop_collection():
-    await async_db._db[MyClass._collection].drop()
+async def async_drop_collection(async_engine: AsyncDbEngine):
+    await async_engine._db[MyClass._collection].drop()
     yield
-    await async_db._db[MyClass._collection].drop()
+    await async_engine._db[MyClass._collection].drop()
 
 
 def test_index_unique_text_index():
-    assert not MyClass.model_fields["attr_0"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_0"]._attributes_set.get("unique") or False
-    assert not MyClass.model_fields["attr_0"]._attributes_set.get("text_index") or False
+    assert MyClass.model_fields["attr_1"].json_schema_extra.get("index") or False
+    assert not MyClass.model_fields["attr_1"].json_schema_extra.get("unique") or False
+    assert (
+        not MyClass.model_fields["attr_1"].json_schema_extra.get("text_index") or False
+    )
 
-    assert MyClass.model_fields["attr_1"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_1"]._attributes_set.get("unique") or False
-    assert not MyClass.model_fields["attr_1"]._attributes_set.get("text_index") or False
+    assert not MyClass.model_fields["attr_2"].json_schema_extra.get("index") or False
+    assert MyClass.model_fields["attr_2"].json_schema_extra.get("unique") or False
+    assert (
+        not MyClass.model_fields["attr_2"].json_schema_extra.get("text_index") or False
+    )
 
-    assert not MyClass.model_fields["attr_2"]._attributes_set.get("index") or False
-    assert MyClass.model_fields["attr_2"]._attributes_set.get("unique") or False
-    assert not MyClass.model_fields["attr_2"]._attributes_set.get("text_index") or False
+    assert not MyClass.model_fields["attr_3"].json_schema_extra.get("index") or False
+    assert not MyClass.model_fields["attr_3"].json_schema_extra.get("unique") or False
+    assert MyClass.model_fields["attr_3"].json_schema_extra.get("text_index") or False
 
-    assert not MyClass.model_fields["attr_3"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_3"]._attributes_set.get("unique") or False
-    assert MyClass.model_fields["attr_3"]._attributes_set.get("text_index") or False
-
-    assert MyClass.model_fields["attr_4"]._attributes_set.get("index") or False
-    assert not MyClass.model_fields["attr_4"]._attributes_set.get("unique") or False
-    assert MyClass.model_fields["attr_4"]._attributes_set.get("text_index") or False
+    assert MyClass.model_fields["attr_4"].json_schema_extra.get("index") or False
+    assert not MyClass.model_fields["attr_4"].json_schema_extra.get("unique") or False
+    assert MyClass.model_fields["attr_4"].json_schema_extra.get("text_index") or False
 
 
 def test_check_index_field():
@@ -68,7 +62,7 @@ def test_check_index_field():
     assert all(type(item) is IndexModel for item in MyClass._init_indexes)
 
 
-def test_sync_check_index_in_db(sync_drop_collection):
+def test_sync_check_index_in_db(sync_drop_collection, engine: DbEngine):
     obj = MyClass(
         attr_0="attr_0",
         attr_1="attr_1",
@@ -76,8 +70,8 @@ def test_sync_check_index_in_db(sync_drop_collection):
         attr_3="attr_3",
         attr_4="attr_4",
     )
-    result = sync_db.save(obj)
-    indexes_in_db = sync_db._db[MyClass._collection].index_information()
+    result = engine.save(obj)
+    indexes_in_db = engine._db[MyClass._collection].index_information()
     assert "attr_0" not in indexes_in_db
     assert "attr_1" in indexes_in_db
     assert "attr_2" not in indexes_in_db
@@ -88,7 +82,9 @@ def test_sync_check_index_in_db(sync_drop_collection):
 
 
 @pytest.mark.asyncio
-async def test_async_check_index_in_db(async_drop_collection):
+async def test_async_check_index_in_db(
+    async_drop_collection, async_engine: AsyncDbEngine
+):
     obj = MyClass(
         attr_0="attr_0",
         attr_1="attr_1",
@@ -96,8 +92,8 @@ async def test_async_check_index_in_db(async_drop_collection):
         attr_3="attr_3",
         attr_4="attr_4",
     )
-    result = await async_db.save(obj)
-    indexes_in_db = await async_db._db[MyClass._collection].index_information()
+    result = await async_engine.save(obj)
+    indexes_in_db = await async_engine._db[MyClass._collection].index_information()
     assert "attr_0" not in indexes_in_db
     assert "attr_1" in indexes_in_db
     assert "attr_2" not in indexes_in_db
@@ -108,7 +104,7 @@ async def test_async_check_index_in_db(async_drop_collection):
     assert indexes_in_db["texts"]["default_language"] == "portuguese"
 
 
-def test_create_indexes_on_inheritance(sync_drop_collection):
+def test_create_indexes_on_inheritance(sync_drop_collection, engine: DbEngine):
     class InheritanceClass(MyClass):
         attr_5: str = Field(index=True)
 
@@ -121,8 +117,8 @@ def test_create_indexes_on_inheritance(sync_drop_collection):
         attr_5="attr_5",
     )
 
-    result = sync_db.save(obj)
-    indexes_in_db = sync_db._db[MyClass._collection].index_information()
+    result = engine.save(obj)
+    indexes_in_db = engine._db[MyClass._collection].index_information()
     assert "attr_0" not in indexes_in_db
     assert "attr_1" in indexes_in_db
     assert "attr_2" not in indexes_in_db
@@ -133,11 +129,11 @@ def test_create_indexes_on_inheritance(sync_drop_collection):
     assert "attr_4" in indexes_in_db["texts"]["weights"]
 
 
-def test_create_indexes_on_two_inheritance():
+def test_create_indexes_on_two_inheritance(engine: DbEngine):
     class MyClass3(MyClass, MyClass2):
         attr_7: str = Field(index=True)
 
-    sync_db._db[MyClass._collection].drop()
+    engine._db[MyClass._collection].drop()
     obj = MyClass3(
         attr_0="attr_0",
         attr_1="attr_1",
@@ -148,8 +144,8 @@ def test_create_indexes_on_two_inheritance():
         attr_6="attr_6",
         attr_7="attr_7",
     )
-    result = sync_db.save(obj)
-    indexes_in_db = sync_db._db[MyClass._collection].index_information()
+    result = engine.save(obj)
+    indexes_in_db = engine._db[MyClass._collection].index_information()
     assert "attr_0" not in indexes_in_db
     assert "attr_1" in indexes_in_db
     assert "attr_2" not in indexes_in_db
@@ -160,10 +156,10 @@ def test_create_indexes_on_two_inheritance():
     assert "attr_7" in indexes_in_db
     assert "attr_3" in indexes_in_db["texts"]["weights"]
     assert "attr_4" in indexes_in_db["texts"]["weights"]
-    sync_db._db[MyClass._collection].drop()
+    engine._db[MyClass._collection].drop()
 
 
-def test_create_custom_indexes():
+def test_create_custom_indexes(engine: DbEngine):
     class MyClassCustomIndex(DbModel):
         attr_0: str = Field(default=None, index=True)
         attr_1: str = Field(default=None)
@@ -175,11 +171,11 @@ def test_create_custom_indexes():
             )
         ]
 
-    sync_db._db[MyClassCustomIndex._collection].drop()
+    engine._db[MyClassCustomIndex._collection].drop()
 
     obj = MyClassCustomIndex()
-    sync_db.save(obj)
-    indexes_in_db = sync_db._db[MyClassCustomIndex._collection].index_information()
+    engine.save(obj)
+    indexes_in_db = engine._db[MyClassCustomIndex._collection].index_information()
     assert "attr_0_and_attr_1" in indexes_in_db
     assert "attr_0" not in indexes_in_db
     assert "attr_1" not in indexes_in_db
@@ -187,11 +183,11 @@ def test_create_custom_indexes():
     assert indexes_in_db["attr_0_and_attr_1"]["key"][0] == ("attr_0", 1)
     assert indexes_in_db["attr_0_and_attr_1"]["key"][1] == ("attr_1", -1)
 
-    sync_db._db[MyClassCustomIndex._collection].drop()
+    engine._db[MyClassCustomIndex._collection].drop()
 
 
 @pytest.mark.asyncio
-async def test_async_create_custom_indexes():
+async def test_async_create_custom_indexes(async_engine: AsyncDbEngine):
     class MyClassCustomIndex(DbModel):
         attr_0: str = Field(default=None, index=True)
         attr_1: str = Field(default=None)
@@ -203,11 +199,13 @@ async def test_async_create_custom_indexes():
             )
         ]
 
-    await async_db._db[MyClassCustomIndex._collection].drop()
+    await async_engine._db[MyClassCustomIndex._collection].drop()
 
     obj = MyClassCustomIndex()
-    await async_db.save(obj)
-    indexes_in_db = sync_db._db[MyClassCustomIndex._collection].index_information()
+    await async_engine.save(obj)
+    indexes_in_db = await async_engine._db[
+        MyClassCustomIndex._collection
+    ].index_information()
     assert "attr_0_and_attr_1" in indexes_in_db
     assert "attr_0" not in indexes_in_db
     assert "attr_1" not in indexes_in_db
@@ -215,4 +213,4 @@ async def test_async_create_custom_indexes():
     assert indexes_in_db["attr_0_and_attr_1"]["key"][0] == ("attr_0", 1)
     assert indexes_in_db["attr_0_and_attr_1"]["key"][1] == ("attr_1", -1)
 
-    sync_db._db[MyClassCustomIndex._collection].drop()
+    await async_engine._db[MyClassCustomIndex._collection].drop()

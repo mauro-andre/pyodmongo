@@ -10,84 +10,17 @@ Here's a simple example using just the `$group` stage from the MongoDB Aggregati
 
 /// tab | Async
 ```python
-from pyodmongo import DbModel, AsyncDbEngine, Id
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Customer(DbModel):
-    name: str
-    email: str
-    _collection: ClassVar = 'customers'
-
-
-class Order(DbModel):
-    customer: Customer | Id
-    value: float
-    _collection: ClassVar = 'orders'
-
-
-class OrdersByCustomers(DbModel):
-    count: int
-    total_value: float
-    _collection: ClassVar = 'orders'
-    _pipeline: ClassVar = [
-        {
-            '$group': {
-                '_id': '$customer',
-                'count': {'$count': {}},
-                'total_value': {'$sum': '$value'},
-            }
-        }
-    ]
-
-
-async def main():
-    result: list[OrdersByCustomers] = await engine.find_many(Model=OrdersByCustomers)
-
-asyncio.run(main())
+__aggregation_async.py__
 ```
 ///
 /// tab | Sync
 ```python
-from pyodmongo import DbModel, DbEngine, Id
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Customer(DbModel):
-    name: str
-    email: str
-    _collection: ClassVar = 'customers'
-
-
-class Order(DbModel):
-    customer: Customer | Id
-    value: float
-    _collection: ClassVar = 'orders'
-
-
-class OrdersByCustomers(DbModel):
-    count: int
-    total_value: float
-    _collection: ClassVar = 'orders'
-    _pipeline: ClassVar = [
-        {
-            '$group': {
-                '_id': '$customer',
-                'count': {'$count': {}},
-                'total_value': {'$sum': '$value'},
-            }
-        }
-    ]
-
-
-result: list[OrdersByCustomers] = engine.find_many(Model=OrdersByCustomers)
+__aggregation_sync.py__
 ```
 ///
+
+!!! tip
+    PyODMongo already uses aggregation in the `find` and `find_one` methods under the hood. The `query` parameter in these methods is actually converted into a `$match` stage and inserted as the first stage of the aggregation pipeline. You can continue using this combination by passing `query` parameter in `find` and `find_one` methods and `_pipeline` in your class.
 
 In this example, we have an `OrdersByCustomers` model with an aggregation pipeline that groups orders by customer, calculating the count of orders and the total order value for each customer.
 

@@ -5,15 +5,7 @@ No **PyODMongo**, a classe `DbModel` serve como elemento fundamental para modela
 Graças à integração do **PyODMongo** e Pydantic, você pode criar coleções MongoDB e definir seu esquema sem esforço, combinando os pontos fortes do MongoDB com a conveniência das classes Pydantic e suas validações de dados.
 
 ```python
-from pyodmongo import DbModel
-from typing import ClassVar
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
+__db_model.py__
 ```
 
 Para garantir que sua classe Python esteja mapeada corretamente para a coleção MongoDB correspondente, é essencial incluir o atributo `_collection`. Este atributo deve ser um `ClassVar` com um valor de string contendo o nome desejado da coleção em seu banco de dados MongoDB.
@@ -49,22 +41,7 @@ No **PyODMongo**, você pode modelar relacionamentos entre documentos usando ref
 Os relacionamentos por referência envolvem a referência de um documento a outro usando um identificador. No **PyODMongo**, você pode estabelecer relacionamentos por referência entre documentos incluindo campos que armazenam referências a identificadores de outros documentos.
 
 ```python hl_lines="15"
-from pyodmongo import DbModel, Id
-from typing import ClassVar
-
-
-class User(DbModel):
-    username: str
-    password: str
-    _collection: ClassVar = 'users'
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    user: User | Id
-    _collection: ClassVar = 'products'
+__reference.py__
 ```
 
 Neste caso, o **PyODMongo** aceitará que `user` pode ser uma instância de `User` ou uma referência `Id`
@@ -76,26 +53,19 @@ Neste caso, o **PyODMongo** aceitará que `user` pode ser uma instância de `Use
 
 Documentos incorporados envolvem aninhar um documento dentro de outro. No **PyODMongo**, você pode definir relacionamentos incorporados incluindo campos que representam documentos aninhados.
 
-```python hl_lines="16"
-from pyodmongo import DbModel
-from pydantic import BaseModel
-from typing import ClassVar
-
-
-class Address(BaseModel):
-    street: str
-    city: str
-    state: str
-    zip_code: str
-
-
-class User(DbModel):
-    username: str
-    password: str
-    address: Address
-    _collection: ClassVar = 'users'
-
+/// tab | PyODMongo MainBaseModel
+```python hl_lines="5"
+__embedded_mainbasemodel.py__
 ```
+///
+/// tab | Pydantic BaseModel
+```python hl_lines="6"
+__embedded_basemodel.py__
+```
+///
+
+!!! note
+    A diferença entre usar `MainBaseModel` e `BaseModel` é que alguns métodos de busca, como o operador `$elemMatch`, requerem `MainBaseModel` para elementos aninhados. Portanto, é sempre recomendado usar `MainBaseModel`.
 
 !!! tip
     Você também pode incorporar documentos de outros objetos `DbModel` em vez de `BaseModel`. Isso é ótimo quando você deseja manter as informações atuais em um documento.

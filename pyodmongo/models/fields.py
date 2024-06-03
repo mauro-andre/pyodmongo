@@ -2,13 +2,12 @@ from __future__ import annotations as _annotations
 
 import typing
 from typing import Any
-from warnings import warn
 
 from pydantic_core import PydanticUndefined
 from typing_extensions import Literal, Unpack
 
-from pydantic.errors import PydanticUserError
-from pydantic.fields import AliasPath, AliasChoices, _EmptyKwargs, FieldInfo
+from pydantic.fields import AliasPath, AliasChoices, _EmptyKwargs
+from pydantic import Field as Pydantic_Field
 
 
 _Unset: Any = PydanticUndefined
@@ -27,9 +26,7 @@ def Field(  # noqa: C901
     examples: list[Any] | None = _Unset,
     exclude: bool | None = _Unset,
     discriminator: str | None = _Unset,
-    json_schema_extra: (
-        dict[str, Any] | typing.Callable[[dict[str, Any]], None] | None
-    ) = _Unset,
+    json_schema_extra: dict[str, Any] | None = _Unset,
     frozen: bool | None = _Unset,
     validate_default: bool | None = _Unset,
     repr: bool = _Unset,
@@ -109,89 +106,17 @@ def Field(  # noqa: C901
             type annotated fields without causing a typing error.
     """
     # Check deprecated and removed params from V1. This logic should eventually be removed.
-    const = extra.pop("const", None)  # type: ignore
-    if const is not None:
-        raise PydanticUserError(
-            "`const` is removed, use `Literal` instead", code="removed-kwargs"
-        )
-
-    min_items = extra.pop("min_items", None)  # type: ignore
-    if min_items is not None:
-        warn(
-            "`min_items` is deprecated and will be removed, use `min_length` instead",
-            DeprecationWarning,
-        )
-        if min_length in (None, _Unset):
-            min_length = min_items  # type: ignore
-
-    max_items = extra.pop("max_items", None)  # type: ignore
-    if max_items is not None:
-        warn(
-            "`max_items` is deprecated and will be removed, use `max_length` instead",
-            DeprecationWarning,
-        )
-        if max_length in (None, _Unset):
-            max_length = max_items  # type: ignore
-
-    unique_items = extra.pop("unique_items", None)  # type: ignore
-    if unique_items is not None:
-        raise PydanticUserError(
-            (
-                "`unique_items` is removed, use `Set` instead"
-                "(this feature is discussed in https://github.com/pydantic/pydantic-core/issues/296)"
-            ),
-            code="removed-kwargs",
-        )
-
-    allow_mutation = extra.pop("allow_mutation", None)  # type: ignore
-    if allow_mutation is not None:
-        warn(
-            "`allow_mutation` is deprecated and will be removed. use `frozen` instead",
-            DeprecationWarning,
-        )
-        if allow_mutation is False:
-            frozen = True
-
-    regex = extra.pop("regex", None)  # type: ignore
-    if regex is not None:
-        raise PydanticUserError(
-            "`regex` is removed. use `pattern` instead", code="removed-kwargs"
-        )
-
-    if extra:
-        warn(
-            "Using extra keyword arguments on `Field` is deprecated and will be removed."
-            " Use `json_schema_extra` instead."
-            f' (Extra keys: {", ".join(k.__repr__() for k in extra.keys())})',
-            DeprecationWarning,
-        )
-        if not json_schema_extra or json_schema_extra is _Unset:
-            json_schema_extra = extra  # type: ignore
-
-    if (
-        validation_alias
-        and validation_alias is not _Unset
-        and not isinstance(validation_alias, (str, AliasChoices, AliasPath))
-    ):
-        raise TypeError(
-            "Invalid `validation_alias` type. it should be `str`, `AliasChoices`, or `AliasPath`"
-        )
-
-    if serialization_alias in (_Unset, None) and isinstance(alias, str):
-        serialization_alias = alias
-
-    if validation_alias in (_Unset, None):
-        validation_alias = alias
-
-    include = extra.pop("include", None)  # type: ignore
-    if include is not None:
-        warn(
-            "`include` is deprecated and does nothing. It will be removed, use `exclude` instead",
-            DeprecationWarning,
-        )
-
-    return FieldInfo.from_field(
-        default,
+    json_schema_extra = (
+        {}
+        if json_schema_extra == PydanticUndefined or json_schema_extra is None
+        else json_schema_extra
+    )
+    json_schema_extra["index"] = index
+    json_schema_extra["unique"] = unique
+    json_schema_extra["text_index"] = text_index
+    json_schema_extra["default_language"] = default_language
+    return Pydantic_Field(
+        default=default,
         default_factory=default_factory,
         alias=alias,
         alias_priority=alias_priority,
@@ -204,25 +129,22 @@ def Field(  # noqa: C901
         discriminator=discriminator,
         json_schema_extra=json_schema_extra,
         frozen=frozen,
-        pattern=pattern,
         validate_default=validate_default,
         repr=repr,
         init_var=init_var,
         kw_only=kw_only,
+        pattern=pattern,
         strict=strict,
         gt=gt,
         ge=ge,
         lt=lt,
         le=le,
         multiple_of=multiple_of,
-        min_length=min_length,
-        max_length=max_length,
         allow_inf_nan=allow_inf_nan,
         max_digits=max_digits,
         decimal_places=decimal_places,
+        min_length=min_length,
+        max_length=max_length,
         union_mode=union_mode,
-        index=index,
-        unique=unique,
-        text_index=text_index,
-        default_language=default_language,
+        **extra,
     )

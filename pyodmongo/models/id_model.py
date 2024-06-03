@@ -1,10 +1,8 @@
 from typing import Any
 from bson import ObjectId
 from pydantic import GetCoreSchemaHandler
-import pydantic_core
 from pydantic_core import core_schema, CoreSchema
 from pydantic_core.core_schema import ValidationInfo, str_schema
-from packaging import version
 
 
 class Id(str):

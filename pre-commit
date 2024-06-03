@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# Path to your virtual environment
+VENV_DIR="venv"
+
+# Check if the virtual environment directory exists
+if [ -d "$VENV_DIR" ]; then
+    # Activate the virtual environment
+    . "$VENV_DIR/bin/activate"
+else
+    echo "Virtual environment not found at $VENV_DIR"
+    exit 1
+fi
+
+# Run black formatter on specified directories
+black pyodmongo tests
+
+# Check if black made any changes
+if ! git diff --exit-code; then
+    echo "Black formatting made changes. Please add the changes and commit again."
+    exit 1
+fi
+
+# Update requirements.txt
+pip freeze > requirements.txt
+
+# Check if requirements.txt was modified
+if ! git diff --exit-code requirements.txt; then
+    echo "requirements.txt was updated. Please add the changes and commit again."
+    exit 1
+fi
+
+# Add requirements.txt to the commit
+git add requirements.txt
+
+# If everything is formatted correctly, allow the commit
+exit 0

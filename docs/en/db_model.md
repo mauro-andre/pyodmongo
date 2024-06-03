@@ -5,15 +5,7 @@ In **PyODMongo**, the `DbModel` class serves as the foundational element for mod
 Thanks to the **PyODMongo** and Pydantic integration, you can create MongoDB collections and define their schema effortlessly, combining the strengths of MongoDB with the convenience of Pydantic classes and their data validation.
 
 ```python
-from pyodmongo import DbModel
-from typing import ClassVar
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
+__db_model.py__
 ```
 
 To ensure that your Python class is correctly mapped to the corresponding MongoDB collection, it's essential to include the `_collection` attribute. This attribute should be a `ClassVar` with a string value containing the desired name of the collection in your MongoDB database.
@@ -49,22 +41,7 @@ In **PyODMongo**, you can model relationships between documents using references
 Reference relationships involve referencing one document from another using an identifier. In **PyODMongo**, you can establish reference relationships between documents by including fields that store references to other documents' identifiers.
 
 ```python hl_lines="15"
-from pyodmongo import DbModel, Id
-from typing import ClassVar
-
-
-class User(DbModel):
-    username: str
-    password: str
-    _collection: ClassVar = 'users'
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    user: User | Id
-    _collection: ClassVar = 'products'
+__reference.py__
 ```
 
 In this case **PyODMongo** will accept `user` can be an instance of `User` or an `Id` reference
@@ -76,26 +53,19 @@ In this case **PyODMongo** will accept `user` can be an instance of `User` or an
 
 Embedded documents involve nesting one document within another. In **PyODMongo**, you can define embedded relationships by including fields that represent nested documents.
 
-```python hl_lines="16"
-from pyodmongo import DbModel
-from pydantic import BaseModel
-from typing import ClassVar
-
-
-class Address(BaseModel):
-    street: str
-    city: str
-    state: str
-    zip_code: str
-
-
-class User(DbModel):
-    username: str
-    password: str
-    address: Address
-    _collection: ClassVar = 'users'
-
+/// tab | PyODMongo MainBaseModel
+```python hl_lines="5"
+__embedded_mainbasemodel.py__
 ```
+///
+/// tab | Pydantic BaseModel
+```python hl_lines="6"
+__embedded_basemodel.py__
+```
+///
+
+!!! note
+    The difference between using `MainBaseModel` and `BaseModel` is that some search methods, such as the `$elemMatch` operator, require `MainBaseModel` for nested elements. Therefore, it is always recommended to use `MainBaseModel`.
 
 !!! tip
     You can also embed documents from other `DbModel` objects instead of `BaseModel`. This is great when you want to keep current information in a document.
