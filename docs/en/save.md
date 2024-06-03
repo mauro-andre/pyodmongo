@@ -25,7 +25,7 @@ If the result of the `save` method corresponds to the creation of a new document
 - `raw_query: dict = None`: A query in the format accepted by MongoDB. This parameter allows you to specify a custom query for updating documents.
 
 !!! warning
-    If `raw_query` is passed, `query` will not be considered.
+    If `query` is passed, `raw_query` will not be considered.
 
 !!! note
     Under the hood, **PyODMongo** uses the `update_many` operation with `upsert=True`, which means it can add or update one or multiple documents.

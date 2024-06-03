@@ -7,18 +7,7 @@ Os índices desempenham um papel crucial na otimização do desempenho do banco 
 A maneira mais simples de criar índices no **PyODMongo** é usando o `Field`, especificando qual campo deve ser indexado.
 
 ```python
-from pyodmongo import DbModel, Field
-from typing import ClassVar
-
-
-class Product(DbModel):
-    name: str = Field(index=True)
-    code: str = Field(index=True, unique=True)
-    description: str = Field(text_index=True, default_language='english')
-    price: float
-    product_type: str
-    is_available: bool
-    _collection: ClassVar = 'products'
+__indexes.py__
 ```
 
 - `index: bool`: Quando definido como `True`, este campo resultará na criação de um índice na coleção usando o mesmo nome do campo.
@@ -33,23 +22,7 @@ No entanto, se precisar criar índices mais específicos ou complexos, você pod
 Aqui está um exemplo de como criar índices personalizados no PyODMongo:
 
 ```python
-from pyodmongo import DbModel
-from pymongo import IndexModel, ASCENDING, DESCENDING
-from typing import ClassVar
-
-
-class Product(DbModel):
-    name: str
-    code: str
-    description: str
-    price: float
-    product_type: str
-    is_available: bool
-    _collection: ClassVar = 'products'
-    _indexes: ClassVar = [
-        IndexModel([('name', ASCENDING), ('price', DESCENDING)], name='name_and_price'),
-        IndexModel([('product_type', DESCENDING)], name='product_type'),
-    ]
+__indexes_advanced.py__
 ```
 
 Neste exemplo, definimos dois índices personalizados para o modelo `Product` usando `IndexModel`. O primeiro índice é um índice composto do campo `name` em ordem crescente e do campo `price` em ordem decrescente, denominado 'name_and_price'. O segundo índice está no campo `product_type` em ordem decrescente, denominado 'product_type'.

@@ -14,7 +14,7 @@ The `mount_query_filter` function adapts perfectly to FastAPI. It dynamically bu
 
 ### Function Parameters
 
-- `Model: type[DbModel]`: The model for which the query will be constructed.
+- `Model: DbModel`: The model for which the query will be constructed.
 - `items: dict`: A dictionary containing items to construct the query.
 - `initial_comparison_operators: list[QueryOperator]`: An initial list of query operators to start the query.
 

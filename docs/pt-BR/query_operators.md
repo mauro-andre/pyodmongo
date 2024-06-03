@@ -1,212 +1,237 @@
-# <center>Query Operators</center>
+# <center>Operadores de queries</center>
 
-Criar consultas no **PyODMongo** é simples e intuitivo. Ele simplifica o processo de criação de consultas do MongoDB, fornecendo uma abordagem Pythônica e direta para trabalhar com **Operadores de comparação** e **Operadores lógicos** encontrados no MongoDB.
+Criar consultas no **PyODMongo** é simples e intuitivo. Ele simplifica o processo de construção de consultas no MongoDB, fornecendo uma abordagem pythônica e direta.
 
-No **PyODMongo**, uma consulta serve como um atributo essencial dos métodos `find_many` e `find_one`, que estão disponíveis através das classes `DbEngine` e `AsyncDbEngine`. Esses métodos permitem recuperar dados do seu banco de dados MongoDB com facilidade, combinando a simplicidade do Python com os recursos robustos de consulta do MongoDB.
+No **PyODMongo**, uma consulta serve como um atributo essencial dos métodos `find_many`, `find_one`, `delete` e `save`, que estão disponíveis através das classes `DbEngine` e `AsyncDbEngine`. Esses métodos permitem que você recupere dados do seu banco de dados MongoDB com facilidade, combinando a simplicidade do Python com as robustas capacidades de consulta do MongoDB.
 
-## Operadores de comparação
+## Operadores
 
-| Operador | Uso |
-| ---------|--- |
-| **EQ**  | `eq(Model.attr, value)`</br>`Model.attr == value` |
-| **GT**   | `gt(Model.attr, value)`</br>`Model.attr > value` |
-| **GTE** | `gte(Model.attr, value)`</br>`Model.attr >= value` |
-| **IN**        | `in_(Model.attr, value)` |
-| **LT**   | `lt(Model.attr, value)`</br>`Model.attr < value` |
-| **LTE** | `lte(Model.attr, value)`</br>`Model.attr <= value` |
-| **NE**  | `ne(Model.attr, value)`</br>`Model.attr != value` |
-| **NIN**            | `nin(Model.attr, value)` |
+### Equal (Igual)
+O operador **Equal** é usado para combinar documentos onde o valor de um campo é igual ao valor especificado. É um operador básico de comparação no MongoDB e **PyODMongo**.
 
-
-Ao usar esses operadores de comparação no PyODMongo, você normalmente fornecerá dois argumentos:
-
-- `field: DbField`: Este argumento representa o campo da sua classe `DbModel` do PyODMongo que você deseja pesquisar no banco de dados. Ele define a propriedade à qual você deseja aplicar o operador de comparação.
-
-- `value: Any`: Este argumento especifica o valor que você deseja comparar com o campo definido no primeiro argumento. Representa o valor de referência a ser encontrado no banco de dados.
-
-Aqui está um exemplo de como usar um operador de comparação no PyODMongo:
-
-/// tab | Async
-```python hl_lines="18"
-from pyodmongo import AsyncDbEngine, DbModel
-from pyodmongo.queries import ( eq, gt, gte, in_, lt, lte, ne, nin, text, 
-                                and_, or_, nor)
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-async def main():
-    query =  Product.price >= 5
-    #query = gte(Product.price, 5)
-    sort_oprator = sort((Product.name, 1), (Product.price, -1))
-    result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
-
-asyncio.run(main())
-```
-///
-/// tab | Sync
-```python hl_lines="16"
-from pyodmongo import DbEngine, DbModel
-from pyodmongo.queries import ( eq, gt, gte, in_, lt, lte, ne, nin, text, 
-                                and_, or_, nor)
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-query =  Product.price >= 5
-#query = gte(Product.price, 5)
-sort_oprator = sort((Product.name, 1), (Product.price, -1))
-result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
+/// tab | Magic method
+```python hl_lines="14"
+__eq_magic.py__
 ```
 ///
 
-Neste exemplo, a consulta retornará todos os documentos da collection 'products' onde o campo price for igual ou superior a 5.
-
-## Operadores lógicos
-
-Assim como os operadores de comparação, os operadores lógicos no **PyODMongo** são projetados para espelhar seus equivalentes no próprio MongoDB.
-
-Aqui estão os principais operadores lógicos disponíveis no PyODMongo:
-
-| Operador | Uso |
-| ---------|-|
-| **AND**| `and_(gt(Model.attr_1, value_1), lt(Model.attr_1, value_2))`</br>`(Model.attr_1 > value_1) & (Model.attr_1 < value_2)` |
-| **OR** | `or_(eq(Model.attr_1, value_1), eq(Model.attr_1, value_2))`</br>`(Model.attr_1 == value_1) | (Model.attr_1 == value_2)` |
-| **NOR** | `nor(Model.attr_1 == value_1, Model.attr_1 == value_2)` |
-
-
-Aqui está um exemplo de como você pode usar operadores lógicos no PyODMongo:
-
-/// tab | Async
-```python hl_lines="18"
-from pyodmongo import AsyncDbEngine, DbModel
-from pyodmongo.queries import (eq, gt, gte, in_, lt, lte, ne, nin, text,
-                               and_, or_, nor)
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-async def main():
-    query = (Product.is_available == True) & (Product.price >= 5)
-    # query = and_(
-    #     eq(Product.is_available, True),
-    #     gte(Product.price, 5)
-    # )
-    sort_oprator = sort((Product.name, 1), (Product.price, -1))
-    result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
-
-asyncio.run(main())
-```
-///
-/// tab | Sync
-```python hl_lines="17"
-from pyodmongo import DbEngine, DbModel
-from pyodmongo.queries import (eq, gt, gte, in_, lt, lte, ne, nin, text,
-                               and_, or_, nor)
-from typing import ClassVar
-import asyncio
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-query = (Product.is_available == True) & (Product.price >= 5)
-# query = and_(
-#     eq(Product.is_available, True),
-#     gte(Product.price, 5)
-# )
-sort_oprator = sort((Product.name, 1), (Product.price, -1))
-result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
-
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__eq_pyodmongo_queries.py__
 ```
 ///
 
-Neste exemplo a consulta retornará todos os documentos da collecion 'products' que `is_available` seja `True` e que tenham `price` maior ou igual a 5
-
-!!! tip
-    As entradas para estes Operadores Lógicos podem ser Operadores de Comparação ou mesmo outros Operadores Lógicos. Essa flexibilidade permite criar consultas complexas e aninhadas, permitindo expressar condições complexas de recuperação de dados com precisão.
-
-    ## Sort
-
-/// tab | Async
-```python hl_lines="19"
-from pyodmongo import AsyncDbEngine, DbModel
-from pyodmongo.queries import ( eq, gt, gte, in_, lt, lte, ne, nin, text, 
-                                and_, or_, nor)
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-async def main():
-    query = Product.price >= 5
-    sort_oprator = sort((Product.name, 1), (Product.price, -1))
-    result: Product = await engine.find_one(Model=Product, query=query, sort=sort_oprator)
-
-asyncio.run(main())
+Filtro equivalente no MongoDB
+```javascript
+{name: {$eq: "Box"}}
 ```
-///
-/// tab | Sync
-```python hl_lines="17"
-from pyodmongo import DbEngine, DbModel
-from pyodmongo.queries import ( eq, gt, gte, in_, lt, lte, ne, nin, text, 
-                                and_, or_, nor)
-from typing import ClassVar
 
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
+### Greater than (Maior que)
+O operador **Greater than** é usado para combinar documentos onde o valor de um campo é maior que o valor especificado. Ele ajuda a filtrar registros que excedem um determinado limite.
 
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-query = Product.price >= 5
-sort_oprator = sort((Product.name, 1), (Product.price, -1))
-result: Product = engine.find_one(Model=Product, query=query, sort=sort_oprator)
+/// tab | Magic method
+```python hl_lines="14"
+__gt_magic.py__
 ```
 ///
 
-No exemplo fornecido, o `sort_operator` é definido usando a função `sort`, que aceita tuplas. Cada tupla contém dois elementos: o primeiro é o campo pelo qual você deseja ordenar e o segundo é a direção da ordenação, onde 1 indica ordem ascendente e -1 indica ordem descendente. No caso apresentado, o `sort_operator` ordena os resultados primeiro pelo campo name em ordem ascendente e, em seguida, pelo campo price em ordem descendente. Assim, os produtos são retornados em ordem alfabética pelo nome e, em caso de empate, em ordem decrescente pelo preço.
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__gt_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{price: {$gt: 10}}
+```
+
+### Greater than equal (Maior ou igual que)
+O operador **Greater than equal** combina documentos onde o valor de um campo é maior ou igual ao valor especificado. Isso é útil para consultas de intervalo que incluem o valor limite.
+
+/// tab | Magic method
+```python hl_lines="14"
+__gte_magic.py__
+```
+///
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__gte_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{price: {$gte: 10}}
+```
+
+### In (Em)
+O operador **In** permite especificar um array de valores possíveis para um campo. Ele combina documentos onde o valor do campo está no array especificado.
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__in_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{name: {$in: ["Ball", "Box", "Toy"]}}
+```
+
+### Lower than (Menor que)
+O operador **Lower than** combina documentos onde o valor de um campo é menor que o valor especificado. Isso é usado para filtrar registros abaixo de um determinado limite.
+
+/// tab | Magic method
+```python hl_lines="14"
+__lt_magic.py__
+```
+///
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__lt_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{price: {$lt: 10}}
+```
+
+### Lower than equal (Menor ou igual que)
+O operador **Lower than equal** combina documentos onde o valor de um campo é menor ou igual ao valor especificado. Isso inclui o valor limite nos resultados.
+
+/// tab | Magic method
+```python hl_lines="14"
+__lte_magic.py__
+```
+///
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__lte_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{price: {$lte: 10}}
+```
+
+### Not equal (Diferente)
+O operador **Not equal** combina documentos onde o valor de um campo não é igual ao valor especificado. Ele é usado para excluir documentos com um valor específico.
+
+/// tab | Magic method
+```python hl_lines="14"
+__ne_magic.py__
+```
+///
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__ne_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{name: {$ne: "Box"}}
+```
+
+### Not in (Não em)
+O operador **Not in** permite especificar um array de valores aos quais o campo não deve ser igual. Ele combina documentos onde o valor do campo não está no array especificado.
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__nin_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{name: {$nin: ["Ball", "Box", "Toy"]}}
+```
+
+### And (E)
+O operador **And** é usado para unir várias cláusulas de consulta com um **E** lógico. Ele garante que todas as condições especificadas sejam verdadeiras para que um documento seja incluído no conjunto de resultados.
+
+/// tab | Magic method
+```python hl_lines="14"
+__and_magic.py__
+```
+///
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__and_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{$and: [{price: {$gt: 10}}, {price: {$lte: 50}}]}
+```
+
+### Or (Ou)
+O operador **Or** une cláusulas de consulta com um **OU** lógico, combinando documentos que satisfazem pelo menos uma das condições especificadas.
+
+/// tab | Magic method
+```python hl_lines="14"
+__or_magic.py__
+```
+///
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__or_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{$or: [{name: {$eq: "Box"}}, {price: {$eq: 100}}]}
+```
+
+### Nor
+O operador **Nor** une cláusulas de consulta com um **NOR** lógico, combinando documentos que não atendem a nenhuma das condições especificadas.
+
+/// tab | PyODMongo queries
+```python hl_lines="3 15"
+__nor_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{$nor: [{name: {$eq: "Box"}}, {price: {$eq: 100}}]}
+```
+
+### Elem match
+O operador **Elem match** é usado para combinar documentos que contêm um campo de array com pelo menos um elemento que corresponde a todos os critérios especificados.
+
+/// tab | PyODMongo queries
+```python hl_lines="3 20"
+__elem_match_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{$products: {$elemMatch: {name: "Box", price: 50}}}
+```
+
+### Sort
+O operador **Sort** organiza os resultados de uma consulta em uma ordem especificada. Ele é útil para organizar os dados em ordem ascendente ou descendente com base em um campo particular.
+
+/// tab | PyODMongo queries
+```python hl_lines="3 16"
+__sort_pyodmongo_queries.py__
+```
+///
+
+Filtro equivalente no MongoDB
+```javascript
+{name: 1, price: -1}
+```

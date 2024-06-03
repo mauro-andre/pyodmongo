@@ -17,7 +17,7 @@ __delete_sync.py__
 
 ### Arguments
 
-- `Model: type[DbModel]`: The class that inherits from `DbModel` and serves as the base for querying the database.
+- `Model: DbModel`: The class that inherits from `DbModel` and serves as the base for querying the database.
 - `query: ComparisonOperator | LogicalOperator`: A query that defines the criteria for selecting the documents to be deleted.
 - `raw_query: dict (optional)`: A raw query in dictionary format accepted by MongoDB.
 
@@ -43,7 +43,7 @@ __delete_one_sync.py__
 ## Delete Response
 The `delete` method in **PyODMongo** returns a `DbResponse` object that provides information about the outcome of the delete operation. This object contains several attributes that give insights into how the delete operation affected the database.
 
-### `DbResponse` Attributes
+### Atributos de `DbResponse`
 
 - `acknowledged: bool`: A boolean value indicating whether the operation was acknowledged by the MongoDB server. If the operation was acknowledged, this attribute is set to `True`, indicating that the server recognized and processed the save request.
 

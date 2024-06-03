@@ -9,85 +9,18 @@ Para utilizar os recursos de agregação no **PyODMongo**, você pode inserir pi
 Aqui está um exemplo simples usando apenas o estágio `$group` do MongoDB Aggregation Pipeline:
 
 /// tab | Async
-```python hl_lines="24"
-from pyodmongo import DbModel, AsyncDbEngine, Id
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Customer(DbModel):
-    name: str
-    email: str
-    _collection: ClassVar = 'customers'
-
-
-class Order(DbModel):
-    customer: Customer | Id
-    value: float
-    _collection: ClassVar = 'orders'
-
-
-class OrdersByCustomers(DbModel):
-    count: int
-    total_value: float
-    _collection: ClassVar = 'orders'
-    _pipeline: ClassVar = [
-        {
-            '$group': {
-                '_id': '$customer',
-                'count': {'$count': {}},
-                'total_value': {'$sum': '$value'},
-            }
-        }
-    ]
-
-
-async def main():
-    result: list[OrdersByCustomers] = await engine.find_many(Model=OrdersByCustomers)
-
-asyncio.run(main())
+```python
+__aggregation_async.py__
 ```
 ///
 /// tab | Sync
-```python hl_lines="23"
-from pyodmongo import DbModel, DbEngine, Id
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Customer(DbModel):
-    name: str
-    email: str
-    _collection: ClassVar = 'customers'
-
-
-class Order(DbModel):
-    customer: Customer | Id
-    value: float
-    _collection: ClassVar = 'orders'
-
-
-class OrdersByCustomers(DbModel):
-    count: int
-    total_value: float
-    _collection: ClassVar = 'orders'
-    _pipeline: ClassVar = [
-        {
-            '$group': {
-                '_id': '$customer',
-                'count': {'$count': {}},
-                'total_value': {'$sum': '$value'},
-            }
-        }
-    ]
-
-
-result: list[OrdersByCustomers] = engine.find_many(Model=OrdersByCustomers)
+```python
+__aggregation_sync.py__
 ```
 ///
+
+!!! tip
+    PyODMongo já utiliza agregação nos métodos `find` e `find_one` internamente. O parâmetro `query` nesses métodos é na verdade convertido em uma etapa `$match` e inserido como a primeira etapa do pipeline de agregação. Você pode continuar usando essa combinação passando o parâmetro `query` nos métodos `find` e `find_one` e `_pipeline` na sua classe.
 
 Neste exemplo, temos um modelo `OrdersByCustomers` com um pipeline de agregação que agrupa os pedidos por cliente, calculando a contagem de pedidos e o valor total para cada cliente.
 

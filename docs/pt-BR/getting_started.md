@@ -8,48 +8,13 @@ Para começar a usar o **PyODMongo**, primeiro você precisa criar uma instânci
 
 /// tab | Async
 ```python hl_lines="5"
-from pyodmongo import AsyncDbEngine, DbModel
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-
-async def main():
-    result = await engine.save(box)
-
-asyncio.run(main())
+__save_async.py__
 ```
 ///
 
 /// tab | Sync
 ```python hl_lines="4"
-from pyodmongo import DbEngine, DbModel
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-result = engine.save(box)
+__save_sync.py__
 ```
 ///
 
@@ -63,48 +28,13 @@ A seguir, você definirá um modelo que herda de DbModel. Este modelo representa
 
 /// tab | Async
 ```python hl_lines="8 12"
-from pyodmongo import AsyncDbEngine, DbModel
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-
-async def main():
-    result = await engine.save(box)
-
-asyncio.run(main())
+__save_async.py__
 ```
 ///
 
 /// tab | Sync
 ```python hl_lines="7 11"
-from pyodmongo import DbEngine, DbModel
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-result = engine.save(box)
+__save_sync.py__
 ```
 ///
 
@@ -115,48 +45,13 @@ Você pode salvar dados no MongoDB usando o método `save()` da sua instância `
 
 /// tab | Async
 ```python hl_lines="19"
-from pyodmongo import AsyncDbEngine, DbModel
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-
-async def main():
-    result = await engine.save(box)
-
-asyncio.run(main())
+__save_async.py__
 ```
 ///
 
 /// tab | Sync
 ```python hl_lines="16"
-from pyodmongo import DbEngine, DbModel
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-box = Product(name='Box', price='5.99', is_available=True)
-
-result = engine.save(box)
+__save_sync.py__
 ```
 ///
 
@@ -166,48 +61,14 @@ Este código cria um novo documento usando os dados fornecidos e salva no MongoD
 Para ler dados do banco de dados, você pode usar o método `find_one()` da sua instância `AsyncDbEngine` ou `DbEngine`.
 
 /// tab | Async
-```python hl_lines="18"
-from pyodmongo import AsyncDbEngine, DbModel
-from pyodmongo.queries import eq
-from typing import ClassVar
-import asyncio
-
-engine = AsyncDbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-async def main():
-    query = eq(Product.name, 'Box')
-    box: Product = await engine.find_one(Model=Product, query=query)
-
-asyncio.run(main())
+```python hl_lines="17"
+__find_one_async.py__
 ```
 ///
 
 /// tab | Sync
-```python hl_lines="16"
-from pyodmongo import DbEngine, DbModel
-from pyodmongo.queries import eq
-from typing import ClassVar
-
-engine = DbEngine(mongo_uri='mongodb://localhost:27017', db_name='my_db')
-
-
-class Product(DbModel):
-    name: str
-    price: float
-    is_available: bool
-    _collection: ClassVar = 'products'
-
-
-query = eq(Product.name, 'Box')
-box: Product = engine.find_one(Model=Product, query=query)
+```python hl_lines="15"
+__find_one_sync.py__
 ```
 ///
 
