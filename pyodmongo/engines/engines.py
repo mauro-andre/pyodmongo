@@ -10,10 +10,14 @@ from ..models.responses import DbResponse
 from ..models.query_operators import QueryOperator
 from ..models.sort_operators import SortOperator
 from ..models.paginate import ResponsePaginate
+from typing import TypeVar, Type, Union
 from .utils import consolidate_dict, mount_base_pipeline
 from ..services.verify_subclasses import is_subclass
 from asyncio import gather
 from math import ceil
+
+
+Model = TypeVar("Model", bound=DbModel)
 
 
 class _Engine:
@@ -88,7 +92,7 @@ class _Engine:
         """
         return tz_info if tz_info else self._tz_info
 
-    def _update_many_operation(self, obj: DbModel, query_dict: dict, now):
+    def _update_many_operation(self, obj: Type[Model], query_dict: dict, now):
         """
         Create an UpdateMany operation for bulk updates.
 
@@ -132,7 +136,7 @@ class _Engine:
 
     def _create_save_operations_list(
         self,
-        objs: list[DbModel],
+        objs: list[Type[Model]],
         query: QueryOperator,
         raw_query: dict,
     ):
@@ -153,7 +157,7 @@ class _Engine:
         now = datetime.now(self._tz_info)
         now = now.replace(microsecond=int(now.microsecond / 1000) * 1000)
         for obj in objs:
-            obj: DbModel
+            obj: Model
             operation = self._update_many_operation(obj=obj, query_dict=query, now=now)
             collection_name = obj._collection
             try:
@@ -169,7 +173,7 @@ class _Engine:
         return indexes, operations, now
 
     def _after_save(
-        self, result: BulkWriteResult, objs: list[DbModel], collection_name: str, now
+        self, result: BulkWriteResult, objs: list[Model], collection_name: str, now
     ):
         """
         Perform post-save operations.
@@ -210,7 +214,7 @@ class _Engine:
 
     def _aggregate_cursor(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         pipeline,
         tz_info: timezone,
     ):
@@ -234,7 +238,7 @@ class _Engine:
 
     def _aggregate_pipeline(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator,
         raw_query: dict,
         sort: SortOperator,
@@ -311,7 +315,7 @@ class AsyncDbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    async def save_all(self, obj_list: list[DbModel]) -> dict[str, DbResponse]:
+    async def save_all(self, obj_list: list[Model]) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
 
@@ -336,7 +340,7 @@ class AsyncDbEngine(_Engine):
         return response
 
     async def save(
-        self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
+        self, obj: Model, query: QueryOperator = None, raw_query: dict = None
     ) -> DbResponse:
         """
         Save a single object to the database.
@@ -367,7 +371,7 @@ class AsyncDbEngine(_Engine):
 
     async def find_one(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator = None,
         raw_query: dict = None,
         sort: SortOperator = None,
@@ -375,7 +379,7 @@ class AsyncDbEngine(_Engine):
         populate: bool = False,
         as_dict: bool = False,
         tz_info: timezone = None,
-    ) -> DbModel:
+    ) -> Model:
         """
         Find a single document in the database.
 
@@ -413,7 +417,7 @@ class AsyncDbEngine(_Engine):
 
     async def find_many(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator = None,
         raw_query: dict = None,
         sort: SortOperator = None,
@@ -424,7 +428,7 @@ class AsyncDbEngine(_Engine):
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
-    ) -> list[DbModel]:
+    ) -> Union[list[Model], ResponsePaginate]:
         """
         Find multiple documents in the database.
 
@@ -487,7 +491,7 @@ class AsyncDbEngine(_Engine):
 
     async def delete(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator = None,
         raw_query: dict = None,
         delete_one: bool = False,
@@ -533,7 +537,7 @@ class DbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    def save_all(self, obj_list: list[DbModel]) -> dict[str, DbResponse]:
+    def save_all(self, obj_list: list[Model]) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
 
@@ -558,7 +562,7 @@ class DbEngine(_Engine):
         return response
 
     def save(
-        self, obj: DbModel, query: QueryOperator = None, raw_query: dict = None
+        self, obj: Model, query: QueryOperator = None, raw_query: dict = None
     ) -> DbResponse:
         """
         Save a single object to the database.
@@ -587,7 +591,7 @@ class DbEngine(_Engine):
 
     def find_one(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator = None,
         raw_query: dict = None,
         sort: SortOperator = None,
@@ -595,7 +599,7 @@ class DbEngine(_Engine):
         populate: bool = False,
         as_dict: bool = False,
         tz_info: timezone = None,
-    ) -> DbModel:
+    ) -> Model:
         """
         Find a single document in the database.
 
@@ -633,7 +637,7 @@ class DbEngine(_Engine):
 
     def find_many(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator = None,
         raw_query: dict = None,
         sort: SortOperator = None,
@@ -644,7 +648,7 @@ class DbEngine(_Engine):
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
-    ) -> list[DbModel]:
+    ) -> Union[list[Model], ResponsePaginate]:
         """
         Find multiple documents in the database.
 
@@ -706,7 +710,7 @@ class DbEngine(_Engine):
 
     def delete(
         self,
-        Model: DbModel,
+        Model: Type[Model],
         query: QueryOperator = None,
         raw_query: dict = None,
         delete_one: bool = False,

@@ -45,7 +45,7 @@ async def test_save_all(async_engine: AsyncDbEngine, engine: DbEngine):
 
     response_0: dict[str, DbResponse] = await async_engine.save_all([obj_0, obj_2])
     response_1: dict[str, DbResponse] = engine.save_all([obj_1, obj_3])
-    
+
     assert response_0["my_class_0"].upserted_count == 1
     assert response_0["my_class_0"].upserted_ids[0] == obj_0.id
     assert response_0["my_class_1"].upserted_count == 1
@@ -117,10 +117,10 @@ async def test_find(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
     obj_to_find_0_49: MyClass0 = copy.deepcopy(objs_0_49[24])
     obj_to_find_50_99: MyClass0 = copy.deepcopy(objs_50_99[24])
 
-    obj_found_0_49: MyClass0 = await async_engine.find_one(
+    obj_found_0_49 = await async_engine.find_one(
         Model=MyClass0, query=MyClass0.id == obj_to_find_0_49.id
     )
-    obj_found_50_49: MyClass0 = engine.find_one(
+    obj_found_50_49 = engine.find_one(
         Model=MyClass0, query=MyClass0.id == obj_to_find_50_99.id
     )
 
@@ -183,5 +183,6 @@ async def test_delete(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
 
     find_result_0 = await async_engine.find_many(Model=MyClass0)
     find_result_1 = engine.find_many(Model=MyClass0)
+
     assert len(find_result_0) == 80
     assert len(find_result_1) == 80
