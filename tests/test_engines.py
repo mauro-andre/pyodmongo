@@ -23,8 +23,8 @@ async def drop_db(async_engine: AsyncDbEngine, engine: DbEngine):
     await async_engine._client.drop_database("pyodmongo_pytest")
     engine._client.drop_database("pyodmongo_pytest")
     yield
-    # await async_engine._client.drop_database("pyodmongo_pytest")
-    # engine._client.drop_database("pyodmongo_pytest")
+    await async_engine._client.drop_database("pyodmongo_pytest")
+    engine._client.drop_database("pyodmongo_pytest")
 
 
 @pytest.mark.asyncio
@@ -210,5 +210,3 @@ async def test_db_field_population(
     await async_engine.save(obj_b)
 
     obj_found = await async_engine.find_one(Model=MyClassB)
-    print()
-    print(obj_found)
