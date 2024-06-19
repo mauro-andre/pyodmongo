@@ -478,5 +478,6 @@ def test_mount_query_filter_with_elem_match():
         ]
     }
 
+
 def test_to_dict_query_operator_default():
     assert QueryOperator().to_dict() is None

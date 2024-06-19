@@ -8,6 +8,7 @@ from pyodmongo import (
     Field,
     DbResponse,
     ResponsePaginate,
+    Id,
 )
 from bson import ObjectId
 import copy
@@ -22,8 +23,8 @@ async def drop_db(async_engine: AsyncDbEngine, engine: DbEngine):
     await async_engine._client.drop_database("pyodmongo_pytest")
     engine._client.drop_database("pyodmongo_pytest")
     yield
-    await async_engine._client.drop_database("pyodmongo_pytest")
-    engine._client.drop_database("pyodmongo_pytest")
+    # await async_engine._client.drop_database("pyodmongo_pytest")
+    # engine._client.drop_database("pyodmongo_pytest")
 
 
 @pytest.mark.asyncio
@@ -186,3 +187,28 @@ async def test_delete(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
 
     assert len(find_result_0) == 80
     assert len(find_result_1) == 80
+
+
+@pytest.mark.asyncio
+async def test_db_field_population(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class MyClassA(DbModel):
+        attr_a_1: str
+        attr_a_2: str
+        _collection: ClassVar = "my_class_a"
+
+    class MyClassB(DbModel):
+        attr_b_1: str
+        attr_obj_a: MyClassA | Id
+        _collection: ClassVar = "my_class_b"
+
+    obj_a = MyClassA(attr_a_1="value_a_1", attr_a_2="value_a_2")
+    obj_b = MyClassB(attr_b_1="value_b_1", attr_obj_a=obj_a)
+
+    engine.save(obj_a)
+    await async_engine.save(obj_b)
+
+    obj_found = await async_engine.find_one(Model=MyClassB)
+    print()
+    print(obj_found)
