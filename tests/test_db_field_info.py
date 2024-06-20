@@ -37,3 +37,12 @@ def test_model_fiels_are_corrects():
     assert not Lv1.attr_lv1_two.by_reference
     assert not Lv1.attr_lv1_two.is_list
     assert not Lv1.attr_lv1_two.has_model_fields
+
+
+def test_magic_methods_with_two_db_fields():
+    class TestMagic(DbModel):
+        a: str
+        b: str
+
+    assert type(TestMagic.a == TestMagic.a) is bool
+    assert type(TestMagic.a != TestMagic.a) is bool

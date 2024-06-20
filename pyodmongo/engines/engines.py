@@ -10,6 +10,7 @@ from ..models.responses import DbResponse
 from ..models.query_operators import QueryOperator
 from ..models.sort_operators import SortOperator
 from ..models.paginate import ResponsePaginate
+from ..models.db_field_info import DbField
 from typing import TypeVar, Type, Union
 from concurrent.futures import ThreadPoolExecutor
 from .utils import consolidate_dict, mount_base_pipeline
@@ -245,6 +246,7 @@ class _Engine:
         sort: SortOperator,
         raw_sort: dict,
         populate: bool,
+        populate_db_fields: list[DbField] | None,
     ) -> dict:
         """
         Construct an aggregation pipeline.
@@ -268,6 +270,7 @@ class _Engine:
                 query=query,
                 sort=sort,
                 populate=populate,
+                populate_db_fields=populate_db_fields,
             ),
             query,
             sort,
@@ -378,6 +381,7 @@ class AsyncDbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
     ) -> Model:
@@ -404,6 +408,7 @@ class AsyncDbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            populate_db_fields=populate_db_fields,
         )
         pipeline += [{"$limit": 1}]
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
@@ -424,6 +429,7 @@ class AsyncDbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
         paginate: bool = False,
@@ -456,6 +462,7 @@ class AsyncDbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            populate_db_fields=populate_db_fields,
         )
 
         async def _result():
@@ -598,6 +605,7 @@ class DbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
     ) -> Model:
@@ -624,6 +632,7 @@ class DbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            populate_db_fields=populate_db_fields,
         )
         pipeline += [{"$limit": 1}]
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
@@ -644,6 +653,7 @@ class DbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
         paginate: bool = False,
@@ -676,6 +686,7 @@ class DbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            populate_db_fields=populate_db_fields,
         )
 
         def _result():

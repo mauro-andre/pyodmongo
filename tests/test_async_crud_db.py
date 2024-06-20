@@ -2,6 +2,7 @@ from pyodmongo import (
     AsyncDbEngine,
     MainBaseModel,
     DbModel,
+    MainBaseModel,
     DbResponse,
     ResponsePaginate,
     Id,
@@ -9,7 +10,7 @@ from pyodmongo import (
 )
 from pyodmongo.queries import eq, gte, gt, mount_query_filter, sort, elem_match
 from pyodmongo.engines.utils import consolidate_dict
-from pydantic import ConfigDict, BaseModel
+from pydantic import ConfigDict
 from typing import ClassVar
 from bson import ObjectId
 from datetime import datetime, UTC, timezone, timedelta
@@ -507,12 +508,12 @@ class ClassOne(DbModel):
     _collection: ClassVar = "class_one"
 
 
-class ClassTwoA(BaseModel):
+class ClassTwoA(MainBaseModel):
     attr_2_a: str = "attr 2 A"
     class_one: list[ClassOne | Id] | None
 
 
-class ClassTwoB(BaseModel):
+class ClassTwoB(MainBaseModel):
     attr_2_b: str = "attr 2 B"
     class_two_a: ClassTwoA | None
     class_two_a_list: list[ClassTwoA] | None

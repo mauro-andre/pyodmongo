@@ -1,7 +1,9 @@
 from bson import ObjectId
 from pydantic import BaseModel
 from ..models.id_model import Id
-from ..services.model_init import field_annotation_infos
+from ..models.db_field_info import DbField
+from ..services.reference_pipeline import resolve_reference_pipeline
+from ..services.verify_subclasses import is_subclass
 
 
 def consolidate_dict(obj: BaseModel, dct: dict):
@@ -28,7 +30,13 @@ def consolidate_dict(obj: BaseModel, dct: dict):
     """
     for field, field_info in obj.model_fields.items():
         value = getattr(obj, field)
-        db_field_info = field_annotation_infos(field=field, field_info=field_info)
+        try:
+            db_field_info: DbField = getattr(obj.__class__, field)
+        except AttributeError:
+            if is_subclass(class_to_verify=obj.__class__, subclass=BaseModel):
+                raise TypeError(
+                    f"The {obj.__class__.__name__} class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class"
+                )
         alias = db_field_info.field_alias
         has_model_fields = db_field_info.has_model_fields
         is_list = db_field_info.is_list
@@ -69,7 +77,13 @@ def consolidate_dict(obj: BaseModel, dct: dict):
     return dct
 
 
-def mount_base_pipeline(Model, query: dict, sort: dict, populate: bool = False):
+def mount_base_pipeline(
+    Model,
+    query: dict,
+    sort: dict,
+    populate: bool,
+    populate_db_fields: list[DbField] | None,
+):
     """
     Constructs a basic MongoDB aggregation pipeline based on the provided query, sort, and
     model settings, optionally including reference population stages.
@@ -92,8 +106,12 @@ def mount_base_pipeline(Model, query: dict, sort: dict, populate: bool = False):
     match_stage = [{"$match": query}]
     sort_stage = [{"$sort": sort}] if sort != {} else []
     model_stage = Model._pipeline
-    reference_stage = Model._reference_pipeline
-    if populate:
-        return match_stage + model_stage + reference_stage + sort_stage
-    else:
+    if model_stage != []:
         return match_stage + model_stage + sort_stage
+    if populate:
+        reference_stage = resolve_reference_pipeline(
+            cls=Model, pipeline=[], populate_db_fields=populate_db_fields
+        )
+        return match_stage + reference_stage + sort_stage
+    else:
+        return match_stage + sort_stage
