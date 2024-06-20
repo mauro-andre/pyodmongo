@@ -11,6 +11,7 @@ from ..models.query_operators import QueryOperator
 from ..models.sort_operators import SortOperator
 from ..models.paginate import ResponsePaginate
 from typing import TypeVar, Type, Union
+from concurrent.futures import ThreadPoolExecutor
 from .utils import consolidate_dict, mount_base_pipeline
 from ..services.verify_subclasses import is_subclass
 from asyncio import gather
@@ -698,8 +699,12 @@ class DbEngine(_Engine):
             kwargs = {"hint": "_id_"} if not query else {}
             return self._db[Model._collection].count_documents(filter=query, **kwargs)
 
-        result = _result()
-        count = _count()
+        with ThreadPoolExecutor() as executor:
+            future_result = executor.submit(_result)
+            future_count = executor.submit(_count)
+            result = future_result.result()
+            count = future_count.result()
+
         page_quantity = ceil(count / docs_per_page)
         return ResponsePaginate(
             current_page=current_page,
