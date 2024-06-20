@@ -10,6 +10,7 @@ from pyodmongo import (
     ResponsePaginate,
     Id,
 )
+from pydantic import BaseModel
 from bson import ObjectId
 import copy
 from faker import Faker
@@ -203,10 +204,48 @@ async def test_db_field_population(
         attr_obj_a: MyClassA | Id
         _collection: ClassVar = "my_class_b"
 
+    class MyClassC(DbModel):
+        attr_c_1: str
+        attr_obj_b: MyClassB | Id
+        _collection: ClassVar = "my_class_c"
+
     obj_a = MyClassA(attr_a_1="value_a_1", attr_a_2="value_a_2")
-    obj_b = MyClassB(attr_b_1="value_b_1", attr_obj_a=obj_a)
-
     engine.save(obj_a)
+    obj_b = MyClassB(attr_b_1="value_b_1", attr_obj_a=obj_a)
     await async_engine.save(obj_b)
+    obj_c = MyClassC(attr_c_1="value_c_1", attr_obj_b=obj_b)
+    await async_engine.save(obj_c)
 
-    obj_found = await async_engine.find_one(Model=MyClassB)
+    populate_db_fields = [MyClassC.attr_obj_b]
+    obj_found = await async_engine.find_one(
+        Model=MyClassC, populate=True, populate_db_fields=populate_db_fields
+    )
+    obj_c.attr_obj_b.attr_obj_a = obj_a.id
+    assert obj_found == obj_c
+
+
+@pytest.mark.asyncio
+async def test_error_save_base_model(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class MyClassA(BaseModel):
+        a1: str = "a1"
+
+    class MyClassB(DbModel):
+        b1: str = "b1"
+        obj_a: MyClassA = MyClassA()
+        _collection: ClassVar = "my_class_b"
+
+    obj = MyClassB()
+
+    with pytest.raises(
+        TypeError,
+        match="The MyClassA class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
+    ):
+        await async_engine.save(obj)
+
+    with pytest.raises(
+        TypeError,
+        match="The MyClassA class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
+    ):
+        engine.save(obj)

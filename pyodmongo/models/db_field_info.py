@@ -55,9 +55,13 @@ class DbField:
         return self.comparison_operator(operator="$lte", value=value)
 
     def __eq__(self, value: Any) -> ComparisonOperator:
+        if isinstance(value, DbField):
+            return super().__eq__(value)
         return self.comparison_operator(operator="$eq", value=value)
 
     def __ne__(self, value: Any) -> ComparisonOperator:
+        if isinstance(value, DbField):
+            return super().__ne__(value)
         return self.comparison_operator(operator="$ne", value=value)
 
     def __gt__(self, value: Any) -> ComparisonOperator:

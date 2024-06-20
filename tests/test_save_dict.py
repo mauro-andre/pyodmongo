@@ -1,5 +1,4 @@
-from pyodmongo import DbModel, Field, Id
-from pydantic import BaseModel
+from pyodmongo import DbModel, Field, Id, MainBaseModel
 from typing import ClassVar
 from bson import ObjectId
 from pyodmongo.engines.utils import consolidate_dict
@@ -130,7 +129,7 @@ def test_save_dict_is_correct():
 
 
 def test_save_dict_with_basemodel_reference():
-    class BaseModelClass(BaseModel):
+    class BaseModelClass(MainBaseModel):
         attr_bm: str
 
     class DbModelClass(DbModel):
@@ -172,13 +171,13 @@ def test_field_with_union_more_than_two():
 
 
 def test_multiples_nested_references():
-    class MyType1(BaseModel):
+    class MyType1(MainBaseModel):
         attr_type_1: str = None
 
-    class MyType2(BaseModel):
+    class MyType2(MainBaseModel):
         attr_type_2: str = None
 
-    class MyType3(BaseModel):
+    class MyType3(MainBaseModel):
         attr_type_3: str = None
 
     class DbMyType(DbModel):
