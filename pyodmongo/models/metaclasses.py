@@ -2,7 +2,6 @@ from typing import Any
 from ..services.model_init import (
     resolve_indexes,
     resolve_class_fields_db_info,
-    resolve_reference_pipeline,
 )
 from pydantic import BaseModel
 from pydantic._internal._model_construction import ModelMetaclass
@@ -85,8 +84,6 @@ class DbMeta(PyOdmongoMeta):
     ) -> type:
         cls: BaseModel = PyOdmongoMeta.__new__(cls, name, bases, namespace, **kwargs)
 
-        pipeline = resolve_reference_pipeline(cls=cls, pipeline=[])
-        setattr(cls, "_reference_pipeline", pipeline)
         indexes = resolve_indexes(cls=cls)
         setattr(cls, "_init_indexes", indexes)
         return cls

@@ -1,6 +1,8 @@
-from pyodmongo import DbModel, Id, Field
+from pyodmongo import DbModel, MainBaseModel, Id
 from pydantic import BaseModel
 from typing import ClassVar
+from pyodmongo.services.reference_pipeline import resolve_reference_pipeline
+import pytest
 
 
 def test_single_class_project_pipeline():
@@ -21,7 +23,10 @@ def test_single_class_project_pipeline():
         # },
     ]
 
-    assert A._reference_pipeline == expected
+    assert (
+        resolve_reference_pipeline(cls=A, pipeline=[], populate_db_fields=None)
+        == expected
+    )
 
 
 def test_simple_if_reference_pipeline_is_correct():
@@ -109,7 +114,10 @@ def test_simple_if_reference_pipeline_is_correct():
         #     }
         # },
     ]
-    assert C._reference_pipeline == expected
+    assert (
+        resolve_reference_pipeline(cls=C, pipeline=[], populate_db_fields=None)
+        == expected
+    )
 
 
 def test_manual_pipeline():
@@ -138,7 +146,7 @@ def test_recursive_reference_pipeline():
         zero_2: Zero = Zero()
         _collection: ClassVar = "col_a"
 
-    class B(BaseModel):
+    class B(MainBaseModel):
         attr_2: str = "Two"
         a1: A | Id = A()
         a2: A = A()
@@ -149,7 +157,7 @@ def test_recursive_reference_pipeline():
         b: B = B()
         _collection: ClassVar = "col_c"
 
-    assert C._reference_pipeline == [
+    assert resolve_reference_pipeline(cls=C, pipeline=[], populate_db_fields=None) == [
         {
             "$lookup": {
                 "as": "a",
@@ -276,3 +284,25 @@ def test_recursive_reference_pipeline():
         #     }
         # },
     ]
+
+
+def test_main_base_model_usage_recommendation():
+    class Z(DbModel):
+        z1: str = "z1"
+        _collection: TypeError = "z"
+
+    class X(BaseModel):
+        x1: str = "x1"
+        x2: str = "x2"
+        z: Z | Id
+
+    class Y(DbModel):
+        y1: str = "y1"
+        x: X
+        _collection: TypeError = "y"
+
+    with pytest.raises(
+        TypeError,
+        match="The X class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
+    ):
+        resolve_reference_pipeline(cls=Y, pipeline=[], populate_db_fields=None)
