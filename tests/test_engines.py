@@ -5,10 +5,11 @@ from pyodmongo import (
     AsyncDbEngine,
     DbEngine,
     DbModel,
-    Field,
+    MainBaseModel,
     DbResponse,
     ResponsePaginate,
     Id,
+    Field,
 )
 from pydantic import BaseModel
 from bson import ObjectId
@@ -249,3 +250,71 @@ async def test_error_save_base_model(
         match="The MyClassA class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
     ):
         engine.save(obj)
+
+
+@pytest.mark.asyncio
+async def test_list_of_empty_objects(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class A(DbModel):
+        name: str = "A Name"
+        code: str = "A Code"
+        _collection: ClassVar = "a"
+
+    class B(MainBaseModel):
+        a: A | Id
+        code: str = "B Code"
+        cost: float = 100
+
+    class C(DbModel):
+        name: str = "name_1"
+        b_list: list[B] | None = None
+        _collection: ClassVar = "c"
+
+    obj_c = C()
+    engine.save(obj_c)
+    obj_found = await async_engine.find_one(Model=C, populate=True)
+    assert obj_found == obj_c
+
+
+@pytest.mark.asyncio
+async def test_field_population_with_main_base_model(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class S(DbModel):
+        s1: str = "s1"
+        _collection: ClassVar = "s"
+
+    class BC(DbModel):
+        b1: str = "b1"
+        s: S | Id
+        _collection: ClassVar = "bc"
+
+    class A(MainBaseModel):
+        a1: str = "a1"
+        bc: BC | Id
+
+    class P(DbModel):
+        p1: str = "p1"
+        a: A
+        _collection: ClassVar = "p"
+
+    class O(DbModel):
+        o1: str = "o1"
+        p: P | Id
+        _collection: ClassVar = "o"
+
+    obj_s = S()
+    await async_engine.save(obj_s)
+    obj_bc = BC(s=obj_s)
+    await async_engine.save(obj_bc)
+    obj_a = A(bc=obj_bc)
+    obj_p = P(a=obj_a)
+    engine.save(obj_p)
+    obj_o = O(p=obj_p)
+    engine.save(obj_o)
+
+    obj_found = engine.find_one(
+        Model=O, populate=True, populate_db_fields=[O.p, A.bc, BC.s]
+    )
+    assert obj_found == obj_o
