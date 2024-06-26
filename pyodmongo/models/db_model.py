@@ -72,15 +72,21 @@ class DbModel(BaseModel, metaclass=DbMeta):
 
     def __init__(self, **attrs):
         for key, value in attrs.items():
+            print(key, value)
             if type(value) == dict:
                 attrs[key] = self.__remove_empty_dict(dct=value)
             elif type(value) == list:
                 is_full_empty = all(v == None or v == {} for v in value)
                 if is_full_empty:
-                    default_value = self.__class__.model_fields[key].default
-                    attrs[key] = (
-                        None if default_value == PydanticUndefined else default_value
-                    )
+                    try:
+                        default_value = self.__class__.model_fields[key].default
+                        attrs[key] = (
+                            None
+                            if default_value == PydanticUndefined
+                            else default_value
+                        )
+                    except KeyError:
+                        ...
         if attrs.get("_id") is not None:
             attrs["id"] = attrs.pop("_id")
         super().__init__(**attrs)
