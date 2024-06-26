@@ -72,7 +72,6 @@ class DbModel(BaseModel, metaclass=DbMeta):
 
     def __init__(self, **attrs):
         for key, value in attrs.items():
-            print(key, value)
             if type(value) == dict:
                 attrs[key] = self.__remove_empty_dict(dct=value)
             elif type(value) == list:
