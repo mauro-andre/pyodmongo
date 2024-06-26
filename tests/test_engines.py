@@ -318,3 +318,30 @@ async def test_field_population_with_main_base_model(
         Model=O, populate=True, populate_db_fields=[O.p, A.bc, BC.s]
     )
     assert obj_found == obj_o
+
+
+@pytest.mark.asyncio
+async def test_db_model_init_with_missing_attribute_in_class(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class A(DbModel):
+        a1: str = "a1"
+        a2: str = "a2"
+        _collection: ClassVar = "a"
+
+    class B(DbModel):
+        b1: str = "b1"
+        b2: str = "b2"
+        _collection: ClassVar = "b"
+
+    class A2(A):
+        a3: str = "a3"
+        a4: list[B | Id] = []
+
+    obj_b1 = B()
+    obj_b2 = B()
+    engine.save_all([obj_b1, obj_b2])
+    obj_a2 = A2()
+    await async_engine.save(obj_a2)
+    obj_found = await async_engine.find_one(Model=A)
+    assert obj_found
