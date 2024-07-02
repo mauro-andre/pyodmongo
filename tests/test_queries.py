@@ -481,3 +481,24 @@ def test_mount_query_filter_with_elem_match():
 
 def test_to_dict_query_operator_default():
     assert QueryOperator().to_dict() is None
+
+
+def test_mount_query_filter_with_logical_operators():
+    class MyClass(DbModel):
+        attr_1: str
+        attr_2: int
+        attr_3: bool
+        _collection: ClassVar = "my_class"
+
+    dict_input = {
+        "attr_3_eq": "true",
+        "_or": "{'attr_1_eq': 'value_1', 'attr_2_lte': '10'}",
+    }
+    query, _ = mount_query_filter(Model=MyClass, items=dict_input)
+    assert query == and_(
+        eq(MyClass.attr_3, True),
+        or_(eq(MyClass.attr_1, "value_1"), lte(MyClass.attr_2, 10)),
+    )
+    assert query == (MyClass.attr_3 == True) & (
+        (MyClass.attr_1 == "value_1") | (MyClass.attr_2 <= 10)
+    )
