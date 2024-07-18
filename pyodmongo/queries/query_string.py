@@ -149,7 +149,7 @@ def mount_query_filter(
                 value[index] = js_regex_to_python(item)
         if type(value) != LogicalOperator:
             try:
-                db_field_info: DbField = getattr(Model, field_name)
+                db_field_info: DbField = eval(f"Model.{field_name}")
             except AttributeError:
                 raise AttributeError(
                     f"There's no field '{field_name}' in {Model.__name__}"
