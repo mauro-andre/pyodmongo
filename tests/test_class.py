@@ -200,3 +200,10 @@ def test_polymorphism():
     assert type(obj_1.attr_1) is str
     assert obj_2.attr_1 == 1
     assert type(obj_2.attr_1) is int
+
+
+def test_empty_list_field():
+    class A(DbModel):
+        x: list[int]
+
+    A(x=[])

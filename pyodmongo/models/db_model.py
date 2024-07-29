@@ -80,9 +80,7 @@ class DbModel(BaseModel, metaclass=DbMeta):
                     try:
                         default_value = self.__class__.model_fields[key].default
                         attrs[key] = (
-                            None
-                            if default_value == PydanticUndefined
-                            else default_value
+                            [] if default_value == PydanticUndefined else default_value
                         )
                     except KeyError:
                         ...
