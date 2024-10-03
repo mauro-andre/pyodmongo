@@ -94,7 +94,9 @@ class _Engine:
         """
         return tz_info if tz_info else self._tz_info
 
-    def _update_many_operation(self, obj: Type[Model], query_dict: dict, now):
+    def _update_many_operation(
+        self, obj: Type[Model], query_dict: dict, now, upsert: bool
+    ):
         """
         Create an UpdateMany operation for bulk updates.
 
@@ -115,7 +117,7 @@ class _Engine:
             "$set": dct,
             "$setOnInsert": {obj.__class__.created_at.field_alias: now},
         }
-        return UpdateMany(filter=find_filter, update=to_save, upsert=True)
+        return UpdateMany(filter=find_filter, update=to_save, upsert=upsert)
 
     def _create_delete_operations_list(
         self, query: QueryOperator, raw_query: dict, delete_one: bool
@@ -141,6 +143,7 @@ class _Engine:
         objs: list[Type[Model]],
         query: QueryOperator,
         raw_query: dict,
+        upsert: bool,
     ):
         """
         Create lists of indexes and save operations for bulk writes.
@@ -160,7 +163,9 @@ class _Engine:
         now = now.replace(microsecond=int(now.microsecond / 1000) * 1000)
         for obj in objs:
             obj: Model
-            operation = self._update_many_operation(obj=obj, query_dict=query, now=now)
+            operation = self._update_many_operation(
+                obj=obj, query_dict=query, now=now, upsert=upsert
+            )
             collection_name = obj._collection
             try:
                 operations[collection_name] += [operation]
@@ -319,7 +324,10 @@ class AsyncDbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    async def save_all(self, obj_list: list[Model]) -> dict[str, DbResponse]:
+    async def save_all(
+        self,
+        obj_list: list[Model],
+    ) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
 
@@ -328,7 +336,7 @@ class AsyncDbEngine(_Engine):
         """
         response = {}
         indexes, operations, now = self._create_save_operations_list(
-            objs=obj_list, query=None, raw_query=None
+            objs=obj_list, query=None, raw_query=None, upsert=True
         )
         for collection_name, index_list in indexes.items():
             if index_list:
@@ -344,7 +352,11 @@ class AsyncDbEngine(_Engine):
         return response
 
     async def save(
-        self, obj: Model, query: QueryOperator = None, raw_query: dict = None
+        self,
+        obj: Model,
+        query: QueryOperator = None,
+        raw_query: dict = None,
+        upsert: bool = True,
     ) -> DbResponse:
         """
         Save a single object to the database.
@@ -358,7 +370,7 @@ class AsyncDbEngine(_Engine):
             DbResponse: The database response object.
         """
         indexes, operations, now = self._create_save_operations_list(
-            objs=[obj], query=query, raw_query=raw_query
+            objs=[obj], query=query, raw_query=raw_query, upsert=upsert
         )
         collection_name = obj._collection
         index_list = indexes[collection_name]
@@ -545,7 +557,10 @@ class DbEngine(_Engine):
             tz_info=tz_info,
         )
 
-    def save_all(self, obj_list: list[Model]) -> dict[str, DbResponse]:
+    def save_all(
+        self,
+        obj_list: list[Model],
+    ) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
 
@@ -554,7 +569,7 @@ class DbEngine(_Engine):
         """
         response = {}
         indexes, operations, now = self._create_save_operations_list(
-            objs=obj_list, query=None, raw_query=None
+            objs=obj_list, query=None, raw_query=None, upsert=True
         )
         for collection_name, index_list in indexes.items():
             if index_list:
@@ -570,7 +585,11 @@ class DbEngine(_Engine):
         return response
 
     def save(
-        self, obj: Model, query: QueryOperator = None, raw_query: dict = None
+        self,
+        obj: Model,
+        query: QueryOperator = None,
+        raw_query: dict = None,
+        upsert: bool = True,
     ) -> DbResponse:
         """
         Save a single object to the database.
@@ -584,7 +603,7 @@ class DbEngine(_Engine):
             DbResponse: The database response object.
         """
         indexes, operations, now = self._create_save_operations_list(
-            objs=[obj], query=query, raw_query=raw_query
+            objs=[obj], query=query, raw_query=raw_query, upsert=upsert
         )
         collection_name = obj._collection
         index_list = indexes[collection_name]
