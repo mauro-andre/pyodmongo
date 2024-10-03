@@ -345,3 +345,43 @@ async def test_db_model_init_with_missing_attribute_in_class(
     await async_engine.save(obj_a2)
     obj_found = await async_engine.find_one(Model=A)
     assert obj_found
+
+
+@pytest.mark.asyncio
+async def test_save_with_upsert(async_engine: AsyncDbEngine, engine: DbEngine, drop_db):
+    class A(DbModel):
+        attr_1: str
+        _collection: ClassVar = "col_a"
+
+    obj_0 = A(attr_1="A")
+    obj_1 = A(attr_1="B")
+    obj_2 = A(attr_1="C")
+    obj_3 = A(attr_1="D")
+
+    result_0 = engine.save_all([obj_0, obj_1])
+    result_1 = await async_engine.save_all([obj_2, obj_3])
+    assert result_0["col_a"].upserted_count == 2
+    assert result_1["col_a"].upserted_count == 2
+
+    updated_obj_0 = A(attr_1="E")
+    updated_obj_1 = A(attr_1="F")
+
+    result_0: DbResponse = engine.save(
+        updated_obj_0, query=A.attr_1 == "E", upsert=False
+    )
+    result_1: DbResponse = await async_engine.save(
+        updated_obj_1, query=A.attr_1 == "F", upsert=False
+    )
+    assert result_0.upserted_count == 0
+    assert result_1.upserted_count == 0
+
+    result_0: DbResponse = engine.save(
+        updated_obj_0, query=(A.attr_1 == "A") | (A.attr_1 == "K"), upsert=False
+    )
+    result_1: DbResponse = await async_engine.save(
+        updated_obj_1, query=(A.attr_1 == "C") | (A.attr_1 == "D"), upsert=False
+    )
+    assert result_0.modified_count == 1
+    assert result_0.upserted_count == 0
+    assert result_1.modified_count == 2
+    assert result_1.upserted_count == 0
