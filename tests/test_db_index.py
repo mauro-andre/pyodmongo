@@ -12,6 +12,7 @@ class MyClass(DbModel):
     attr_3: str = Field(text_index=True)
     attr_4: str = Field(index=True, text_index=True, default_language="portuguese")
     _collection: ClassVar = "my_class"
+    _default_language: ClassVar = "portuguese"
 
 
 class MyClass2(DbModel):

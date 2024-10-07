@@ -84,6 +84,6 @@ class DbMeta(PyOdmongoMeta):
     ) -> type:
         cls: BaseModel = PyOdmongoMeta.__new__(cls, name, bases, namespace, **kwargs)
 
-        indexes = resolve_indexes(cls=cls, indexes=[], text_keys=[], indexes_path=[], text_indexes_path=[])
+        indexes = resolve_indexes(cls=cls)
         setattr(cls, "_init_indexes", indexes)
         return cls

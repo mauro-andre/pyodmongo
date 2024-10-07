@@ -56,6 +56,7 @@ class DbModel(BaseModel, metaclass=DbMeta):
     updated_at: datetime | None = None
     model_config = ConfigDict(populate_by_name=True)
     _pipeline: ClassVar = []
+    _default_language: ClassVar = None
 
     def __remove_empty_dict(self, dct: dict):
         if dct == {}:

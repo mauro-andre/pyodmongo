@@ -7,28 +7,13 @@ from ..models.db_field_info import DbField
 from ..services.verify_subclasses import is_subclass
 
 
-def resolve_indexes(
+def __ordinary_index_and_text_keys(
     cls: BaseModel,
     indexes: list,
     text_keys: list,
     indexes_path: list,
     text_indexes_path: list,
 ):
-    """
-    Resolves and constructs MongoDB index models for the fields of a given class based on field attributes.
-
-    Args:
-        cls (BaseModel): The model class whose indexes are to be resolved.
-
-    Returns:
-        list[IndexModel]: A list of MongoDB index models constructed for the class fields.
-
-    Description:
-        This method iterates over the model fields and checks for index-related attributes (index, unique,
-        text_index). It creates appropriate MongoDB index structures (IndexModel) for these fields,
-        including handling of text indexes and unique constraints.
-    """
-
     for key in cls.model_fields.keys():
         try:
             db_field_info: DbField = getattr(cls, key)
@@ -38,10 +23,14 @@ def resolve_indexes(
                     f"The {cls.__name__} class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class"
                 )
 
-        if db_field_info.has_model_fields and not db_field_info.by_reference:
+        if (
+            db_field_info.has_model_fields
+            and not db_field_info.by_reference
+            and not db_field_info.is_list
+        ):
             indexes_path.append(db_field_info.field_alias)
             text_indexes_path.append(db_field_info.field_alias)
-            resolve_indexes(
+            __ordinary_index_and_text_keys(
                 cls=db_field_info.field_type,
                 indexes=indexes,
                 text_keys=text_keys,
@@ -56,9 +45,6 @@ def resolve_indexes(
         is_text_index = (
             cls.model_fields[key].json_schema_extra.get("text_index") or False
         )
-        default_language = (
-            cls.model_fields[key].json_schema_extra.get("default_language") or False
-        )
         if is_index:
             indexes_path.append(db_field_info.field_alias)
             index_name = ".".join(indexes_path)
@@ -71,8 +57,37 @@ def resolve_indexes(
             text_index_name = ".".join(text_indexes_path)
             text_keys.append((text_index_name, TEXT))
             text_indexes_path.pop()
+    return indexes, text_keys
+
+
+def resolve_indexes(cls: BaseModel):
+    """
+    Resolves and constructs MongoDB index models for the fields of a given class based on field attributes.
+
+    Args:
+        cls (BaseModel): The model class whose indexes are to be resolved.
+
+    Returns:
+        list[IndexModel]: A list of MongoDB index models constructed for the class fields.
+
+    Description:
+        This method iterates over the model fields and checks for index-related attributes (index, unique,
+        text_index). It creates appropriate MongoDB index structures (IndexModel) for these fields,
+        including handling of text indexes and unique constraints.
+    """
+    indexes = []
+    text_keys = []
+
+    indexes, text_keys = __ordinary_index_and_text_keys(
+        cls=cls,
+        indexes=indexes,
+        text_keys=text_keys,
+        indexes_path=[],
+        text_indexes_path=[],
+    )
 
     if len(text_keys) > 0:
+        default_language = cls._default_language
         if default_language:
             indexes.append(
                 IndexModel(text_keys, name="texts", default_language=default_language)
