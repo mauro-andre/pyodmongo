@@ -305,7 +305,7 @@ def test_logical_operator_inside_another():
 
 
 def test_sort_operator():
-    class MyNestedClass(BaseModel):
+    class MyNestedClass(MainBaseModel):
         n: int
 
     class MyClass(DbModel):
