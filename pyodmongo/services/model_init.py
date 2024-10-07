@@ -4,9 +4,16 @@ from typing import Any, Union, get_origin, get_args
 from types import UnionType
 from ..models.id_model import Id
 from ..models.db_field_info import DbField
+from ..services.verify_subclasses import is_subclass
 
 
-def resolve_indexes(cls: BaseModel):
+def resolve_indexes(
+    cls: BaseModel,
+    indexes: list,
+    text_keys: list,
+    indexes_path: list,
+    text_indexes_path: list,
+):
     """
     Resolves and constructs MongoDB index models for the fields of a given class based on field attributes.
 
@@ -21,9 +28,27 @@ def resolve_indexes(cls: BaseModel):
         text_index). It creates appropriate MongoDB index structures (IndexModel) for these fields,
         including handling of text indexes and unique constraints.
     """
-    indexes = []
-    text_keys = []
+
     for key in cls.model_fields.keys():
+        try:
+            db_field_info: DbField = getattr(cls, key)
+        except AttributeError:
+            if is_subclass(class_to_verify=cls, subclass=BaseModel):
+                raise TypeError(
+                    f"The {cls.__name__} class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class"
+                )
+
+        if db_field_info.has_model_fields and not db_field_info.by_reference:
+            indexes_path.append(db_field_info.field_alias)
+            text_indexes_path.append(db_field_info.field_alias)
+            resolve_indexes(
+                cls=db_field_info.field_type,
+                indexes=indexes,
+                text_keys=text_keys,
+                indexes_path=indexes_path,
+                text_indexes_path=text_indexes_path,
+            )
+            pass
         if not cls.model_fields[key].json_schema_extra:
             continue
         is_index = cls.model_fields[key].json_schema_extra.get("index") or False
@@ -34,14 +59,19 @@ def resolve_indexes(cls: BaseModel):
         default_language = (
             cls.model_fields[key].json_schema_extra.get("default_language") or False
         )
-        db_field_info: DbField = getattr(cls, key)
-        alias = db_field_info.field_alias
         if is_index:
+            indexes_path.append(db_field_info.field_alias)
+            index_name = ".".join(indexes_path)
             indexes.append(
-                IndexModel([(alias, ASCENDING)], name=alias, unique=is_unique)
+                IndexModel([(index_name, ASCENDING)], name=index_name, unique=is_unique)
             )
+            indexes_path.pop()
         if is_text_index:
-            text_keys.append((alias, TEXT))
+            text_indexes_path.append(db_field_info.field_alias)
+            text_index_name = ".".join(text_indexes_path)
+            text_keys.append((text_index_name, TEXT))
+            text_indexes_path.pop()
+
     if len(text_keys) > 0:
         if default_language:
             indexes.append(

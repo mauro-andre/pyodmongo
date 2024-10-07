@@ -1,4 +1,4 @@
-from pyodmongo import DbModel, Field, DbEngine, AsyncDbEngine
+from pyodmongo import DbModel, Field, DbEngine, AsyncDbEngine, MainBaseModel
 from pymongo import IndexModel, ASCENDING, DESCENDING
 from typing import ClassVar
 import pytest
@@ -214,3 +214,43 @@ async def test_async_create_custom_indexes(async_engine: AsyncDbEngine):
     assert indexes_in_db["attr_0_and_attr_1"]["key"][1] == ("attr_1", -1)
 
     await async_engine._db[MyClassCustomIndex._collection].drop()
+
+
+@pytest_asyncio.fixture()
+async def Model_for_recursive_tests(async_engine: AsyncDbEngine):
+    class PersistedLv2(DbModel):
+        attr_lv2_1: str = "attr_lv2_1"
+        attr_lv2_2: str = Field(default="attr_lv2_2", index=True)
+
+    class Persisted(MainBaseModel):
+        attr_p1: str = "attr_p1"
+        attr_p2: str = Field(default="attr_p2", index=True)
+        attr_lv2: PersistedLv2 = PersistedLv2()
+
+    class RecModelTest(DbModel):
+        attr_1: str = "attr_1"
+        attr_2: str = Field(default="attr_2", index=True)
+        attr_persisted: Persisted = Persisted()
+        _collection: ClassVar = "rec_model_test"
+
+    await async_engine._db[RecModelTest._collection].drop()
+    yield RecModelTest
+    await async_engine._db[RecModelTest._collection].drop()
+
+
+@pytest.mark.asyncio
+async def test_index_creation_with_persisted_nested(
+    async_engine: AsyncDbEngine, Model_for_recursive_tests
+):
+    obj = Model_for_recursive_tests()
+    await async_engine.save(obj)
+    indexes_in_db = await async_engine._db[
+        Model_for_recursive_tests._collection
+    ].index_information()
+    assert "attr_1" not in indexes_in_db
+    assert "attr_2" in indexes_in_db
+    assert "attr_persisted" not in indexes_in_db
+    assert "attr_persisted.attr_p1" not in indexes_in_db
+    assert "attr_persisted.attr_p2" in indexes_in_db
+    assert "attr_persisted.attr_lv2.attr_lv2_2" in indexes_in_db
+    assert "attr_persisted.attr_lv2.attr_lv2_1" not in indexes_in_db

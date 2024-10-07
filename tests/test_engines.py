@@ -229,26 +229,21 @@ async def test_db_field_population(
 async def test_error_save_base_model(
     async_engine: AsyncDbEngine, engine: DbEngine, drop_db
 ):
-    class MyClassA(BaseModel):
-        a1: str = "a1"
-
-    class MyClassB(DbModel):
-        b1: str = "b1"
-        obj_a: MyClassA = MyClassA()
-        _collection: ClassVar = "my_class_b"
-
-    obj = MyClassB()
-
     with pytest.raises(
         TypeError,
         match="The MyClassA class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
     ):
+
+        class MyClassA(BaseModel):
+            a1: str = "a1"
+
+        class MyClassB(DbModel):
+            b1: str = "b1"
+            obj_a: MyClassA = MyClassA()
+            _collection: ClassVar = "my_class_b"
+
+        obj = MyClassB()
         await async_engine.save(obj)
-
-    with pytest.raises(
-        TypeError,
-        match="The MyClassA class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
-    ):
         engine.save(obj)
 
 
