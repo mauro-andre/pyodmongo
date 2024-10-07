@@ -37,7 +37,8 @@ def __ordinary_index_and_text_keys(
                 indexes_path=indexes_path,
                 text_indexes_path=text_indexes_path,
             )
-            pass
+            indexes_path.pop()
+            text_indexes_path.pop()
         if not cls.model_fields[key].json_schema_extra:
             continue
         is_index = cls.model_fields[key].json_schema_extra.get("index") or False

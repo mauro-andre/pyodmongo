@@ -232,6 +232,7 @@ async def Model_for_recursive_tests(async_engine: AsyncDbEngine):
         attr_1: str = "attr_1"
         attr_2: str = Field(default="attr_2", index=True)
         attr_persisted: Persisted = Persisted()
+        attr_3: str = Field(default="attr_3", index=True)
         _collection: ClassVar = "rec_model_test"
 
     await async_engine._db[RecModelTest._collection].drop()
@@ -250,6 +251,7 @@ async def test_index_creation_with_persisted_nested(
     ].index_information()
     assert "attr_1" not in indexes_in_db
     assert "attr_2" in indexes_in_db
+    assert "attr_3" in indexes_in_db
     assert "attr_persisted" not in indexes_in_db
     assert "attr_persisted.attr_p1" not in indexes_in_db
     assert "attr_persisted.attr_p2" in indexes_in_db
