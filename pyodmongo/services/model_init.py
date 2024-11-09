@@ -49,6 +49,17 @@ def __ordinary_index_and_text_keys(
         if is_index:
             indexes_path.append(db_field_info.field_alias)
             index_name = ".".join(indexes_path)
+            from ..models.db_model import DbModel
+
+            # TODO: 🤮🤮🤮 This section requires a more efficient and robust solution 🤮🤮🤮
+            # The current implementation needs improvement to optimize performance and readability.
+            if (
+                is_unique
+                and len(indexes_path) > 1
+                and is_subclass(class_to_verify=cls, subclass=DbModel)
+            ):
+                is_unique = False
+
             indexes.append(
                 IndexModel([(index_name, ASCENDING)], name=index_name, unique=is_unique)
             )

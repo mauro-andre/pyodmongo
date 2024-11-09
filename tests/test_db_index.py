@@ -221,16 +221,16 @@ async def test_async_create_custom_indexes(async_engine: AsyncDbEngine):
 async def Model_for_recursive_tests(async_engine: AsyncDbEngine):
     class PersistedLv2(DbModel):
         attr_lv2_1: str = "attr_lv2_1"
-        attr_lv2_2: str = Field(default="attr_lv2_2", index=True)
+        attr_lv2_2: str = Field(default="attr_lv2_2", index=True, unique=True)
 
     class Persisted(MainBaseModel):
         attr_p1: str = "attr_p1"
-        attr_p2: str = Field(default="attr_p2", index=True)
+        attr_p2: str = Field(default="attr_p2", index=True, unique=True)
         attr_lv2: PersistedLv2 = PersistedLv2()
 
     class RecModelTest(DbModel):
         attr_1: str = "attr_1"
-        attr_2: str = Field(default="attr_2", index=True)
+        attr_2: str = Field(default="attr_2", index=True, unique=True)
         attr_persisted: Persisted = Persisted()
         attr_3: str = Field(default="attr_3", index=True)
         _collection: ClassVar = "rec_model_test"
@@ -257,3 +257,7 @@ async def test_index_creation_with_persisted_nested(
     assert "attr_persisted.attr_p2" in indexes_in_db
     assert "attr_persisted.attr_lv2.attr_lv2_2" in indexes_in_db
     assert "attr_persisted.attr_lv2.attr_lv2_1" not in indexes_in_db
+    assert indexes_in_db["attr_2"].get("unique")
+    assert not indexes_in_db["attr_3"].get("unique")
+    assert indexes_in_db["attr_persisted.attr_p2"].get("unique")
+    assert not indexes_in_db["attr_persisted.attr_lv2.attr_lv2_2"].get("unique")
