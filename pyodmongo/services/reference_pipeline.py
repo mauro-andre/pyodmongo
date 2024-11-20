@@ -104,7 +104,7 @@ def resolve_reference_pipeline(
                 "_id" if reverse_index - 1 < 0 else unwind_index_list[reverse_index - 1]
             )
             pipeline += group_set_replace_root(
-                id_=unwind_index, field=path_str.split(".")[-1], path_str=path_str
+                id_=unwind_index, array_index=unwind_index_list[-1], field=path_str.split(".")[-1], path_str=path_str
             )
             pipeline += unset(fields=[unwind_index_list[reverse_index - 1]])
 

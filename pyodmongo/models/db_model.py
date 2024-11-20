@@ -58,33 +58,51 @@ class DbModel(BaseModel, metaclass=DbMeta):
     _pipeline: ClassVar = []
     _default_language: ClassVar = None
 
-    def __remove_empty_dict(self, dct: dict):
-        if dct == {}:
-            return None
-        for key, value in dct.items():
-            if value == {}:
-                dct[key] = None
-            elif type(value) == dict:
-                dct[key] = self.__remove_empty_dict(dct=value)
-        is_full_empty = all(v == None or v == {} for v in dct.values())
-        if is_full_empty:
-            return None
-        return dct
+    def __replace_empty_dicts(self, data):
+        """
+        Recursively traverses a dictionary (or a list of dictionaries) and:
+        - Replaces empty dictionaries with None.
+        - Removes empty dictionaries from lists.
+
+        Args:
+            data (dict | list): The dictionary or list to process.
+
+        Returns:
+            dict | list: The processed dictionary or list with modifications.
+        """
+        if "_id" in data:
+            data["id"] = data.pop("_id")
+
+        if isinstance(data, dict):
+            # Traverse each key-value pair in the dictionary
+            for key, value in data.items():
+                if isinstance(value, dict):  # Check if the value is a dictionary
+                    if not value:  # If the dictionary is empty
+                        data[key] = None
+                    else:
+                        data[key] = self.__replace_empty_dicts(
+                            value
+                        )  # Recursive call for non-empty dictionaries
+                elif isinstance(value, list):  # Check if the value is a list
+                    # Process each item in the list and remove empty dictionaries
+                    data[key] = [
+                        self.__replace_empty_dicts(item)
+                        for item in value
+                        if not (
+                            isinstance(item, dict) and not item
+                        )  # Exclude empty dictionaries
+                    ]
+        elif isinstance(data, list):
+            # If the data itself is a list, process each item and remove empty dictionaries
+            data = [
+                self.__replace_empty_dicts(item)
+                for item in data
+                if not (
+                    isinstance(item, dict) and not item
+                )  # Exclude empty dictionaries
+            ]
+        return data
 
     def __init__(self, **attrs):
-        for key, value in attrs.items():
-            if type(value) == dict:
-                attrs[key] = self.__remove_empty_dict(dct=value)
-            elif type(value) == list:
-                is_full_empty = all(v == None or v == {} for v in value)
-                if is_full_empty:
-                    try:
-                        default_value = self.__class__.model_fields[key].default
-                        attrs[key] = (
-                            [] if default_value == PydanticUndefined else default_value
-                        )
-                    except KeyError:
-                        ...
-        if attrs.get("_id") is not None:
-            attrs["id"] = attrs.pop("_id")
+        self.__replace_empty_dicts(attrs)
         super().__init__(**attrs)

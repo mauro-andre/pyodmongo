@@ -7,7 +7,7 @@ def test_empty_dict():
         _collection = "my_model_1"
 
     class MyModel2(DbModel):
-        attr2: str | None
+        attr2: str | None = None
         attr2_list: list | None = []
         my_model_1: MyModel1 | Id | None
         _collection = "my_model_2"
@@ -40,9 +40,21 @@ def test_empty_dict():
             "updated_at": None,
             "attr2": "Escrito",
             "attr2_list": [],
-            "my_model_1": None,
+            "my_model_1": {
+                "id": None,
+                "created_at": None,
+                "updated_at": None,
+                "attr1": None,
+            },
         },
-        "my_model_2_2": None,
+        "my_model_2_2": {
+            "attr2": None,
+            "id": None,
+            "created_at": None,
+            "updated_at": None,
+            "my_model_1": None,
+            "attr2_list": None,
+        },
         "my_model_2_3": None,
         "my_model_2_4": {
             "id": None,

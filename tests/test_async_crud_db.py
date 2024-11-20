@@ -564,7 +564,6 @@ async def test_nested_list_objects(
         attr_3="obj_15", class_two_b=obj_13, class_two_b_list=[obj_13, obj_14]
     )
     await async_engine.save(obj_15)
-
     obj_found = await async_engine.find_one(Model=ClassThree, populate=True)
     assert obj_found.id == obj_15.id
     assert obj_found.class_two_b.attr_2_b == "obj_13"
