@@ -76,7 +76,7 @@ def set_(as_: str):
     return [{"$set": {as_: {"$arrayElemAt": [f"${as_}", 0]}}}]
 
 
-def group_set_replace_root(id_: str, field: str, path_str: str):
+def group_set_replace_root(id_: str, array_index: str, field: str, path_str: str):
     """
     Constructs a combination of group, set, and replaceRoot stages for a MongoDB aggregation pipeline.
 
@@ -101,7 +101,18 @@ def group_set_replace_root(id_: str, field: str, path_str: str):
                 field: {"$push": f"${path_str}"},
             }
         },
-        {"$set": {f"_document.{path_str}": f"${field}"}},
+        # {"$set": {f"_document.{path_str}": f"${field}"}},
+        {
+            "$set": {
+                f"_document.{path_str}": {
+                    "$cond": {
+                        "if": {"$eq": [f"$_document.{array_index}", None]},
+                        "then": None,
+                        "else": f"${field}",
+                    }
+                }
+            }
+        },
         {"$replaceRoot": {"newRoot": "$_document"}},
     ]
 
