@@ -49,10 +49,10 @@ class PyOdmongoMeta(ModelMetaclass):
         return cls
 
     def __getattr__(cls, name: str):
-        if cls.__dict__.get("__pyodmongo_complete__"):
-            is_attr = name in cls.__dict__.get("model_fields").keys()
-            if is_attr:
-                return cls.__dict__.get(name + "__pyodmongo")
+        if cls.__dict__.get("__pyodmongo_complete__") and cls.__dict__.get(
+            name + "__pyodmongo"
+        ):
+            return cls.__dict__.get(name + "__pyodmongo")
         ModelMetaclass.__getattr__(cls, name)
 
 
