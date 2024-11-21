@@ -1,19 +1,20 @@
-from bson import ObjectId
 from pydantic import BaseModel
+from bson import ObjectId
 from ..models.id_model import Id
+from ..models.db_model import MainBaseModel
 from ..models.db_field_info import DbField
 from ..services.reference_pipeline import resolve_reference_pipeline
 from ..services.verify_subclasses import is_subclass
 
 
-def consolidate_dict(obj: BaseModel, dct: dict):
+def consolidate_dict(obj: MainBaseModel, dct: dict):
     """
     Recursively consolidates the attributes of a Pydantic model into a dictionary,
     handling nested models, list fields, and references appropriately based on the model's
     field specifications.
 
     Args:
-        obj (BaseModel): The Pydantic model instance from which to extract data.
+        obj (MainBaseModel): The PyODMongo model instance from which to extract data.
         dct (dict): The dictionary into which data should be consolidated. This dictionary
                     is modified in-place.
 

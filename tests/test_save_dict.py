@@ -1,7 +1,9 @@
+from pydantic import BaseModel
 from pyodmongo import DbModel, Field, Id, MainBaseModel
 from typing import ClassVar
 from bson import ObjectId
 from pyodmongo.engines.utils import consolidate_dict
+import pytest
 
 
 def test_save_dict_is_correct():
@@ -286,3 +288,25 @@ def test_fields_with_reference():
     }
     assert consolidate_dict(obj=obj_1, dct={}) == dct_expected_1
     assert consolidate_dict(obj=obj_2, dct={}) == dct_expected_2
+
+
+def test_basemodel_exception():
+    class PydanticModel(BaseModel):
+        att1: str = "Attr 1"
+
+    class PyodmongoModel(MainBaseModel):
+        att1: str = "Attr 1"
+
+    class DbModelClass(DbModel):
+        attr2: str = "Attr 2"
+        bm: PyodmongoModel = PyodmongoModel()
+        _collection: ClassVar = "db_model_class"
+
+    obj = DbModelClass()
+    consolidate_dict(obj=obj, dct={})
+    obj.bm = PydanticModel()
+    with pytest.raises(
+        TypeError,
+        match="The PydanticModel class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
+    ):
+        consolidate_dict(obj=obj, dct={})

@@ -1,7 +1,10 @@
 from pyodmongo import DbModel, MainBaseModel, Id
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import ClassVar
-from pyodmongo.services.reference_pipeline import resolve_reference_pipeline
+from pyodmongo.services.reference_pipeline import (
+    resolve_reference_pipeline,
+    _paths_to_ref_ids,
+)
 import pytest
 
 
@@ -287,23 +290,17 @@ def test_recursive_reference_pipeline():
 
 
 def test_main_base_model_usage_recommendation():
+    class Z(DbModel):
+        z1: str = "z1"
+        _collection: TypeError = "z"
+
+    class X(BaseModel):
+        x1: str = "x1"
+        x2: str = "x2"
+        z: Z | Id
+
     with pytest.raises(
         TypeError,
         match="The X class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
     ):
-
-        class Z(DbModel):
-            z1: str = "z1"
-            _collection: TypeError = "z"
-
-        class X(BaseModel):
-            x1: str = "x1"
-            x2: str = "x2"
-            z: Z | Id
-
-        class Y(DbModel):
-            y1: str = "y1"
-            x: X
-            _collection: TypeError = "y"
-
-        resolve_reference_pipeline(cls=Y, pipeline=[], populate_db_fields=None)
+        _paths_to_ref_ids(cls=X, paths=[], db_field_path=[], populate_db_fields=None)

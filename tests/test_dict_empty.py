@@ -24,7 +24,7 @@ def test_empty_dict():
         "attr3": "attr3",
         "my_model_2": {
             "attr2": "Escrito",
-            "attr2_list": [],
+            "attr2_list": [{}, {}],
             "my_model_1": {"attr1": {}},
         },
         "my_model_2_2": {"my_model_1": {}, "attr2_list": None},
