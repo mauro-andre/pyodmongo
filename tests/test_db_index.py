@@ -10,9 +10,18 @@ class MyClass(DbModel):
     attr_1: str = Field(index=True)
     attr_2: str = Field(unique=True)
     attr_3: str = Field(text_index=True)
-    attr_4: str = Field(index=True, text_index=True, default_language="portuguese")
+    attr_4: str = Field(index=True, text_index=True)
     _collection: ClassVar = "my_class"
     _default_language: ClassVar = "portuguese"
+
+
+class MyClassWithoutDefaultLanguage(DbModel):
+    attr_0: str
+    attr_1: str = Field(index=True)
+    attr_2: str = Field(unique=True)
+    attr_3: str = Field(text_index=True)
+    attr_4: str = Field(index=True, text_index=True)
+    _collection: ClassVar = "my_class_without_default_language"
 
 
 class MyClass2(DbModel):
@@ -93,8 +102,20 @@ async def test_async_check_index_in_db(
         attr_3="attr_3",
         attr_4="attr_4",
     )
-    result = await async_engine.save(obj)
+    obj2 = MyClassWithoutDefaultLanguage(
+        attr_0="attr_0",
+        attr_1="attr_1",
+        attr_2="attr_2",
+        attr_3="attr_3",
+        attr_4="attr_4",
+    )
+    await async_engine.save(obj)
+    await async_engine.save(obj2)
     indexes_in_db = await async_engine._db[MyClass._collection].index_information()
+    indexes_in_db_2 = await async_engine._db[
+        MyClassWithoutDefaultLanguage._collection
+    ].index_information()
+
     assert "attr_0" not in indexes_in_db
     assert "attr_1" in indexes_in_db
     assert "attr_2" not in indexes_in_db
@@ -103,6 +124,15 @@ async def test_async_check_index_in_db(
     assert "attr_3" in indexes_in_db["texts"]["weights"]
     assert "attr_4" in indexes_in_db["texts"]["weights"]
     assert indexes_in_db["texts"]["default_language"] == "portuguese"
+
+    assert "attr_0" not in indexes_in_db_2
+    assert "attr_1" in indexes_in_db_2
+    assert "attr_2" not in indexes_in_db_2
+    assert "attr_3" not in indexes_in_db_2
+    assert "attr_4" in indexes_in_db_2
+    assert "attr_3" in indexes_in_db_2["texts"]["weights"]
+    assert "attr_4" in indexes_in_db_2["texts"]["weights"]
+    assert indexes_in_db_2["texts"]["default_language"] == "english"
 
 
 def test_create_indexes_on_inheritance(sync_drop_collection, engine: DbEngine):

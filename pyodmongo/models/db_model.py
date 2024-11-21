@@ -92,15 +92,16 @@ class DbModel(BaseModel, metaclass=DbMeta):
                             isinstance(item, dict) and not item
                         )  # Exclude empty dictionaries
                     ]
-        elif isinstance(data, list):
-            # If the data itself is a list, process each item and remove empty dictionaries
-            data = [
-                self.__replace_empty_dicts(item)
-                for item in data
-                if not (
-                    isinstance(item, dict) and not item
-                )  # Exclude empty dictionaries
-            ]
+
+        # elif isinstance(data, list):
+        #     # If the data itself is a list, process each item and remove empty dictionaries
+        #     data = [
+        #         self.__replace_empty_dicts(item)
+        #         for item in data
+        #         if not (
+        #             isinstance(item, dict) and not item
+        #         )  # Exclude empty dictionaries
+        #     ]
         return data
 
     def __init__(self, **attrs):
