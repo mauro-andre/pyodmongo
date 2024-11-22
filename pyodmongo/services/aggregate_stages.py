@@ -60,7 +60,7 @@ def lookup(from_: str, local_field: str, foreign_field: str, as_: str, pipeline:
     ]
 
 
-def set_(as_: str):
+def set_(local_field: str, as_: str):
     """
     Constructs a set stage for a MongoDB aggregation pipeline that redefines a field with a specified value.
 
@@ -73,7 +73,31 @@ def set_(as_: str):
     Description:
         This operation allows setting or replacing values of fields within documents during aggregation.
     """
-    return [{"$set": {as_: {"$arrayElemAt": [f"${as_}", 0]}}}]
+    fields = local_field.split(".")
+    pipeline = [{"$set": {as_: {"$arrayElemAt": [f"${as_}", 0]}}}]
+    for i in range(len(fields), 0, -1):
+        field_str = ".".join(fields[:i])
+        then = "$$REMOVE" if i > 1 else None
+        pipeline.append(
+            {
+                "$set": {
+                    field_str: {
+                        "$cond": {
+                            "if": {
+                                "$or": [
+                                    {"$eq": [f"${field_str}", None]},
+                                    {"$eq": [f"${field_str}", {}]},
+                                ]
+                            },
+                            "then": then,
+                            "else": f"${field_str}",
+                        }
+                    }
+                }
+            }
+        )
+
+    return pipeline
 
 
 def group_set_replace_root(id_: str, array_index: str, field: str, path_str: str):

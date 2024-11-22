@@ -70,11 +70,11 @@ class DbModel(BaseModel, metaclass=DbMeta):
         Returns:
             dict | list: The processed dictionary or list with modifications.
         """
-        if "_id" in data:
-            data["id"] = data.pop("_id")
 
         if isinstance(data, dict):
             # Traverse each key-value pair in the dictionary
+            if "_id" in data:
+                data["id"] = data.pop("_id")
             for key, value in data.items():
                 if isinstance(value, dict):  # Check if the value is a dictionary
                     if not value:  # If the dictionary is empty

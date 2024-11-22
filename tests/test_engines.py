@@ -380,3 +380,46 @@ async def test_save_with_upsert(async_engine: AsyncDbEngine, engine: DbEngine, d
     assert result_0.upserted_count == 0
     assert result_1.modified_count == 2
     assert result_1.upserted_count == 0
+
+
+@pytest.mark.asyncio
+async def test_save_nested_objects_with_none(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class S(DbModel):
+        s_1: str = "s_1"
+        _collection: ClassVar = "s"
+
+    class BC(DbModel):
+        bc_1: str = "bc_1"
+        s: S | Id
+        _collection: ClassVar = "bc"
+
+    class A(MainBaseModel):
+        a: str | None = None
+        bc: BC | None = None
+        _collection: ClassVar = "a"
+
+    class BI(MainBaseModel):
+        bi_1: str = "bi_1"
+        a: A | None = None
+
+    class O(DbModel):
+        o_1: str = "o_1"
+        bi: BI | None = None
+        _collection: ClassVar = "o"
+
+    obj_s = S()
+    await async_engine.save(obj_s)
+
+    obj_bc = BC(s=obj_s)
+    await async_engine.save(obj_bc)
+
+    obj_a = A(bc=obj_bc)
+    obj_bi = BI(a=obj_a)
+
+    obj_1 = O()
+    obj_2 = O(bi=obj_bi)
+    await async_engine.save_all([obj_1, obj_2])
+    obj_found = await async_engine.find_one(Model=O, populate=True, query=O.bi == None)
+    assert obj_found == obj_1
