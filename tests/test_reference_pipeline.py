@@ -53,69 +53,66 @@ def test_simple_if_reference_pipeline_is_correct():
     expected = [
         {
             "$lookup": {
-                "as": "c1",
-                "foreignField": "_id",
                 "from": "b",
                 "localField": "c1",
+                "foreignField": "_id",
+                "as": "c1",
                 "pipeline": [
                     {
                         "$lookup": {
-                            "as": "b1",
-                            "foreignField": "_id",
                             "from": "a",
                             "localField": "b1",
-                            "pipeline": [
-                                # {
-                                #     "$project": {
-                                #         "_id": True,
-                                #         "a1": True,
-                                #         "created_at": True,
-                                #         "updated_at": True,
-                                #     }
-                                # }
-                            ],
+                            "foreignField": "_id",
+                            "as": "b1",
+                            "pipeline": [],
                         }
                     },
                     {"$set": {"b1": {"$arrayElemAt": ["$b1", 0]}}},
                     {
+                        "$set": {
+                            "b1": {
+                                "$cond": {
+                                    "if": {
+                                        "$or": [
+                                            {"$eq": ["$b1", None]},
+                                            {"$eq": ["$b1", {}]},
+                                        ]
+                                    },
+                                    "then": None,
+                                    "else": "$b1",
+                                }
+                            }
+                        }
+                    },
+                    {
                         "$lookup": {
-                            "as": "b2",
-                            "foreignField": "_id",
                             "from": "a0",
                             "localField": "b2",
-                            "pipeline": [
-                                # {
-                                #     "$project": {
-                                #         "_id": True,
-                                #         "a01": True,
-                                #         "created_at": True,
-                                #         "updated_at": True,
-                                #     }
-                                # }
-                            ],
+                            "foreignField": "_id",
+                            "as": "b2",
+                            "pipeline": [],
                         }
                     },
                     {"$set": {"b2": {"$arrayElemAt": ["$b2", 0]}}},
-                    # {
-                    #     "$project": {
-                    #         "_id": True,
-                    #         "b1": True,
-                    #         "b2": True,
-                    #         "created_at": True,
-                    #         "updated_at": True,
-                    #     }
-                    # },
+                    {
+                        "$set": {
+                            "b2": {
+                                "$cond": {
+                                    "if": {
+                                        "$or": [
+                                            {"$eq": ["$b2", None]},
+                                            {"$eq": ["$b2", {}]},
+                                        ]
+                                    },
+                                    "then": None,
+                                    "else": "$b2",
+                                }
+                            }
+                        }
+                    },
                 ],
-            },
-        },
-        # {
-        #     "$project": {
-        #         "_id": True,
-        #         "c1": True,
-        #         "created_at": True,
-        #         "updated_at": True,
-        #     }
-        # },
+            }
+        }
     ]
     assert (
         resolve_reference_pipeline(cls=C, pipeline=[], populate_db_fields=None)
@@ -163,129 +160,163 @@ def test_recursive_reference_pipeline():
     assert resolve_reference_pipeline(cls=C, pipeline=[], populate_db_fields=None) == [
         {
             "$lookup": {
-                "as": "a",
-                "foreignField": "_id",
                 "from": "col_a",
                 "localField": "a",
+                "foreignField": "_id",
+                "as": "a",
                 "pipeline": [
                     {
                         "$lookup": {
-                            "as": "zero_1",
-                            "foreignField": "_id",
                             "from": "col_0",
                             "localField": "zero_1",
-                            "pipeline": [
-                                # {
-                                #     "$project": {
-                                #         "_id": True,
-                                #         "attr_0": True,
-                                #         "created_at": True,
-                                #         "updated_at": True,
-                                #     }
-                                # }
-                            ],
+                            "foreignField": "_id",
+                            "as": "zero_1",
+                            "pipeline": [],
                         }
                     },
                     {"$set": {"zero_1": {"$arrayElemAt": ["$zero_1", 0]}}},
-                    # {
-                    #     "$project": {
-                    #         "_id": True,
-                    #         "attr_1": True,
-                    #         "created_at": True,
-                    #         "updated_at": True,
-                    #         "zero_1": True,
-                    #         "zero_2._id": True,
-                    #         "zero_2.attr_0": True,
-                    #         "zero_2.created_at": True,
-                    #         "zero_2.updated_at": True,
-                    #     }
-                    # },
+                    {
+                        "$set": {
+                            "zero_1": {
+                                "$cond": {
+                                    "if": {
+                                        "$or": [
+                                            {"$eq": ["$zero_1", None]},
+                                            {"$eq": ["$zero_1", {}]},
+                                        ]
+                                    },
+                                    "then": None,
+                                    "else": "$zero_1",
+                                }
+                            }
+                        }
+                    },
                 ],
             }
         },
         {"$set": {"a": {"$arrayElemAt": ["$a", 0]}}},
         {
+            "$set": {
+                "a": {
+                    "$cond": {
+                        "if": {"$or": [{"$eq": ["$a", None]}, {"$eq": ["$a", {}]}]},
+                        "then": None,
+                        "else": "$a",
+                    }
+                }
+            }
+        },
+        {
             "$lookup": {
-                "as": "b.a1",
-                "foreignField": "_id",
                 "from": "col_a",
                 "localField": "b.a1",
+                "foreignField": "_id",
+                "as": "b.a1",
                 "pipeline": [
                     {
                         "$lookup": {
-                            "as": "zero_1",
-                            "foreignField": "_id",
                             "from": "col_0",
                             "localField": "zero_1",
-                            "pipeline": [
-                                # {
-                                #     "$project": {
-                                #         "_id": True,
-                                #         "attr_0": True,
-                                #         "created_at": True,
-                                #         "updated_at": True,
-                                #     }
-                                # }
-                            ],
+                            "foreignField": "_id",
+                            "as": "zero_1",
+                            "pipeline": [],
                         }
                     },
                     {"$set": {"zero_1": {"$arrayElemAt": ["$zero_1", 0]}}},
-                    # {
-                    #     "$project": {
-                    #         "_id": True,
-                    #         "attr_1": True,
-                    #         "created_at": True,
-                    #         "updated_at": True,
-                    #         "zero_1": True,
-                    #         "zero_2._id": True,
-                    #         "zero_2.attr_0": True,
-                    #         "zero_2.created_at": True,
-                    #         "zero_2.updated_at": True,
-                    #     }
-                    # },
+                    {
+                        "$set": {
+                            "zero_1": {
+                                "$cond": {
+                                    "if": {
+                                        "$or": [
+                                            {"$eq": ["$zero_1", None]},
+                                            {"$eq": ["$zero_1", {}]},
+                                        ]
+                                    },
+                                    "then": None,
+                                    "else": "$zero_1",
+                                }
+                            }
+                        }
+                    },
                 ],
             }
         },
         {"$set": {"b.a1": {"$arrayElemAt": ["$b.a1", 0]}}},
         {
+            "$set": {
+                "b.a1": {
+                    "$cond": {
+                        "if": {
+                            "$or": [{"$eq": ["$b.a1", None]}, {"$eq": ["$b.a1", {}]}]
+                        },
+                        "then": "$$REMOVE",
+                        "else": "$b.a1",
+                    }
+                }
+            }
+        },
+        {
+            "$set": {
+                "b": {
+                    "$cond": {
+                        "if": {"$or": [{"$eq": ["$b", None]}, {"$eq": ["$b", {}]}]},
+                        "then": None,
+                        "else": "$b",
+                    }
+                }
+            }
+        },
+        {
             "$lookup": {
-                "as": "b.a2.zero_1",
-                "foreignField": "_id",
                 "from": "col_0",
                 "localField": "b.a2.zero_1",
-                "pipeline": [
-                    # {
-                    #     "$project": {
-                    #         "_id": True,
-                    #         "attr_0": True,
-                    #         "created_at": True,
-                    #         "updated_at": True,
-                    #     }
-                    # }
-                ],
+                "foreignField": "_id",
+                "as": "b.a2.zero_1",
+                "pipeline": [],
             }
         },
         {"$set": {"b.a2.zero_1": {"$arrayElemAt": ["$b.a2.zero_1", 0]}}},
-        # {
-        #     "$project": {
-        #         "_id": True,
-        #         "a": True,
-        #         "attr_3": True,
-        #         "b.a1": True,
-        #         "b.a2._id": True,
-        #         "b.a2.attr_1": True,
-        #         "b.a2.created_at": True,
-        #         "b.a2.updated_at": True,
-        #         "b.a2.zero_1": True,
-        #         "b.a2.zero_2._id": True,
-        #         "b.a2.zero_2.attr_0": True,
-        #         "b.a2.zero_2.created_at": True,
-        #         "b.a2.zero_2.updated_at": True,
-        #         "b.attr_2": True,
-        #         "created_at": True,
-        #         "updated_at": True,
-        #     }
-        # },
+        {
+            "$set": {
+                "b.a2.zero_1": {
+                    "$cond": {
+                        "if": {
+                            "$or": [
+                                {"$eq": ["$b.a2.zero_1", None]},
+                                {"$eq": ["$b.a2.zero_1", {}]},
+                            ]
+                        },
+                        "then": "$$REMOVE",
+                        "else": "$b.a2.zero_1",
+                    }
+                }
+            }
+        },
+        {
+            "$set": {
+                "b.a2": {
+                    "$cond": {
+                        "if": {
+                            "$or": [{"$eq": ["$b.a2", None]}, {"$eq": ["$b.a2", {}]}]
+                        },
+                        "then": "$$REMOVE",
+                        "else": "$b.a2",
+                    }
+                }
+            }
+        },
+        {
+            "$set": {
+                "b": {
+                    "$cond": {
+                        "if": {"$or": [{"$eq": ["$b", None]}, {"$eq": ["$b", {}]}]},
+                        "then": None,
+                        "else": "$b",
+                    }
+                }
+            }
+        },
     ]
 
 
