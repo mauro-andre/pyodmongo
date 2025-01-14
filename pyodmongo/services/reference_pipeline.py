@@ -66,7 +66,7 @@ def resolve_reference_pipeline(
     )
     for db_field_path in paths:
         path_str = ""
-        unwind_index_list = []
+        unwind_index_list = ["_id"]
         paths_str_to_group = []
         db_field: DbField = None
         for index, db_field in enumerate(db_field_path):
@@ -99,16 +99,16 @@ def resolve_reference_pipeline(
             pipeline += set_(local_field=path_str, as_=path_str)
 
         for index, path_str in enumerate(reversed(paths_str_to_group)):
-            reverse_index = len(paths_str_to_group) - index - 1
-            unwind_index = (
-                "_id" if reverse_index - 1 < 0 else unwind_index_list[reverse_index - 1]
-            )
+            id_ = [
+                f"${e}" for e in unwind_index_list[: len(unwind_index_list) - index - 1]
+            ]
+            to_unset = unwind_index_list[-(index + 1)]
             pipeline += group_set_replace_root(
-                id_=unwind_index,
+                id_=[id_],
                 array_index=unwind_index_list[-1],
                 field=path_str.split(".")[-1],
                 path_str=path_str,
             )
-            pipeline += unset(fields=[unwind_index_list[reverse_index - 1]])
+            pipeline += unset(fields=[to_unset])
 
     return pipeline
