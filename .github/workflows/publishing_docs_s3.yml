@@ -2,53 +2,48 @@ name: Update docs on AWS S3
 
 on: workflow_dispatch
 
-
 jobs:
-  update-docs-on-s3-bucket:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
+    update-docs-on-s3-bucket:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11.x'
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11.x"
 
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip mkdocs-material mkdocs-static-i18n "mkdocs-material[imaging]"
+            - name: Install dependencies
+              run: |
+                  python3 -m pip install --upgrade pip mkdocs-material mkdocs-static-i18n "mkdocs-material[imaging]"
 
-    - name: Install Image processing Dependencies
-      run: |
-        sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
-        sudo apt-get install -y pngquant
-        
-    - name: Install AWS CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install awscli
-  
-    - name: Configuring AWS CLI
-      run: |
-        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws configure set region us-east-1
+            - name: Install Image processing Dependencies
+              run: |
+                  sudo apt-get install -y libcairo2-dev libfreetype6-dev libffi-dev libjpeg-dev libpng-dev libz-dev
+                  sudo apt-get install -y pngquant
 
-    - name: Change mkdocs_build.sh chmod
-      run: |
-        chmod +x mkdocs_build.sh
-    
-    - name: Building docs
-      run: |
-        ./mkdocs_build.sh
+            - name: Install AWS CLI
+              run: |
+                  snap install aws-cli --classic
 
-    - name: Upload S3 Bucket
-      run: |
-        aws s3 sync ./site s3://pyodmongo.dev/
-    
-    - name: CloudFront Invalidation
-      run: |
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+            - name: Configuring AWS CLI
+              run: |
+                  aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws configure set region us-east-1
 
+            - name: Change mkdocs_build.sh chmod
+              run: |
+                  chmod +x mkdocs_build.sh
 
-    
+            - name: Building docs
+              run: |
+                  ./mkdocs_build.sh
+
+            - name: Upload S3 Bucket
+              run: |
+                  aws s3 sync ./site s3://pyodmongo.dev/
+
+            - name: CloudFront Invalidation
+              run: |
+                  aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
