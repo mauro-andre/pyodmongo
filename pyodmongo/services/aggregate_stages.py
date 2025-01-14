@@ -100,7 +100,7 @@ def set_(local_field: str, as_: str):
     return pipeline
 
 
-def group_set_replace_root(id_: str, array_index: str, field: str, path_str: str):
+def group_set_replace_root(id_: list[str], array_index: str, field: str, path_str: str):
     """
     Constructs a combination of group, set, and replaceRoot stages for a MongoDB aggregation pipeline.
 
@@ -120,7 +120,7 @@ def group_set_replace_root(id_: str, array_index: str, field: str, path_str: str
     return [
         {
             "$group": {
-                "_id": f"${id_}",
+                "_id": id_,
                 "_document": {"$first": "$$ROOT"},
                 field: {"$push": f"${path_str}"},
             }

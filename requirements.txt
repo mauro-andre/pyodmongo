@@ -47,8 +47,8 @@ pillow==10.3.0
 platformdirs==4.2.2
 pluggy==1.5.0
 pycparser==2.22
-pydantic==2.10.0
-pydantic_core==2.27.0
+pydantic==2.10.5
+pydantic_core==2.27.2
 Pygments==2.18.0
 pymdown-extensions==10.8.1
 pymongo==4.9.2
