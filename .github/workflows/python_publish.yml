@@ -1,78 +1,78 @@
 name: Update PyODMongo in PyPI
 
 on:
-  release:
-    types: [published]
-
+    release:
+        types: [published]
 
 jobs:
-  publishing-on-pypi:
-    runs-on: ubuntu-latest
+    publishing-on-pypi:
+        runs-on: ubuntu-latest
 
-    services:
-      mongodb:
-        image: mongo:latest
-        ports:
-          - 27017:27017
+        services:
+            mongodb:
+                image: mongo:latest
+                ports:
+                    - 27017:27017
 
-    steps:
-    - uses: actions/checkout@v3
+        steps:
+            - uses: actions/checkout@v3
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11.x'
+            - name: Set up Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: "3.11.x"
 
-    - name: Install dependencies
-      run: |
-        python3 -m pip install --upgrade pip requests build twine pytest pytest-cov pytest_asyncio motor fastapi httpx pydantic-dbmodel-core "pydantic[email]" pytz Faker
+            - name: Install dependencies
+              run: |
+                  python3 -m pip install --upgrade pip requests build twine pytest pytest-cov pytest_asyncio motor fastapi httpx pydantic-dbmodel-core "pydantic[email]" pytz Faker
 
-    - name: Run pytest
-      run: |
-        pytest --cov pyodmongo --cov-report html --cov-report json
+            - name: Run pytest
+              run: |
+                  pytest --cov pyodmongo --cov-report html --cov-report json
 
-    - name: Generate coverage badge
-      run: |
-        python coverage.py
-      if: ${{ success() }}
+            - name: Generate coverage badge
+              run: |
+                  python coverage.py
+              if: ${{ success() }}
 
-    - name: Update pyproject.toml and version.py
-      run: |
-        python pyproject.py
-      if: ${{ success() }}
+            - name: Update pyproject.toml and version.py
+              run: |
+                  python pyproject.py
+              if: ${{ success() }}
 
-    - name: Building version
-      run: |
-        python3 -m build
-      if: ${{ success() }}
+            - name: Building version
+              run: |
+                  python3 -m build
+              if: ${{ success() }}
 
-    - name: Send to PyPI
-      run: |
-        twine upload dist/*
-      if: ${{ success() }}
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+            - name: Send to PyPI
+              run: |
+                  twine upload dist/*
+              if: ${{ success() }}
+              env:
+                  TWINE_USERNAME: __token__
+                  TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
 
-    - name: Install AWS CLI
-      run: |
-        sudo apt-get update
-        sudo apt-get install awscli
-      if: ${{ success() }}
-  
-    - name: Configuring AWS CLI
-      run: |
-        aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws configure set region us-east-1
-      if: ${{ success() }}
+            - name: Install AWS CLI
+              run: |
+                  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+                  unzip awscliv2.zip
+                  sudo ./aws/install --update
+              if: ${{ success() }}
 
-    - name: Upload S3 Bucket
-      run: |
-        aws s3 sync ./htmlcov s3://pyodmongo.dev/coverage/
-      if: ${{ success() }}
-    
-    - name: CloudFront Invalidation
-      run: |
-        aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
-      if: ${{ success() }}
+            - name: Configuring AWS CLI
+              run: |
+                  aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+                  aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+                  aws configure set region us-east-1
+              if: ${{ success() }}
+
+            - name: Upload S3 Bucket
+              run: |
+                  aws s3 sync ./htmlcov s3://pyodmongo.dev/coverage/
+              if: ${{ success() }}
+
+            - name: CloudFront Invalidation
+              run: |
+                  aws cloudfront create-invalidation --distribution-id ${{ secrets.AWS_CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+              if: ${{ success() }}
