@@ -134,7 +134,8 @@ def group_set_replace_root(
                 f"_document.{path_str}": {
                     "$cond": {
                         "if": {"$eq": [f"$_document.{array_index}", None]},
-                        "then": None,
+                        "then": [],
+                        # "then": None,
                         "else": f"${field}",
                     }
                 }
