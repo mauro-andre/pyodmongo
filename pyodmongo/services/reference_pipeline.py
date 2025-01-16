@@ -103,12 +103,13 @@ def resolve_reference_pipeline(
             id_ = [
                 f"${e}" for e in unwind_index_list[: len(unwind_index_list) - index - 1]
             ]
-            index_to_unset.append(unwind_index_list[-(index + 1)])
+            current_index = unwind_index_list[-(index + 1)]
+            index_to_unset.append(current_index)
             to_sort = {key: 1 for key in unwind_index_list[1:]}
             pipeline += group_set_replace_root(
                 to_sort=to_sort,
                 id_=id_,
-                array_index=unwind_index_list[-1],
+                array_index=current_index,
                 field=path_str.split(".")[-1],
                 path_str=path_str,
             )

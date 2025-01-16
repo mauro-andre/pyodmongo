@@ -263,7 +263,7 @@ async def test_list_of_empty_objects(
 
     class C(DbModel):
         name: str = "name_1"
-        b_list: list[B] | None = None
+        b_list: list[B] = []
         _collection: ClassVar = "c"
 
     obj_c = C()
