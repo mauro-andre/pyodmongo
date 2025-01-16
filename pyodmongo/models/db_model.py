@@ -72,36 +72,24 @@ class DbModel(BaseModel, metaclass=DbMeta):
         """
 
         if isinstance(data, dict):
-            # Traverse each key-value pair in the dictionary
             if "_id" in data:
                 data["id"] = data.pop("_id")
             for key, value in data.items():
-                if isinstance(value, dict):  # Check if the value is a dictionary
-                    if not value:  # If the dictionary is empty
+                if isinstance(value, dict):
+                    if not value:
                         data[key] = None
                     else:
-                        data[key] = self.__replace_empty_dicts(
-                            value
-                        )  # Recursive call for non-empty dictionaries
-                elif isinstance(value, list):  # Check if the value is a list
-                    # Process each item in the list and remove empty dictionaries
+                        self.__replace_empty_dicts(value)
+                elif isinstance(value, list):
                     data[key] = [
-                        self.__replace_empty_dicts(item)
+                        (
+                            self.__replace_empty_dicts(item)
+                            if isinstance(item, dict)
+                            else item
+                        )
                         for item in value
-                        if not (
-                            isinstance(item, dict) and not item
-                        )  # Exclude empty dictionaries
+                        if not (isinstance(item, dict) and not item)
                     ]
-
-        # elif isinstance(data, list):
-        #     # If the data itself is a list, process each item and remove empty dictionaries
-        #     data = [
-        #         self.__replace_empty_dicts(item)
-        #         for item in data
-        #         if not (
-        #             isinstance(item, dict) and not item
-        #         )  # Exclude empty dictionaries
-        #     ]
         return data
 
     def __init__(self, **attrs):
