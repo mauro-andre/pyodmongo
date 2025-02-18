@@ -83,6 +83,7 @@ def mount_base_pipeline(
     query: dict,
     sort: dict,
     populate: bool,
+    pipeline: list | None,
     populate_db_fields: list[DbField] | None,
 ):
     """
@@ -107,6 +108,8 @@ def mount_base_pipeline(
     match_stage = [{"$match": query}]
     sort_stage = [{"$sort": sort}] if sort != {} else []
     model_stage = Model._pipeline
+    if pipeline:
+        return match_stage + pipeline + sort_stage
     if model_stage != []:
         return match_stage + model_stage + sort_stage
     if populate:
