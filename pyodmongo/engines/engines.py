@@ -251,6 +251,7 @@ class _Engine:
         sort: SortOperator,
         raw_sort: dict,
         populate: bool,
+        pipeline: list | None,
         populate_db_fields: list[DbField] | None,
     ) -> dict:
         """
@@ -275,6 +276,7 @@ class _Engine:
                 query=query,
                 sort=sort,
                 populate=populate,
+                pipeline=pipeline,
                 populate_db_fields=populate_db_fields,
             ),
             query,
@@ -393,6 +395,7 @@ class AsyncDbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        pipeline: list = None,
         populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
@@ -420,6 +423,7 @@ class AsyncDbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            pipeline=pipeline,
             populate_db_fields=populate_db_fields,
         )
         pipeline += [{"$limit": 1}]
@@ -441,6 +445,7 @@ class AsyncDbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        pipeline: list = None,
         populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
@@ -474,6 +479,7 @@ class AsyncDbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            pipeline=pipeline,
             populate_db_fields=populate_db_fields,
         )
 
@@ -624,6 +630,7 @@ class DbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        pipeline: list = None,
         populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
@@ -651,6 +658,7 @@ class DbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            pipeline=pipeline,
             populate_db_fields=populate_db_fields,
         )
         pipeline += [{"$limit": 1}]
@@ -672,6 +680,7 @@ class DbEngine(_Engine):
         sort: SortOperator = None,
         raw_sort: dict = None,
         populate: bool = False,
+        pipeline: list = None,
         populate_db_fields: list[DbField] | None = None,
         as_dict: bool = False,
         tz_info: timezone = None,
@@ -705,6 +714,7 @@ class DbEngine(_Engine):
             sort=sort,
             raw_sort=raw_sort,
             populate=populate,
+            pipeline=pipeline,
             populate_db_fields=populate_db_fields,
         )
 
