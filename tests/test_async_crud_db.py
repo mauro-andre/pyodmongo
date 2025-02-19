@@ -178,7 +178,7 @@ async def test_field_alias(async_engine):
         "third_name": "Third Name",
         "updated_at": None,
     }
-    dict_to_save = consolidate_dict(obj=obj, dct={})
+    dict_to_save = consolidate_dict(obj=obj, dct={}, populate=False)
     assert dict_to_save == expected_dict
     await async_engine.save(obj)
     obj_found = await async_engine.find_one(Model=MyClass)
@@ -207,7 +207,7 @@ async def test_fields_alias_generator(async_engine):
     obj = MyClass(
         first_name="First Name", second_name="Second Name", third_name="Third Name"
     )
-    dict_to_save = consolidate_dict(obj=obj, dct={})
+    dict_to_save = consolidate_dict(obj=obj, dct={}, populate=False)
     expected_dict = {
         "_id": None,
         "createdAt": None,

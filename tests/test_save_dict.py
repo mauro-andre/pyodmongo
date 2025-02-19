@@ -125,9 +125,157 @@ def test_save_dict_is_correct():
         "updated_at": None,
     }
 
-    assert consolidate_dict(obj=obj_lv3_1, dct={}) == obj_lv3_1_expected_dict
-    assert consolidate_dict(obj=obj_lv_2_1, dct={}) == obj_lv_2_1_expected_dict
-    assert consolidate_dict(obj=obj_lv1_son, dct={}) == obj_lv1_son_expected_dict
+    assert (
+        consolidate_dict(obj=obj_lv3_1, dct={}, populate=False)
+        == obj_lv3_1_expected_dict
+    )
+    assert (
+        consolidate_dict(obj=obj_lv_2_1, dct={}, populate=False)
+        == obj_lv_2_1_expected_dict
+    )
+    assert (
+        consolidate_dict(obj=obj_lv1_son, dct={}, populate=False)
+        == obj_lv1_son_expected_dict
+    )
+
+    obj_lv3_1_expected_dict = {
+        "_id": ObjectId("64e8fe13e6dcc2a63c365df4"),
+        "created_at": None,
+        "updated_at": None,
+        "attrLv3One": "valor_attr_lv3_one",
+        "attr_lv3_two": "valor_attr_lv3_two",
+    }
+    obj_lv_2_1_expected_dict = {
+        "_id": ObjectId("64e8fe13e6dcc2a63c365df6"),
+        "created_at": None,
+        "updated_at": None,
+        "attrLv2One": "valor_attr_lv2_one",
+        "attr_lv2_two": "valor_attr_lv2_two",
+        "lv3Alias": {
+            "_id": ObjectId("64e8fe13e6dcc2a63c365df4"),
+            "created_at": None,
+            "updated_at": None,
+            "attrLv3One": "valor_attr_lv3_one",
+            "attr_lv3_two": "valor_attr_lv3_two",
+        },
+    }
+    obj_lv1_son_expected_dict = {
+        "_id": ObjectId("64e8fe13e6dcc2a63c365df8"),
+        "created_at": None,
+        "updated_at": None,
+        "attrLv1One": "value_attr_lv1_one",
+        "attr_lv1_two": "value_attr_lv1_two",
+        "lv2": {
+            "_id": ObjectId("64e8fe13e6dcc2a63c365df6"),
+            "created_at": None,
+            "updated_at": None,
+            "attrLv2One": "valor_attr_lv2_one",
+            "attr_lv2_two": "valor_attr_lv2_two",
+            "lv3Alias": {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df4"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv3One": "valor_attr_lv3_one",
+                "attr_lv3_two": "valor_attr_lv3_two",
+            },
+        },
+        "lv2_list": [
+            {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df6"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv2One": "valor_attr_lv2_one",
+                "attr_lv2_two": "valor_attr_lv2_two",
+                "lv3Alias": {
+                    "_id": ObjectId("64e8fe13e6dcc2a63c365df4"),
+                    "created_at": None,
+                    "updated_at": None,
+                    "attrLv3One": "valor_attr_lv3_one",
+                    "attr_lv3_two": "valor_attr_lv3_two",
+                },
+            },
+            {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df7"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv2One": "valor_attr_lv2_one",
+                "attr_lv2_two": "valor_attr_lv2_two",
+                "lv3Alias": {
+                    "_id": ObjectId("64e8fe13e6dcc2a63c365df5"),
+                    "created_at": None,
+                    "updated_at": None,
+                    "attrLv3One": "valor_attr_lv3_one",
+                    "attr_lv3_two": "valor_attr_lv3_two",
+                },
+            },
+        ],
+        "lv2_list_ref": [
+            {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df6"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv2One": "valor_attr_lv2_one",
+                "attr_lv2_two": "valor_attr_lv2_two",
+                "lv3Alias": {
+                    "_id": ObjectId("64e8fe13e6dcc2a63c365df4"),
+                    "created_at": None,
+                    "updated_at": None,
+                    "attrLv3One": "valor_attr_lv3_one",
+                    "attr_lv3_two": "valor_attr_lv3_two",
+                },
+            },
+            {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df7"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv2One": "valor_attr_lv2_one",
+                "attr_lv2_two": "valor_attr_lv2_two",
+                "lv3Alias": {
+                    "_id": ObjectId("64e8fe13e6dcc2a63c365df5"),
+                    "created_at": None,
+                    "updated_at": None,
+                    "attrLv3One": "valor_attr_lv3_one",
+                    "attr_lv3_two": "valor_attr_lv3_two",
+                },
+            },
+        ],
+        "lv3Ref": {
+            "_id": ObjectId("64e8fe13e6dcc2a63c365df5"),
+            "created_at": None,
+            "updated_at": None,
+            "attrLv3One": "valor_attr_lv3_one",
+            "attr_lv3_two": "valor_attr_lv3_two",
+        },
+        "lv3_list_ref": [
+            {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df5"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv3One": "valor_attr_lv3_one",
+                "attr_lv3_two": "valor_attr_lv3_two",
+            },
+            {
+                "_id": ObjectId("64e8fe13e6dcc2a63c365df4"),
+                "created_at": None,
+                "updated_at": None,
+                "attrLv3One": "valor_attr_lv3_one",
+                "attr_lv3_two": "valor_attr_lv3_two",
+            },
+        ],
+        "lv1_son_attr": "value_lv1_son_attr",
+    }
+    assert (
+        consolidate_dict(obj=obj_lv3_1, dct={}, populate=True)
+        == obj_lv3_1_expected_dict
+    )
+    assert (
+        consolidate_dict(obj=obj_lv_2_1, dct={}, populate=True)
+        == obj_lv_2_1_expected_dict
+    )
+    assert (
+        consolidate_dict(obj=obj_lv1_son, dct={}, populate=True)
+        == obj_lv1_son_expected_dict
+    )
 
 
 def test_save_dict_with_basemodel_reference():
@@ -141,7 +289,7 @@ def test_save_dict_with_basemodel_reference():
 
     obj = DbModelClass(attr_dbm="attr_dbm", bm=BaseModelClass(attr_bm="attr_bm"))
 
-    dct = consolidate_dict(obj=obj, dct={})
+    dct = consolidate_dict(obj=obj, dct={}, populate=False)
     assert dct == {
         "_id": None,
         "created_at": None,
@@ -162,7 +310,7 @@ def test_field_with_union_more_than_two():
         _collection: ClassVar = "my_class"
 
     obj = MyClass(mfc=None)
-    dct = consolidate_dict(obj=obj, dct={})
+    dct = consolidate_dict(obj=obj, dct={}, populate=False)
     assert dct == {
         "_id": None,
         "created_at": None,
@@ -212,9 +360,9 @@ def test_multiples_nested_references():
         "updated_at": None,
     }
 
-    assert consolidate_dict(obj=obj1, dct={}) == dct1
-    assert consolidate_dict(obj=obj2, dct={}) == dct2
-    assert consolidate_dict(obj=obj3, dct={}) == dct3
+    assert consolidate_dict(obj=obj1, dct={}, populate=False) == dct1
+    assert consolidate_dict(obj=obj2, dct={}, populate=False) == dct2
+    assert consolidate_dict(obj=obj3, dct={}, populate=False) == dct3
 
 
 def test_list_of_ids_with_none():
@@ -235,7 +383,7 @@ def test_list_of_ids_with_none():
         "attr_db": None,
         "my_type": None,
     }
-    assert consolidate_dict(obj=obj, dct={}) == dct_expected
+    assert consolidate_dict(obj=obj, dct={}, populate=False) == dct_expected
 
     class DbMyType(DbModel):
         attr_db: str = None
@@ -243,7 +391,7 @@ def test_list_of_ids_with_none():
         _collection: ClassVar = "db_my_type"
 
     obj = DbMyType()
-    assert consolidate_dict(obj=obj, dct={}) == dct_expected
+    assert consolidate_dict(obj=obj, dct={}, populate=False) == dct_expected
 
 
 def test_fields_with_reference():
@@ -286,8 +434,8 @@ def test_fields_with_reference():
         "ref_id": ObjectId(id_4),
         "list_ref_id": [ObjectId(id_5), ObjectId(id_6)],
     }
-    assert consolidate_dict(obj=obj_1, dct={}) == dct_expected_1
-    assert consolidate_dict(obj=obj_2, dct={}) == dct_expected_2
+    assert consolidate_dict(obj=obj_1, dct={}, populate=False) == dct_expected_1
+    assert consolidate_dict(obj=obj_2, dct={}, populate=False) == dct_expected_2
 
 
 def test_basemodel_exception():
@@ -303,10 +451,10 @@ def test_basemodel_exception():
         _collection: ClassVar = "db_model_class"
 
     obj = DbModelClass()
-    consolidate_dict(obj=obj, dct={})
+    consolidate_dict(obj=obj, dct={}, populate=False)
     obj.bm = PydanticModel()
     with pytest.raises(
         TypeError,
         match="The PydanticModel class inherits from Pydantic's BaseModel class. Try switching to PyODMongo's MainBaseModel class",
     ):
-        consolidate_dict(obj=obj, dct={})
+        consolidate_dict(obj=obj, dct={}, populate=False)
