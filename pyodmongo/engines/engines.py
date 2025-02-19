@@ -95,7 +95,7 @@ class _Engine:
         return tz_info if tz_info else self._tz_info
 
     def _update_many_operation(
-        self, obj: Type[Model], query_dict: dict, now, upsert: bool
+        self, obj: Type[Model], query_dict: dict, now, upsert: bool, populate: bool
     ):
         """
         Create an UpdateMany operation for bulk updates.
@@ -108,7 +108,7 @@ class _Engine:
         Returns:
             UpdateMany: The UpdateMany operation.
         """
-        dct = consolidate_dict(obj=obj, dct={})
+        dct = consolidate_dict(obj=obj, dct={}, populate=populate)
         find_filter = query_dict or {"_id": ObjectId(dct.get("_id"))}
         dct[obj.__class__.updated_at.field_alias] = now
         dct.pop("_id")
@@ -144,6 +144,7 @@ class _Engine:
         query: QueryOperator,
         raw_query: dict,
         upsert: bool,
+        populate: bool,
     ):
         """
         Create lists of indexes and save operations for bulk writes.
@@ -164,7 +165,7 @@ class _Engine:
         for obj in objs:
             obj: Model
             operation = self._update_many_operation(
-                obj=obj, query_dict=query, now=now, upsert=upsert
+                obj=obj, query_dict=query, now=now, upsert=upsert, populate=populate
             )
             collection_name = obj._collection
             try:
@@ -329,6 +330,7 @@ class AsyncDbEngine(_Engine):
     async def save_all(
         self,
         obj_list: list[Model],
+        populate: bool = False,
     ) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
@@ -338,7 +340,7 @@ class AsyncDbEngine(_Engine):
         """
         response = {}
         indexes, operations, now = self._create_save_operations_list(
-            objs=obj_list, query=None, raw_query=None, upsert=True
+            objs=obj_list, query=None, raw_query=None, upsert=True, populate=populate
         )
         for collection_name, index_list in indexes.items():
             if index_list:
@@ -359,6 +361,7 @@ class AsyncDbEngine(_Engine):
         query: QueryOperator = None,
         raw_query: dict = None,
         upsert: bool = True,
+        populate: bool = False,
     ) -> DbResponse:
         """
         Save a single object to the database.
@@ -372,7 +375,11 @@ class AsyncDbEngine(_Engine):
             DbResponse: The database response object.
         """
         indexes, operations, now = self._create_save_operations_list(
-            objs=[obj], query=query, raw_query=raw_query, upsert=upsert
+            objs=[obj],
+            query=query,
+            raw_query=raw_query,
+            upsert=upsert,
+            populate=populate,
         )
         collection_name = obj._collection
         index_list = indexes[collection_name]
@@ -566,6 +573,7 @@ class DbEngine(_Engine):
     def save_all(
         self,
         obj_list: list[Model],
+        populate: bool = False,
     ) -> dict[str, DbResponse]:
         """
         Save a list of objects to the database.
@@ -575,7 +583,7 @@ class DbEngine(_Engine):
         """
         response = {}
         indexes, operations, now = self._create_save_operations_list(
-            objs=obj_list, query=None, raw_query=None, upsert=True
+            objs=obj_list, query=None, raw_query=None, upsert=True, populate=populate
         )
         for collection_name, index_list in indexes.items():
             if index_list:
@@ -596,6 +604,7 @@ class DbEngine(_Engine):
         query: QueryOperator = None,
         raw_query: dict = None,
         upsert: bool = True,
+        populate: bool = False,
     ) -> DbResponse:
         """
         Save a single object to the database.
@@ -609,7 +618,11 @@ class DbEngine(_Engine):
             DbResponse: The database response object.
         """
         indexes, operations, now = self._create_save_operations_list(
-            objs=[obj], query=query, raw_query=raw_query, upsert=upsert
+            objs=[obj],
+            query=query,
+            raw_query=raw_query,
+            upsert=upsert,
+            populate=populate,
         )
         collection_name = obj._collection
         index_list = indexes[collection_name]

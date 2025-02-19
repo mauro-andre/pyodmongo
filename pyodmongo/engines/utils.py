@@ -7,7 +7,7 @@ from ..services.reference_pipeline import resolve_reference_pipeline
 from ..services.verify_subclasses import is_subclass
 
 
-def consolidate_dict(obj: MainBaseModel, dct: dict):
+def consolidate_dict(obj: MainBaseModel, dct: dict, populate: bool):
     """
     Recursively consolidates the attributes of a Pydantic model into a dictionary,
     handling nested models, list fields, and references appropriately based on the model's
@@ -41,7 +41,7 @@ def consolidate_dict(obj: MainBaseModel, dct: dict):
         alias = db_field_info.field_alias
         has_model_fields = db_field_info.has_model_fields
         is_list = db_field_info.is_list
-        by_reference = db_field_info.by_reference
+        by_reference = db_field_info.by_reference and not populate
         if has_model_fields:
             if value is None:
                 dct[alias] = None
@@ -54,7 +54,7 @@ def consolidate_dict(obj: MainBaseModel, dct: dict):
                         dct[alias] = ObjectId(value)
                 else:
                     dct[alias] = {}
-                    consolidate_dict(obj=value, dct=dct[alias])
+                    consolidate_dict(obj=value, dct=dct[alias], populate=populate)
             else:
                 if by_reference:
                     try:
@@ -65,7 +65,7 @@ def consolidate_dict(obj: MainBaseModel, dct: dict):
                     dct[alias] = []
                     for v in value:
                         obj_lst_elem = {}
-                        consolidate_dict(obj=v, dct=obj_lst_elem)
+                        consolidate_dict(obj=v, dct=obj_lst_elem, populate=populate)
                         dct[alias].append(obj_lst_elem)
         else:
             if db_field_info.field_type == Id and value is not None:

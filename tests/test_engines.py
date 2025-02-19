@@ -464,3 +464,39 @@ async def test_find_one_and_find_many_with_pipeline(
     assert obj_b_3_found == obj_b_3
     assert obj_b_2_found.a.id == obj_b_2.a.id == obj_a_2.id
     assert obj_b_3_found.a.id == obj_b_3.a.id == obj_a_3.id
+
+
+@pytest.mark.asyncio
+async def test_save_with_populate(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class A(DbModel):
+        attr_a: str
+        _collection: ClassVar = "a"
+
+    class B(DbModel):
+        attr_b: str
+        a: A | Id
+        _collection: ClassVar = "b"
+
+    obj_a_1 = A(attr_a="a_1")
+    obj_a_2 = A(attr_a="a_2")
+    obj_a_3 = A(attr_a="a_3")
+    await async_engine.save(obj_a_1)
+    await async_engine.save_all([obj_a_2, obj_a_3])
+    obj_b_1 = B(attr_b="b_1", a=obj_a_1)
+    obj_b_2 = B(attr_b="b_2", a=obj_a_2)
+    obj_b_3 = B(attr_b="b_3", a=obj_a_3)
+    await async_engine.save(obj_b_1)
+    await async_engine.save_all([obj_b_2, obj_b_3])
+    obj_b_1_found, obj_b_2_found, obj_b_3_found = await async_engine.find_many(Model=B)
+    assert obj_b_1_found.a == obj_b_1.a.id == obj_a_1.id
+    assert obj_b_2_found.a == obj_b_2.a.id == obj_a_2.id
+    assert obj_b_3_found.a == obj_b_3.a.id == obj_a_3.id
+
+    await async_engine.save(obj_b_1, populate=True)
+    await async_engine.save_all([obj_b_2, obj_b_3], populate=True)
+    obj_b_1_found, obj_b_2_found, obj_b_3_found = await async_engine.find_many(Model=B)
+    assert obj_b_1_found.a.id == obj_b_1.a.id == obj_a_1.id
+    assert obj_b_2_found.a.id == obj_b_2.a.id == obj_a_2.id
+    assert obj_b_3_found.a.id == obj_b_3.a.id == obj_a_3.id
