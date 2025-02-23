@@ -3,6 +3,9 @@ from dataclasses import dataclass
 from .query_operators import ComparisonOperator
 from .id_model import Id
 from bson import ObjectId
+from decimal import Decimal
+from bson import Decimal128
+from ..services.verify_subclasses import is_subclass
 
 
 @dataclass
@@ -39,11 +42,22 @@ class DbField:
     has_model_fields: bool = None
 
     def comparison_operator(self, operator: str, value: Any) -> ComparisonOperator:
+        type_of_value = type(value)
         if self.by_reference or self.field_type == Id:
-            if type(value) != list and value is not None:
+            if type_of_value != list and value is not None:
                 value = ObjectId(value)
-            if type(value) == list:
+            elif type_of_value == list:
                 value = [ObjectId(v) for v in value]
+
+        elif (
+            is_subclass(class_to_verify=self.field_type, subclass=Decimal)
+            and value is not None
+        ):
+            if type_of_value == list:
+                value = [Decimal128(str(o)) for o in value]
+            else:
+                value = Decimal128(str(value))
+
         return ComparisonOperator(
             path_str=self.path_str, operator=operator, value=value
         )
