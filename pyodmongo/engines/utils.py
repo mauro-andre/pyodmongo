@@ -5,6 +5,8 @@ from ..models.db_model import MainBaseModel
 from ..models.db_field_info import DbField
 from ..services.reference_pipeline import resolve_reference_pipeline
 from ..services.verify_subclasses import is_subclass
+from decimal import Decimal
+from bson import Decimal128
 
 
 def consolidate_dict(obj: MainBaseModel, dct: dict, populate: bool):
@@ -73,6 +75,14 @@ def consolidate_dict(obj: MainBaseModel, dct: dict, populate: bool):
                     dct[alias] = [ObjectId(o) for o in value if ObjectId.is_valid(o)]
                 else:
                     dct[alias] = ObjectId(value) if ObjectId.is_valid(value) else value
+            elif (
+                is_subclass(class_to_verify=db_field_info.field_type, subclass=Decimal)
+                and value is not None
+            ):
+                if is_list:
+                    dct[alias] = [Decimal128(str(o)) for o in value]
+                else:
+                    dct[alias] = Decimal128(str(value))
             else:
                 dct[alias] = value
     return dct

@@ -9,13 +9,17 @@ from pyodmongo import (
     DbResponse,
     ResponsePaginate,
     Id,
+    DbDecimal,
     Field,
 )
 from pyodmongo.queries import in_
 from pydantic import BaseModel
 from bson import ObjectId
-import copy
 from faker import Faker
+from decimal import Decimal
+from bson import Decimal128
+import copy
+import json
 
 
 fake = Faker()
@@ -500,3 +504,77 @@ async def test_save_with_populate(
     assert obj_b_1_found.a.id == obj_b_1.a.id == obj_a_1.id
     assert obj_b_2_found.a.id == obj_b_2.a.id == obj_a_2.id
     assert obj_b_3_found.a.id == obj_b_3.a.id == obj_a_3.id
+
+
+@pytest.mark.asyncio
+async def test_save_with_decimal(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class Product(DbModel):
+        name: str = "Product Name"
+        price: DbDecimal
+        prices: list[DbDecimal]
+        is_available: bool = True
+        _collection: ClassVar = "products"
+
+    number_1 = DbDecimal("10.123456", 2)
+    number_2 = DbDecimal(10.123456, 2)
+    number_3 = DbDecimal("10.123456").to_scale(2)
+    number_4 = DbDecimal(10.123456).to_scale(2)
+    assert number_1 == number_2 == number_3 == number_4
+    obj_1 = Product(price=number_1, prices=[number_1, number_2, number_3, number_4])
+    obj_2 = Product(price=number_2, prices=[number_1, number_2, number_3, number_4])
+    obj_3 = Product(price=number_3, prices=[number_1, number_2, number_3, number_4])
+    obj_4 = Product(price=number_4, prices=[number_1, number_2, number_3, number_4])
+    assert obj_1 == obj_2 == obj_3 == obj_4
+    await async_engine.save_all([obj_1, obj_2, obj_3, obj_4])
+    objs = await async_engine.find_many(Model=Product)
+    assert len(objs) == 4
+    assert objs == [obj_1, obj_2, obj_3, obj_4]
+
+    obj_5 = Product(
+        price=25.56, prices=[12.5, "46.18", DbDecimal(25.56, 2), DbDecimal("46.18")]
+    )
+    await async_engine.save(obj_5)
+    query = Product.price > 24.56
+    objs = await async_engine.find_many(Model=Product, query=query)
+    assert len(objs) == 1
+    assert objs[0] == obj_5
+    obj_5 = objs[0]
+
+    query = in_(Product.price, [12.5, "46.18", DbDecimal(25.56, 2), DbDecimal("46.18")])
+    assert query.value == [
+        Decimal128("12.5"),
+        Decimal128("46.18"),
+        Decimal128("25.56"),
+        Decimal128("46.18"),
+    ]
+
+    assert obj_5.model_dump() == {
+        "id": obj_5.id,
+        "created_at": obj_5.created_at,
+        "updated_at": obj_5.updated_at,
+        "name": "Product Name",
+        "price": Decimal("25.55999999999999872102307563181967"),
+        "prices": [
+            Decimal("12.5"),
+            Decimal("46.18"),
+            Decimal("25.56"),
+            Decimal("46.18"),
+        ],
+        "is_available": True,
+    }
+    assert json.loads(obj_5.model_dump_json()) == {
+        "id": obj_5.id,
+        "created_at": obj_5.created_at.isoformat(),
+        "updated_at": obj_5.updated_at.isoformat(),
+        "name": "Product Name",
+        "price": 25.56,
+        "prices": [
+            12.5,
+            46.18,
+            25.56,
+            46.18,
+        ],
+        "is_available": True,
+    }
