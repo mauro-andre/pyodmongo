@@ -578,3 +578,6 @@ async def test_save_with_decimal(
         ],
         "is_available": True,
     }
+
+    with pytest.raises(ValueError, match="Invalid decimal type"):
+        error_attr = DbDecimal({"key": "value"})

@@ -2,6 +2,7 @@ from typing import Any
 from dataclasses import dataclass
 from .query_operators import ComparisonOperator
 from .id_model import Id
+from .db_decimal import DbDecimal
 from bson import ObjectId
 from decimal import Decimal
 from bson import Decimal128
@@ -50,9 +51,8 @@ class DbField:
                 value = [ObjectId(v) for v in value]
 
         elif (
-            is_subclass(class_to_verify=self.field_type, subclass=Decimal)
-            and value is not None
-        ):
+            self.field_type == Decimal or self.field_type == DbDecimal
+        ) and value is not None:
             if type_of_value == list:
                 value = [Decimal128(str(o)) for o in value]
             else:
