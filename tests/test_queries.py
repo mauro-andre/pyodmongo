@@ -151,7 +151,7 @@ def test_mount_query_filter_inheritance():
         "attr_2_eq": "Value2",
         "attr_3_eq": "Value3",
         "attr_4_eq": "Value4",
-        "attr_4_in": "",
+        "attr_4_ne": "",
         "attr_4_er": "Value_error",
     }
     query, _ = mount_query_filter(
@@ -163,6 +163,7 @@ def test_mount_query_filter_inheritance():
             {"attr_2": {"$eq": "Value2"}},
             {"attr_3": {"$eq": "Value3"}},
             {"attr_4": {"$eq": "Value4"}},
+            {"attr_4": {"$ne": ""}},
         ]
     }
 
