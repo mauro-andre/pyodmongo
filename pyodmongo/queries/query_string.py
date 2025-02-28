@@ -102,9 +102,12 @@ def mount_query_filter(
     sort_operators = None
     for key, value in items.items():
         key = key.strip()
-        value = value.strip()
-        if value == "":
-            continue
+        try:
+            value = value.strip()
+        except AttributeError:
+            ...
+        # if value == "":
+        #     continue
         split_result = key.strip().rsplit(sep="_", maxsplit=1)
         operator = f"{split_result[-1]}"
         if operator not in [
