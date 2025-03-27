@@ -89,6 +89,25 @@ def consolidate_dict(obj: MainBaseModel, dct: dict, populate: bool):
     return dct
 
 
+def _skip_and_limit_stages(current_page: int, docs_per_page: int):
+    """
+    Add pagination stages to the aggregation pipeline.
+
+    Args:
+        current_page (int): The current page number.
+        docs_per_page (int): The number of documents per page.
+    """
+    max_docs_per_page = 1000
+    current_page = 1 if current_page <= 0 else current_page
+    docs_per_page = (
+        max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
+    )
+    skip = (docs_per_page * current_page) - docs_per_page
+    skip_stage = [{"$skip": skip}]
+    limit_stage = [{"$limit": docs_per_page}]
+    return skip_stage, limit_stage
+
+
 def mount_base_pipeline(
     Model,
     query: dict,
@@ -96,6 +115,10 @@ def mount_base_pipeline(
     populate: bool,
     pipeline: list | None,
     populate_db_fields: list[DbField] | None,
+    paginate: int,
+    current_page: int,
+    docs_per_page: int,
+    is_find_one: bool,
 ):
     """
     Constructs a basic MongoDB aggregation pipeline based on the provided query, sort, and
@@ -118,15 +141,21 @@ def mount_base_pipeline(
     """
     match_stage = [{"$match": query}]
     sort_stage = [{"$sort": sort}] if sort != {} else []
+    skip_stage = []
+    limit_stage = [{"$limit": 1}] if is_find_one else []
     model_stage = Model._pipeline
     if pipeline:
         return match_stage + pipeline + sort_stage
     if model_stage != []:
         return match_stage + model_stage + sort_stage
+    if paginate:
+        skip_stage, limit_stage = _skip_and_limit_stages(
+            current_page=current_page, docs_per_page=docs_per_page
+        )
     if populate:
         reference_stage = resolve_reference_pipeline(
             cls=Model, pipeline=[], populate_db_fields=populate_db_fields
         )
-        return match_stage + reference_stage + sort_stage
+        return match_stage + sort_stage + skip_stage + limit_stage + reference_stage
     else:
-        return match_stage + sort_stage
+        return match_stage + sort_stage + skip_stage + limit_stage

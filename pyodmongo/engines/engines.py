@@ -254,6 +254,10 @@ class _Engine:
         populate: bool,
         pipeline: list | None,
         populate_db_fields: list[DbField] | None,
+        paginate: int,
+        current_page: int,
+        docs_per_page: int,
+        is_find_one: bool,
     ) -> dict:
         """
         Construct an aggregation pipeline.
@@ -279,31 +283,14 @@ class _Engine:
                 populate=populate,
                 pipeline=pipeline,
                 populate_db_fields=populate_db_fields,
+                paginate=paginate,
+                current_page=current_page,
+                docs_per_page=docs_per_page,
+                is_find_one=is_find_one,
             ),
             query,
             sort,
         )
-
-    def _add_paginate_to_pipeline(
-        self, pipeline: list, current_page: int, docs_per_page: int
-    ):
-        """
-        Add pagination stages to the aggregation pipeline.
-
-        Args:
-            pipeline (list): The aggregation pipeline.
-            current_page (int): The current page number.
-            docs_per_page (int): The number of documents per page.
-        """
-        max_docs_per_page = 1000
-        current_page = 1 if current_page <= 0 else current_page
-        docs_per_page = (
-            max_docs_per_page if docs_per_page > max_docs_per_page else docs_per_page
-        )
-        skip = (docs_per_page * current_page) - docs_per_page
-        skip_stage = [{"$skip": skip}]
-        limit_stage = [{"$limit": docs_per_page}]
-        pipeline += skip_stage + limit_stage
 
 
 class AsyncDbEngine(_Engine):
@@ -432,8 +419,11 @@ class AsyncDbEngine(_Engine):
             populate=populate,
             pipeline=pipeline,
             populate_db_fields=populate_db_fields,
+            paginate=False,
+            current_page=1,
+            docs_per_page=1,
+            is_find_one=True,
         )
-        pipeline += [{"$limit": 1}]
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
         if as_dict:
             result = await cursor.to_list(length=None)
@@ -488,6 +478,10 @@ class AsyncDbEngine(_Engine):
             populate=populate,
             pipeline=pipeline,
             populate_db_fields=populate_db_fields,
+            paginate=paginate,
+            current_page=current_page,
+            docs_per_page=docs_per_page,
+            is_find_one=False,
         )
 
         async def _result():
@@ -502,10 +496,6 @@ class AsyncDbEngine(_Engine):
 
         if not paginate:
             return await _result()
-        self._add_paginate_to_pipeline(
-            pipeline=pipeline, current_page=current_page, docs_per_page=docs_per_page
-        )
-        cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
 
         async def _count():
             kwargs = {"hint": "_id_"} if not query else {}
@@ -673,8 +663,11 @@ class DbEngine(_Engine):
             populate=populate,
             pipeline=pipeline,
             populate_db_fields=populate_db_fields,
+            paginate=False,
+            current_page=1,
+            docs_per_page=1,
+            is_find_one=True,
         )
-        pipeline += [{"$limit": 1}]
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
         if as_dict:
             result = list(cursor)
@@ -729,6 +722,10 @@ class DbEngine(_Engine):
             populate=populate,
             pipeline=pipeline,
             populate_db_fields=populate_db_fields,
+            paginate=paginate,
+            current_page=current_page,
+            docs_per_page=docs_per_page,
+            is_find_one=False,
         )
 
         def _result():
@@ -743,9 +740,7 @@ class DbEngine(_Engine):
 
         if not paginate:
             return _result()
-        self._add_paginate_to_pipeline(
-            pipeline=pipeline, current_page=current_page, docs_per_page=docs_per_page
-        )
+
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
 
         def _count():
