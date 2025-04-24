@@ -32,7 +32,7 @@ def consolidate_dict(obj: MainBaseModel, dct: dict, populate: bool):
         MongoDB storage requirements, including converting to ObjectIds where necessary.
         The function is recursive for nested models and lists of models.
     """
-    for field, field_info in obj.model_fields.items():
+    for field, field_info in obj.__class__.model_fields.items():
         value = getattr(obj, field)
         try:
             db_field_info: DbField = getattr(obj.__class__, field)
@@ -149,7 +149,7 @@ def mount_base_pipeline(
             current_page=current_page, docs_per_page=docs_per_page
         )
     if pipeline:
-        return match_stage + pipeline + sort_stage + skip_stage + limit_stage 
+        return match_stage + pipeline + sort_stage + skip_stage + limit_stage
     if populate:
         reference_stage = resolve_reference_pipeline(
             cls=Model, pipeline=[], populate_db_fields=populate_db_fields
