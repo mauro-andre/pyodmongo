@@ -143,15 +143,13 @@ def mount_base_pipeline(
     sort_stage = [{"$sort": sort}] if sort != {} else []
     skip_stage = []
     limit_stage = [{"$limit": 1}] if is_find_one else []
-    model_stage = Model._pipeline
-    if pipeline:
-        return match_stage + pipeline + sort_stage
-    if model_stage != []:
-        return match_stage + model_stage + sort_stage
+    pipeline = pipeline or Model._pipeline
     if paginate:
         skip_stage, limit_stage = _skip_and_limit_stages(
             current_page=current_page, docs_per_page=docs_per_page
         )
+    if pipeline:
+        return match_stage + pipeline + sort_stage + skip_stage + limit_stage 
     if populate:
         reference_stage = resolve_reference_pipeline(
             cls=Model, pipeline=[], populate_db_fields=populate_db_fields
