@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  mongo-db:
+    image: mongo:latest
+    container_name: mongo-db
+    ports:
+      - "27017:27017"
+    volumes:
+      - pyodmongo_mongo_data:/data/db
+
+volumes:
+  pyodmongo_mongo_data:
