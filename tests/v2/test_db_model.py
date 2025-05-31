@@ -9,7 +9,7 @@ def test_db_model():
 
     class MyModel2(MyModel1):
         attr_3: bool
-        
+
     class MyModel3(DbModel):
         attr_3_3: str
         model_2: MyModel2
@@ -23,5 +23,17 @@ def test_db_model():
         attr_9: list[MyModel3 | MyModel2]
         attr_10: list[Union[MyModel3, MyModel2]]
 
-    print(MyModel4.attr_5.model_2.attr_3)
-    # print(vars(MyModel3.attr_5.attr_3))
+    # print(MyModel4.attr_5.model_2)
+
+
+def test_db_field_eq():
+    class MyModel1(DbModel):
+        attr_1: str
+
+    class MyModel2(DbModel):
+        attr_1: str
+        model_1: MyModel1
+
+    assert (MyModel1.attr_1 == "abc") == {"attr_1": {"$eq": "abc"}}
+    assert (MyModel2.model_1.attr_1 == "abc") == {"model_1.attr_1": {"$eq": "abc"}}
+    assert not MyModel2.attr_1 == MyModel1.attr_1

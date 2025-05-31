@@ -5,27 +5,11 @@ from typing_extensions import dataclass_transform
 from typing import Any, Union, List, get_args, get_origin
 from types import UnionType
 from ..models.id_model import Id
-
-
-class DbField:
-    def __init__(self):
-        self.field_name = None
-        self.field_alias = None
-        self.path_str = None
-        # self.annotation = None
-        self.by_reference = None
-        self.is_list = None
-        self.is_union = None
-        self.types = []
-        # self.has_model_fields = None
-
-    def __repr__(self):
-        attrs_str = ", ".join(f"{k}={v!r}" for k, v in vars(self).items())
-        return f"DbField({attrs_str})"
+from ..models.db_field import DbField
 
 
 def _resolve_db_field(
-    field_name: str, field_info: FieldInfo, db_field: DbField
+    field_name: str, field_info: FieldInfo, db_field: DbField, path: list
 ) -> DbField:
     db_field.field_name = field_name
     db_field.field_alias = field_info.alias or field_name
@@ -50,6 +34,8 @@ def _resolve_db_field(
     else:
         db_field.types = [annotation]
     db_field.by_reference = Id in db_field.types
+    path.append(db_field.field_alias)
+    db_field.path_str = ".".join(path)
 
     for cls in db_field.types:
         if not hasattr(cls, "model_fields"):
@@ -61,7 +47,9 @@ def _resolve_db_field(
                 field_name=inner_field_name,
                 field_info=inner_field_info,
                 db_field=getattr(db_field, inner_field_name),
+                path=path,
             )
+            path.pop()
     return db_field
 
 
@@ -69,7 +57,7 @@ def _resolve_cls_db_fields(cls: BaseModel):
     for field_name, field_info in cls.model_fields.items():
         db_field = DbField()
         db_field = _resolve_db_field(
-            field_name=field_name, field_info=field_info, db_field=db_field
+            field_name=field_name, field_info=field_info, db_field=db_field, path=[]
         )
         setattr(cls, field_name, db_field)
 
