@@ -17,4 +17,29 @@ class DbField:
     def __eq__(self, value) -> dict:
         if isinstance(value, DbField):
             return super().__eq__(value)
-        return {self.path_str: {"$eq": value}}
+        return {"$eq": [self.path_str, value]}
+
+    def __ne__(self, value) -> dict:
+        if isinstance(value, DbField):
+            return super().__eq__(value)
+        return {"$ne": [self.path_str, value]}
+
+    def __lt__(self, value) -> dict:
+        if isinstance(value, DbField):
+            return super().__eq__(value)
+        return {"$lt": [self.path_str, value]}
+
+    def __le__(self, value) -> dict:
+        if isinstance(value, DbField):
+            return super().__eq__(value)
+        return {"$lte": [self.path_str, value]}
+
+    def __gt__(self, value) -> dict:
+        if isinstance(value, DbField):
+            return super().__eq__(value)
+        return {"$gt": [self.path_str, value]}
+
+    def __ge__(self, value) -> dict:
+        if isinstance(value, DbField):
+            return super().__eq__(value)
+        return {"$gte": [self.path_str, value]}

@@ -26,14 +26,35 @@ def test_db_model():
     # print(MyModel4.attr_5.model_2)
 
 
-def test_db_field_eq():
+def test_db_field_comparisons():
     class MyModel1(DbModel):
         attr_1: str
 
     class MyModel2(DbModel):
-        attr_1: str
+        attr_1: int
         model_1: MyModel1
 
-    assert (MyModel1.attr_1 == "abc") == {"attr_1": {"$eq": "abc"}}
-    assert (MyModel2.model_1.attr_1 == "abc") == {"model_1.attr_1": {"$eq": "abc"}}
-    assert not MyModel2.attr_1 == MyModel1.attr_1
+    # == operador
+    assert (MyModel1.attr_1 == "abc") == {"$eq": ["attr_1", "abc"]}
+    assert (MyModel2.model_1.attr_1 == "xyz") == {"$eq": ["model_1.attr_1", "xyz"]}
+    assert not (MyModel2.attr_1 == MyModel1.attr_1)
+
+    # != operador
+    assert (MyModel1.attr_1 != "abc") == {"$ne": ["attr_1", "abc"]}
+    assert (MyModel2.model_1.attr_1 != 42) == {"$ne": ["model_1.attr_1", 42]}
+
+    # < operador
+    assert (MyModel1.attr_1 < "zzz") == {"$lt": ["attr_1", "zzz"]}
+    assert (MyModel2.model_1.attr_1 < 10) == {"$lt": ["model_1.attr_1", 10]}
+
+    # <= operador
+    assert (MyModel1.attr_1 <= "zzz") == {"$lte": ["attr_1", "zzz"]}
+    assert (MyModel2.model_1.attr_1 <= 5) == {"$lte": ["model_1.attr_1", 5]}
+
+    # > operador
+    assert (MyModel1.attr_1 > "aaa") == {"$gt": ["attr_1", "aaa"]}
+    assert (MyModel2.model_1.attr_1 > 0) == {"$gt": ["model_1.attr_1", 0]}
+
+    # >= operador
+    assert (MyModel1.attr_1 >= "aaa") == {"$gte": ["attr_1", "aaa"]}
+    assert (MyModel2.model_1.attr_1 >= 100) == {"$gte": ["model_1.attr_1", 100]}

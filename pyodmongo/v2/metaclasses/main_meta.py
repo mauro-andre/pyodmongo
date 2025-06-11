@@ -12,7 +12,9 @@ def _resolve_db_field(
     field_name: str, field_info: FieldInfo, db_field: DbField, path: list
 ) -> DbField:
     db_field.field_name = field_name
-    db_field.field_alias = field_info.alias or field_name
+    db_field.field_alias = (
+        field_info.alias or field_name if field_name != "id" else "_id"
+    )
     annotation = field_info.annotation
 
     def is_union(value) -> bool:
@@ -40,7 +42,6 @@ def _resolve_db_field(
     for cls in db_field.types:
         if not hasattr(cls, "model_fields"):
             continue
-        cls: BaseModel
         for inner_field_name, inner_field_info in cls.model_fields.items():
             setattr(db_field, inner_field_name, DbField())
             _resolve_db_field(
@@ -53,13 +54,41 @@ def _resolve_db_field(
     return db_field
 
 
-def _resolve_cls_db_fields(cls: BaseModel):
+def _resolve_cls_db_fields(cls):
     for field_name, field_info in cls.model_fields.items():
         db_field = DbField()
         db_field = _resolve_db_field(
             field_name=field_name, field_info=field_info, db_field=db_field, path=[]
         )
-        setattr(cls, field_name, db_field)
+        setattr(cls, field_name + "__db_field", db_field)
+
+
+# def _resolve_field_db_dict(
+#     field_name: str, field_info: FieldInfo, db_dict: dict
+# ) -> dict:
+#     field_alias = field_info.alias or field_name if field_name != "id" else "_id"
+#     annotation = field_info.annotation
+
+#     def _is_union(value) -> bool:
+#         return get_origin(value) is UnionType or get_origin(value) is Union
+
+#     is_union = _is_union(value=annotation)
+#     is_list = get_origin(annotation) is list or get_origin(annotation) is List
+
+#     db_dict[field_name] = (None, "Alguma coisa")
+#     print(annotation)
+#     return db_dict
+
+
+# def _resolve_cls_db_dict(cls):
+#     db_dict = {}
+#     for field_name, field_info in cls.model_fields.items():
+#         db_dict = _resolve_field_db_dict(
+#             field_name=field_name, field_info=field_info, db_dict=db_dict
+#         )
+#     setattr(cls, "__db_dict__", db_dict)
+#     print(cls.__dict__.get("__db_dict__"))
+#     print()
 
 
 @dataclass_transform(kw_only_default=True)
@@ -77,12 +106,25 @@ class MainMeta(ModelMetaclass):
         setattr(cls, "__main_meta_complete__", True)
         for base in bases:
             setattr(base, "__main_meta_complete__", True)
+
         _resolve_cls_db_fields(cls=cls)
+        # _resolve_cls_db_dict(cls=cls)
         return cls
 
     def __getattr__(cls, name: str):
+        # if cls.__dict__.get("__main_meta_complete__") and cls.__dict__.get("__db_dict__"):
+        #     print(cls.__dict__.get("__db_dict__"))
+        #     print()
+
         if cls.__dict__.get("__main_meta_complete__") and cls.__dict__.get(
-            name + "__main_meta"
+            name + "__db_field"
         ):
-            return cls.__dict__.get(name + "__main_meta")
+            return cls.__dict__.get(name + "__db_field")
+        # # if (
+        #     cls.__dict__.get("__main_meta_complete__")
+        #     and "__db_fields__" in cls.__dict__
+        #     and name in cls.__dict__["__db_fields__"]
+        # ):
+        #     db_field: DbField = cls.__dict__["__db_fields__"][name]
+        #     return db_field
         return ModelMetaclass.__getattr__(cls, name)
