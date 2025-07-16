@@ -154,6 +154,6 @@ def mount_base_pipeline(
         reference_stage = resolve_reference_pipeline(
             cls=Model, pipeline=[], populate_db_fields=populate_db_fields
         )
-        return match_stage + sort_stage + skip_stage + limit_stage + reference_stage
+        return match_stage + reference_stage + sort_stage + skip_stage + limit_stage
     else:
         return match_stage + sort_stage + skip_stage + limit_stage
