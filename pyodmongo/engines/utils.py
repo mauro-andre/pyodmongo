@@ -118,31 +118,41 @@ def mount_base_pipeline(
     paginate: int,
     current_page: int,
     docs_per_page: int,
-    is_find_one: bool,
+    no_paginate_limit: int | None,
 ):
     """
-    Constructs a basic MongoDB aggregation pipeline based on the provided query, sort, and
-    model settings, optionally including reference population stages.
+    Mounts a base MongoDB aggregation pipeline for find operations.
+
+    This function constructs a pipeline by combining various stages, such as
+    document matching, sorting, reference population, and pagination,
+    based on the provided parameters. It serves as the core pipeline
+    builder for find queries.
 
     Args:
-        Model (type[Model]): The model class defining the MongoDB collection and its aggregation logic.
-        query (dict): MongoDB query dictionary to filter the documents.
-        sort (dict): Dictionary defining the sorting order of the documents.
-        populate (bool): Flag indicating whether to include reference population stages in the pipeline.
+        Model: The PyODMongo model class for the query.
+        query: The MongoDB query dictionary for the `$match` stage.
+        sort: The dictionary defining the sort order for the `$sort` stage.
+        populate: If True, adds stages to populate referenced documents.
+        pipeline: An optional list of aggregation stages to prepend to the
+                  pipeline. If None, the model's default `_pipeline` is used.
+        populate_db_fields: A list of specific `DbField`s to populate.
+                            Used only if `populate` is True.
+        paginate: If True, enables pagination by adding `$skip` and `$limit`
+                  stages.
+        current_page: The page number to retrieve when pagination is enabled.
+        docs_per_page: The number of documents per page for pagination.
+        no_paginate_limit: The maximum number of documents to return when
+                           pagination is disabled.
+        is_find_one: If True, adds a `$limit: 1` stage to the pipeline,
+                     optimizing the query for a single document.
 
     Returns:
-        list: The MongoDB aggregation pipeline configured with match, sort, and optionally population stages.
-
-    Description:
-        This function constructs a MongoDB aggregation pipeline using the provided model's
-        internal pipeline stages and the specified query and sort parameters. If 'populate' is
-        true, reference population stages defined in the model are included to resolve document
-        references as part of the aggregation process.
+        A list representing the complete MongoDB aggregation pipeline.
     """
     match_stage = [{"$match": query}]
     sort_stage = [{"$sort": sort}] if sort != {} else []
     skip_stage = []
-    limit_stage = [{"$limit": 1}] if is_find_one else []
+    limit_stage = [{"$limit": no_paginate_limit}] if no_paginate_limit else []
     pipeline = pipeline or Model._pipeline
     if paginate:
         skip_stage, limit_stage = _skip_and_limit_stages(

@@ -581,3 +581,56 @@ async def test_save_with_decimal(
 
     with pytest.raises(ValueError, match="Invalid decimal type"):
         error_attr = DbDecimal({"key": "value"})
+
+
+@pytest.mark.asyncio
+async def test_find_many_no_paginate_limit(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class MyClass(DbModel):
+        attr: int
+        _collection: ClassVar = "my_class_for_limit_test"
+
+    objs = [MyClass(attr=i) for i in range(100)]
+    await async_engine.save_all(objs)
+
+    # Test async_engine
+    limit_async = 15
+    result_async = await async_engine.find_many(
+        Model=MyClass, no_paginate_limit=limit_async
+    )
+    assert len(result_async) == limit_async
+
+    # Test engine
+    limit_sync = 25
+    result_sync = engine.find_many(Model=MyClass, no_paginate_limit=limit_sync)
+    assert len(result_sync) == limit_sync
+
+    # Test without limit
+    result_no_limit_async = await async_engine.find_many(Model=MyClass)
+    assert len(result_no_limit_async) == 100
+
+    result_no_limit_sync = engine.find_many(Model=MyClass)
+    assert len(result_no_limit_sync) == 100
+
+
+@pytest.mark.asyncio
+async def test_find_one_returns_one_document(
+    async_engine: AsyncDbEngine, engine: DbEngine, drop_db
+):
+    class MyModel(DbModel):
+        attr: int
+        _collection: ClassVar = "my_model_find_one_test"
+
+    objs = [MyModel(attr=i) for i in range(10)]
+    await async_engine.save_all(objs)
+
+    # Test async_engine
+    result_async = await async_engine.find_one(Model=MyModel)
+    assert isinstance(result_async, MyModel)
+    assert result_async in objs
+
+    # Test engine
+    result_sync = engine.find_one(Model=MyModel)
+    assert isinstance(result_sync, MyModel)
+    assert result_sync in objs

@@ -257,7 +257,7 @@ class _Engine:
         paginate: int,
         current_page: int,
         docs_per_page: int,
-        is_find_one: bool,
+        no_paginate_limit: int | None,
     ) -> dict:
         """
         Construct an aggregation pipeline.
@@ -286,7 +286,7 @@ class _Engine:
                 paginate=paginate,
                 current_page=current_page,
                 docs_per_page=docs_per_page,
-                is_find_one=is_find_one,
+                no_paginate_limit=no_paginate_limit,
             ),
             query,
             sort,
@@ -395,20 +395,26 @@ class AsyncDbEngine(_Engine):
         tz_info: timezone = None,
     ) -> Model:
         """
-        Find a single document in the database.
+        Asynchronously finds a single document in the database that matches the query criteria.
+
+        This method constructs and executes an aggregation pipeline to find one document.
+        It supports complex queries, sorting, and populating referenced fields.
 
         Args:
-            Model (DbModel): The database model class.
-            query (QueryOperator, optional): The query operator. Defaults to None.
-            raw_query (dict, optional): The raw query dictionary. Defaults to None.
-            sort (SortOperator, optional): The sort operator. Defaults to None.
-            raw_sort (dict, optional): The raw sort dictionary. Defaults to None.
-            populate (bool, optional): Flag to indicate whether to populate related documents. Defaults to False.
-            as_dict (bool, optional): Flag to return the result as a dictionary. Defaults to False.
-            tz_info (timezone, optional): The timezone information. Defaults to None.
+            Model: The DbModel class to perform the query on.
+            query: A QueryOperator for filtering documents. Defaults to None.
+            raw_query: A raw dictionary for MongoDB query. Defaults to None.
+            sort: A SortOperator for sorting the result. Defaults to None.
+            raw_sort: A raw dictionary for MongoDB sorting. Defaults to None.
+            populate: If True, populates referenced documents. Defaults to False.
+            pipeline: A custom aggregation pipeline to use. Defaults to None.
+            populate_db_fields: A list of specific DbFields to populate. Defaults to None.
+            as_dict: If True, returns the document as a dictionary. Defaults to False.
+            tz_info: Timezone information for decoding datetime objects. Defaults to None.
 
         Returns:
-            DbModel: The found database model object.
+            The matched document as a model instance or a dictionary, or None if no
+            document is found.
         """
         pipeline, _, _ = self._aggregate_pipeline(
             Model=Model,
@@ -422,7 +428,7 @@ class AsyncDbEngine(_Engine):
             paginate=False,
             current_page=1,
             docs_per_page=1,
-            is_find_one=True,
+            no_paginate_limit=1,
         )
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
         if as_dict:
@@ -449,25 +455,32 @@ class AsyncDbEngine(_Engine):
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
+        no_paginate_limit: int | None = None,
     ) -> Union[list[Model], ResponsePaginate]:
         """
-        Find multiple documents in the database.
+        Asynchronously finds multiple documents in the database that match the query criteria.
+
+        This method supports filtering, sorting, populating referenced fields, and pagination.
+        If pagination is enabled, it returns a paginated response object.
 
         Args:
-            Model (DbModel): The database model class.
-            query (QueryOperator, optional): The query operator. Defaults to None.
-            raw_query (dict, optional): The raw query dictionary. Defaults to None.
-            sort (SortOperator, optional): The sort operator. Defaults to None.
-            raw_sort (dict, optional): The raw sort dictionary. Defaults to None.
-            populate (bool, optional): Flag to indicate whether to populate related documents. Defaults to False.
-            as_dict (bool, optional): Flag to return the results as dictionaries. Defaults to False.
-            tz_info (timezone, optional): The timezone information. Defaults to None.
-            paginate (bool, optional): Flag to enable pagination. Defaults to False.
-            current_page (int, optional): The current page number. Defaults to 1.
-            docs_per_page (int, optional): The number of documents per page. Defaults to 1000.
+            Model: The DbModel class to perform the query on.
+            query: A QueryOperator for filtering documents. Defaults to None.
+            raw_query: A raw dictionary for MongoDB query. Defaults to None.
+            sort: A SortOperator for sorting the results. Defaults to None.
+            raw_sort: A raw dictionary for MongoDB sorting. Defaults to None.
+            populate: If True, populates referenced documents. Defaults to False.
+            pipeline: A custom aggregation pipeline to use. Defaults to None.
+            populate_db_fields: A list of specific DbFields to populate. Defaults to None.
+            as_dict: If True, returns documents as dictionaries. Defaults to False.
+            tz_info: Timezone information for decoding datetime objects. Defaults to None.
+            paginate: If True, enables pagination. Defaults to False.
+            current_page: The page number to retrieve. Defaults to 1.
+            docs_per_page: The number of documents per page. Defaults to 1000.
+            no_paginate_limit: The maximum number of documents to return when pagination is disabled. Defaults to None.
 
         Returns:
-            list[DbModel] or ResponsePaginate: The list of found database model objects or a paginated response.
+            A list of documents or a ResponsePaginate object with the paginated results.
         """
         pipeline, query, _ = self._aggregate_pipeline(
             Model=Model,
@@ -481,7 +494,7 @@ class AsyncDbEngine(_Engine):
             paginate=paginate,
             current_page=current_page,
             docs_per_page=docs_per_page,
-            is_find_one=False,
+            no_paginate_limit=no_paginate_limit,
         )
 
         async def _result():
@@ -639,20 +652,26 @@ class DbEngine(_Engine):
         tz_info: timezone = None,
     ) -> Model:
         """
-        Find a single document in the database.
+        Synchronously finds a single document in the database that matches the query criteria.
+
+        This method constructs and executes an aggregation pipeline to find one document.
+        It supports complex queries, sorting, and populating referenced fields.
 
         Args:
-            Model (DbModel): The database model class.
-            query (QueryOperator, optional): The query operator. Defaults to None.
-            raw_query (dict, optional): The raw query dictionary. Defaults to None.
-            sort (SortOperator, optional): The sort operator. Defaults to None.
-            raw_sort (dict, optional): The raw sort dictionary. Defaults to None.
-            populate (bool, optional): Flag to indicate whether to populate related documents. Defaults to False.
-            as_dict (bool, optional): Flag to return the result as a dictionary. Defaults to False.
-            tz_info (timezone, optional): The timezone information. Defaults to None.
+            Model: The DbModel class to perform the query on.
+            query: A QueryOperator for filtering documents. Defaults to None.
+            raw_query: A raw dictionary for MongoDB query. Defaults to None.
+            sort: A SortOperator for sorting the result. Defaults to None.
+            raw_sort: A raw dictionary for MongoDB sorting. Defaults to None.
+            populate: If True, populates referenced documents. Defaults to False.
+            pipeline: A custom aggregation pipeline to use. Defaults to None.
+            populate_db_fields: A list of specific DbFields to populate. Defaults to None.
+            as_dict: If True, returns the document as a dictionary. Defaults to False.
+            tz_info: Timezone information for decoding datetime objects. Defaults to None.
 
         Returns:
-            DbModel: The found database model object.
+            The matched document as a model instance or a dictionary, or None if no
+            document is found.
         """
         pipeline, _, _ = self._aggregate_pipeline(
             Model=Model,
@@ -666,7 +685,7 @@ class DbEngine(_Engine):
             paginate=False,
             current_page=1,
             docs_per_page=1,
-            is_find_one=True,
+            no_paginate_limit=1,
         )
         cursor = self._aggregate_cursor(Model=Model, pipeline=pipeline, tz_info=tz_info)
         if as_dict:
@@ -693,25 +712,32 @@ class DbEngine(_Engine):
         paginate: bool = False,
         current_page: int = 1,
         docs_per_page: int = 1000,
+        no_paginate_limit: int | None = None,
     ) -> Union[list[Model], ResponsePaginate]:
         """
-        Find multiple documents in the database.
+        Synchronously finds multiple documents in the database that match the query criteria.
+
+        This method supports filtering, sorting, populating referenced fields, and pagination.
+        If pagination is enabled, it returns a paginated response object.
 
         Args:
-            Model (DbModel): The database model class.
-            query (QueryOperator, optional): The query operator. Defaults to None.
-            raw_query (dict, optional): The raw query dictionary. Defaults to None.
-            sort (SortOperator, optional): The sort operator. Defaults to None.
-            raw_sort (dict, optional): The raw sort dictionary. Defaults to None.
-            populate (bool, optional): Flag to indicate whether to populate related documents. Defaults to False.
-            as_dict (bool, optional): Flag to return the results as dictionaries. Defaults to False.
-            tz_info (timezone, optional): The timezone information. Defaults to None.
-            paginate (bool, optional): Flag to enable pagination. Defaults to False.
-            current_page (int, optional): The current page number. Defaults to 1.
-            docs_per_page (int, optional): The number of documents per page. Defaults to 1000.
+            Model: The DbModel class to perform the query on.
+            query: A QueryOperator for filtering documents. Defaults to None.
+            raw_query: A raw dictionary for MongoDB query. Defaults to None.
+            sort: A SortOperator for sorting the results. Defaults to None.
+            raw_sort: A raw dictionary for MongoDB sorting. Defaults to None.
+            populate: If True, populates referenced documents. Defaults to False.
+            pipeline: A custom aggregation pipeline to use. Defaults to None.
+            populate_db_fields: A list of specific DbFields to populate. Defaults to None.
+            as_dict: If True, returns documents as dictionaries. Defaults to False.
+            tz_info: Timezone information for decoding datetime objects. Defaults to None.
+            paginate: If True, enables pagination. Defaults to False.
+            current_page: The page number to retrieve. Defaults to 1.
+            docs_per_page: The number of documents per page. Defaults to 1000.
+            no_paginate_limit: The maximum number of documents to return when pagination is disabled. Defaults to None.
 
         Returns:
-            list[DbModel] or ResponsePaginate: The list of found database model objects or a paginated response.
+            A list of documents or a ResponsePaginate object with the paginated results.
         """
         pipeline, query, _ = self._aggregate_pipeline(
             Model=Model,
@@ -725,7 +751,7 @@ class DbEngine(_Engine):
             paginate=paginate,
             current_page=current_page,
             docs_per_page=docs_per_page,
-            is_find_one=False,
+            no_paginate_limit=no_paginate_limit,
         )
 
         def _result():
